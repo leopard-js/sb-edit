@@ -1,0 +1,84 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`sb3 -> scratch-js 1`] = `
+Object {
+  "Abby/Abby.mjs": "import {
+  Sprite,
+  Trigger,
+  Costume
+} from \\"https://pulljosh.github.io/scratch-js/scratch-js/index.mjs\\";
+
+export default class Abby extends Sprite {
+  constructor(...args) {
+    super(...args);
+
+    this.costumes = [
+      new Costume(\\"abbyA\\", \\"./Abby/costumes/abbyA.svg\\", { x: 62, y: 200 }),
+      new Costume(\\"abbyB\\", \\"./Abby/costumes/abbyB.svg\\", { x: 62, y: 200 }),
+      new Costume(\\"abbyC\\", \\"./Abby/costumes/abbyC.svg\\", { x: 64, y: 200 }),
+      new Costume(\\"abbyD\\", \\"./Abby/costumes/abbyD.svg\\", { x: 64, y: 202 })
+    ];
+
+    this.triggers = [];
+  }
+
+  *movesteps(g, s) {
+    this.move(10);
+  }
+
+  *turnright(g, s) {
+    this.direction += this.costumeNumber;
+    this.direction -= 15;
+    /* TODO: Implement motion_goto */ this.goto(this.y, -23);
+    /* TODO: Implement motion_glideto */ yield* this.glide(1, -36, this.x);
+    this.direction = 90;
+    /* TODO: Implement motion_pointtowards */ this.x += this.direction;
+    this.x = -36;
+    this.y += 10;
+    this.y = -23;
+    /* TODO: Implement motion_ifonedgebounce */
+    /* TODO: Implement motion_setrotationstyle */
+  }
+
+  *touchingcolor(g, s) {
+    /* TODO: Implement sensing_touchingcolor */
+  }
+
+  *coloristouchingcolor(g, s) {
+    /* TODO: Implement sensing_coloristouchingcolor */
+  }
+
+  *distanceto(g, s) {
+    /* TODO: Implement sensing_distanceto */
+  }
+
+  *setdragmode(g, s) {
+    /* TODO: Implement sensing_setdragmode */
+  }
+}
+",
+  "index.mjs": "import { Project } from \\"https://pulljosh.github.io/scratch-js/scratch-js/index.mjs\\";
+
+import Stage from \\"./Stage/Stage.mjs\\";
+
+import Abby from \\"./Abby/Abby.mjs\\";
+
+const stage = new Stage();
+
+const sprites = [
+  new Abby({
+    x: -36,
+    y: -23,
+    direction: 90,
+    costumeNumber: 0,
+    size: 100,
+    visible: true
+  })
+];
+
+const project = new Project(stage, sprites);
+
+project.run();
+",
+}
+`;

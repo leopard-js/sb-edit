@@ -1,0 +1,48 @@
+{
+  "name": "sb-edit",
+  "version": "0.1.0",
+  "description": "Import, edit, and export Scratch project files",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
+    "lint": "tslint -p tsconfig.json",
+    "test": "jest --config jestconfig.json",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm test && npm run lint",
+    "preversion": "npm run lint",
+    "version": "npm run format && git add -A src",
+    "postversion": "git push && git push --tags"
+  },
+  "files": [
+    "lib/**/*"
+  ],
+  "keywords": [
+    "Scratch",
+    "mit-scratch",
+    "sb2",
+    "sb3",
+    "scratch-js"
+  ],
+  "author": {
+    "name": "Josh Pullen",
+    "email": "hello@joshuapullen.com",
+    "url": "https://joshuapullen.com/"
+  },
+  "license": "ISC",
+  "devDependencies": {
+    "@types/jest": "^24.0.22",
+    "@types/jszip": "^3.1.6",
+    "@types/prettier": "^1.18.3",
+    "jest": "^24.9.0",
+    "ts-jest": "^24.1.0",
+    "tslint": "^5.20.1",
+    "tslint-config-prettier": "^1.18.0",
+    "typescript": "^3.7.2"
+  },
+  "dependencies": {
+    "jszip": "^3.2.2",
+    "prettier": "^1.19.1"
+  }
+}
