@@ -240,6 +240,11 @@ export interface CustomBlockArguments extends Base {
   value: CustomBlockArgument[];
 }
 
+export interface CustomBlockInputValues extends Base {
+  type: "customBlockInputValues";
+  value: Array<Exclude<Any, CustomBlockInputValues>>;
+}
+
 export type FieldAny =
   | Costume
   | Backdrop
@@ -265,5 +270,18 @@ export type FieldAny =
   | ForwardBackwardMenu
   | CostumeNumberName;
 
-// tslint:disable-next-line:ban-types
-export type Any = Number | String | Boolean | Angle | Color | Broadcast | Variable | List | Block | Blocks | FieldAny;
+// tslint:disable:ban-types
+export type Any =
+  | Number
+  | String
+  | Boolean
+  | Angle
+  | Color
+  | Broadcast
+  | Variable
+  | List
+  | Block
+  | Blocks
+  | CustomBlockArguments
+  | CustomBlockInputValues
+  | FieldAny;

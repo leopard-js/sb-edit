@@ -5,6 +5,7 @@ import * as BlockInput from "../../BlockInput";
 import { OpCode } from "../../OpCode";
 
 import * as prettier from "prettier";
+import Target from "../../Target";
 
 const config = {
   sjsImport: "https://pulljosh.github.io/scratch-js/scratch-js/index.mjs"
@@ -72,248 +73,6 @@ function camelCase(name: string, upper: boolean = false) {
   return parts.join("");
 }
 
-function inputToJS(input: BlockInput.Any): string {
-  switch (input.type) {
-    case "block":
-      return blockToJS(input.value as Block);
-    case "blocks":
-      return input.value.map(block => blockToJS(block as Block)).join(";\n");
-    case "color":
-      const { r, g, b } = input.value;
-      const toHexDigits = (n: number) => {
-        if (n < 16) {
-          return "0" + n.toString(16);
-        }
-        return n.toString(16);
-      };
-      return JSON.stringify(`#${toHexDigits(r)}${toHexDigits(g)}${toHexDigits(b)}`);
-    default:
-      return JSON.stringify(input.value);
-  }
-}
-
-function blockToJS(block: Block): string {
-  switch (block.opcode) {
-    case OpCode.motion_movesteps:
-      return `this.move(${inputToJS(block.inputs.STEPS)})`;
-    case OpCode.motion_turnright:
-      return `this.direction += (${inputToJS(block.inputs.DEGREES)})`;
-    case OpCode.motion_turnleft:
-      return `this.direction -= (${inputToJS(block.inputs.DEGREES)})`;
-    case OpCode.motion_gotoxy:
-      return `this.goto((${inputToJS(block.inputs.X)}), (${inputToJS(block.inputs.Y)}))`;
-    case OpCode.motion_glidesecstoxy:
-      return `yield* this.glide((${inputToJS(block.inputs.SECS)}), (${inputToJS(block.inputs.X)}), (${inputToJS(
-        block.inputs.Y
-      )}))`;
-    case OpCode.motion_pointindirection:
-      return `this.direction = (${inputToJS(block.inputs.DIRECTION)})`;
-    case OpCode.motion_changexby:
-      return `this.x += (${inputToJS(block.inputs.DX)})`;
-    case OpCode.motion_setx:
-      return `this.x = (${inputToJS(block.inputs.X)})`;
-    case OpCode.motion_changeyby:
-      return `this.y += (${inputToJS(block.inputs.DY)})`;
-    case OpCode.motion_sety:
-      return `this.y = (${inputToJS(block.inputs.Y)})`;
-    case OpCode.motion_xposition:
-      return `this.x`;
-    case OpCode.motion_yposition:
-      return `this.y`;
-    case OpCode.motion_direction:
-      return `this.direction`;
-    case OpCode.looks_switchcostumeto:
-      return `this.costume = (${inputToJS(block.inputs.COSTUME)})`;
-    case OpCode.looks_nextcostume:
-      return `this.costume += 1;`;
-    case OpCode.looks_changesizeby:
-      return `this.size += (${inputToJS(block.inputs.CHANGE)})`;
-    case OpCode.looks_setsizeto:
-      return `this.size = (${inputToJS(block.inputs.SIZE)})`;
-    case OpCode.looks_show:
-      return `this.visible = true`;
-    case OpCode.looks_hide:
-      return `this.visible = false`;
-    case OpCode.looks_costumenumbername:
-      switch (block.inputs.NUMBER_NAME.value) {
-        case "name":
-          return `this.costume.name`;
-        case "number":
-        default:
-          return `this.costumeNumber`;
-      }
-    case OpCode.looks_size:
-      return `this.size`;
-    case OpCode.sound_playuntildone:
-      return `yield* this.playSound(/* TODO: Get url for sound ${block.inputs.SOUND_MENU} */)`;
-    case OpCode.sound_play:
-      return `this.playSound(/* TODO: Get url for sound ${block.inputs.SOUND_MENU} */)`;
-    case OpCode.sound_stopallsounds:
-      return `this.stopAllSounds()`;
-    case OpCode.event_broadcast:
-      return `this.broadcast(${inputToJS(block.inputs.BROADCAST_INPUT)})`;
-    case OpCode.event_broadcastandwait:
-      return `yield* this.broadcastAndWait(${inputToJS(block.inputs.BROADCAST_INPUT)})`;
-    case OpCode.control_wait:
-      return `yield* this.wait(${inputToJS(block.inputs.DURATION)})`;
-    case OpCode.control_repeat:
-      return `for (let i = 0; i < (${inputToJS(block.inputs.TIMES)}); i++) {
-        ${inputToJS(block.inputs.SUBSTACK)};
-        yield;
-      }`;
-    case OpCode.control_forever:
-      return `while (true) {
-        ${inputToJS(block.inputs.SUBSTACK)};
-        yield;
-      }`;
-    case OpCode.control_if:
-      return `if (${inputToJS(block.inputs.CONDITION)}) {
-        ${inputToJS(block.inputs.SUBSTACK)}
-      }`;
-    case OpCode.control_wait_until:
-      return `while (!(${inputToJS(block.inputs.CONDITION)})) { yield; }`;
-    case OpCode.control_repeat_until:
-      return `while(!(${inputToJS(block.inputs.CONDITION)})) {
-        ${inputToJS(block.inputs.SUBSTACK)}
-      }`;
-    case OpCode.sensing_touchingobject:
-      switch (block.inputs.TOUCHINGOBJECTMENU.value) {
-        case "_mouse_":
-          return `/* TODO: Create touching "mouse" option */`;
-        default:
-          return `this.touching(${inputToJS(block.inputs.TOUCHINGOBJECTMENU)})`;
-      }
-    case OpCode.sensing_keypressed:
-      return `this.keyPressed(${inputToJS(block.inputs.KEY_OPTION)})`;
-    case OpCode.sensing_mousex:
-      return `this.mouse.x`;
-    case OpCode.sensing_mousey:
-      return `this.mouse.y`;
-    case OpCode.sensing_timer:
-      return `this.timer`;
-    case OpCode.sensing_resettimer:
-      return `this.restartTimer()`;
-    case OpCode.sensing_current:
-      switch (block.inputs.CURRENTMENU.value) {
-        case "YEAR":
-          return `(new Date().getFullYear())`;
-        case "MONTH":
-          return `(new Date().getMonth() + 1)`;
-        case "DATE":
-          return `(new Date().getDate())`;
-        case "DAYOFWEEK":
-          return `(new Date().getDay() + 1)`;
-        case "HOUR":
-          return `(new Date().getHours())`;
-        case "MINUTE":
-          return `(new Date().getMinutes())`;
-        case "SECOND":
-          return `(new Date().getSeconds())`;
-      }
-    case OpCode.sensing_dayssince2000:
-      return `(((new Date().getTime() - new Date(2000, 0, 1)) / 1000 / 60 + new Date().getTimezoneOffset()) / 60 / 24)`;
-    case OpCode.sensing_username:
-      return `(/* no username */ "")`;
-    case OpCode.operator_add:
-      return `((${inputToJS(block.inputs.NUM1)}) + (${inputToJS(block.inputs.NUM2)}))`;
-    case OpCode.operator_subtract:
-      return `((${inputToJS(block.inputs.NUM1)}) - (${inputToJS(block.inputs.NUM2)}))`;
-    case OpCode.operator_multiply:
-      return `((${inputToJS(block.inputs.NUM1)}) * (${inputToJS(block.inputs.NUM2)}))`;
-    case OpCode.operator_divide:
-      return `((${inputToJS(block.inputs.NUM1)}) / (${inputToJS(block.inputs.NUM2)}))`;
-    case OpCode.operator_random:
-      return `this.random(${inputToJS(block.inputs.FROM)}, ${inputToJS(block.inputs.TO)})`;
-    case OpCode.operator_gt:
-      return `((${inputToJS(block.inputs.OPERAND1)}) > (${inputToJS(block.inputs.OPERAND2)}))`;
-    case OpCode.operator_lt:
-      return `((${inputToJS(block.inputs.OPERAND1)}) < (${inputToJS(block.inputs.OPERAND2)}))`;
-    case OpCode.operator_equals:
-      return `((${inputToJS(block.inputs.OPERAND1)}) == (${inputToJS(block.inputs.OPERAND2)}))`;
-    case OpCode.operator_and:
-      return `((${inputToJS(block.inputs.OPERAND1)}) && (${inputToJS(block.inputs.OPERAND2)}))`;
-    case OpCode.operator_or:
-      return `((${inputToJS(block.inputs.OPERAND1)}) || (${inputToJS(block.inputs.OPERAND2)}))`;
-    case OpCode.operator_not:
-      return `(!(${inputToJS(block.inputs.OPERAND)}))`;
-    case OpCode.operator_join:
-      return `("" + (${inputToJS(block.inputs.STRING1)}) + (${inputToJS(block.inputs.STRING2)}))`;
-    case OpCode.operator_letter_of:
-      return `((${inputToJS(block.inputs.STRING)})[${inputToJS(block.inputs.LETTER)}])`;
-    case OpCode.operator_length:
-      return `(${inputToJS(block.inputs.STRING)}).length`;
-    case OpCode.operator_contains:
-      return `(${inputToJS(block.inputs.STRING1)}).includes(${inputToJS(block.inputs.STRING2)})`;
-    case OpCode.operator_mod:
-      return `((${inputToJS(block.inputs.NUM1)}) % (${inputToJS(block.inputs.NUM2)}))`;
-    case OpCode.operator_round:
-      return `Math.round(${inputToJS(block.inputs.NUM)})`;
-    case OpCode.operator_mathop:
-      switch (block.inputs.OPERATOR.value) {
-        case "abs":
-          return `Math.abs(${inputToJS(block.inputs.NUM)})`;
-        case "floor":
-          return `Math.floor(${inputToJS(block.inputs.NUM)})`;
-        case "ceiling":
-          return `Math.ceil(${inputToJS(block.inputs.NUM)})`;
-        case "sqrt":
-          return `Math.sqrt(${inputToJS(block.inputs.NUM)})`;
-        case "sin":
-          return `Math.sin(this.scratchToRad(${inputToJS(block.inputs.NUM)}))`;
-        case "cos":
-          return `Math.cos(this.scratchToRad(${inputToJS(block.inputs.NUM)}))`;
-        case "tan":
-          return `Math.tan(this.scratchToRad(${inputToJS(block.inputs.NUM)}))`;
-        case "asin":
-          return `this.radToScratch(Math.asin(${inputToJS(block.inputs.NUM)}))`;
-        case "acos":
-          return `this.radToScratch(Math.acos(${inputToJS(block.inputs.NUM)}))`;
-        case "atan":
-          return `this.radToScratch(Math.atan(${inputToJS(block.inputs.NUM)}))`;
-        case "ln":
-          return `Math.log(${inputToJS(block.inputs.NUM)})`;
-        case "log":
-          return `Math.log10(${inputToJS(block.inputs.NUM)})`;
-        case "e ^":
-          return `(Math.E ** (${inputToJS(block.inputs.NUM)}))`;
-        case "10 ^":
-          return `(10 ** (${inputToJS(block.inputs.NUM)}))`;
-      }
-      break;
-    case OpCode.data_variable:
-      // TODO: Detect variable scope (for all variable types)
-      // It might make sense for this to happen at the library level rather than during compilation
-      // (Consider possibility of dynamic variable names with hacked blocks)
-      return `g.get(${inputToJS(block.inputs.VARIABLE)})`;
-    case OpCode.data_setvariableto:
-      return `g.set((${inputToJS(block.inputs.VARIABLE)}), (${inputToJS(block.inputs.VALUE)}))`;
-    case OpCode.data_changevariableby:
-      return `g.change((${inputToJS(block.inputs.VARIABLE)}), (${inputToJS(block.inputs.VALUE)}))`;
-    case OpCode.data_showvariable:
-      return `g.show(${inputToJS(block.inputs.VARIABLE)})`;
-    case OpCode.data_hidevariable:
-      return `g.hide(${inputToJS(block.inputs.VARIABLE)})`;
-    case OpCode.data_listcontents:
-      return `g.get(${inputToJS(block.inputs.LIST)})`;
-    case OpCode.pen_clear:
-      return `this.clearPen()`;
-    case OpCode.pen_stamp:
-      return `this.stamp()`;
-    case OpCode.pen_penDown:
-      return `this.penDown = true`;
-    case OpCode.pen_penUp:
-      return `this.penDown = false`;
-    case OpCode.pen_setPenColorToColor:
-      return `this.penColor = (${inputToJS(block.inputs.COLOR)})`;
-    case OpCode.pen_setPenSizeTo:
-      return `this.penSize = (${inputToJS(block.inputs.SIZE)})`;
-    case OpCode.pen_changePenSizeBy:
-      return `this.penSize += (${inputToJS(block.inputs.SIZE)})`;
-    default:
-      return `/* TODO: Implement ${block.opcode} */`;
-  }
-}
-
 export default function toScratchJS(
   project: Project,
   prettierConfig?: prettier.Options
@@ -321,6 +80,8 @@ export default function toScratchJS(
   // Update all identifying names in the project to be unique
   // Names changed first are less likely to be ugly
   const uniqueName = uniqueNameGenerator(["g", "s"]);
+
+  let customBlockArgNameMap: Map<Script, { [key: string]: string }> = new Map();
 
   for (const target of [project.stage, ...project.sprites]) {
     target.setName(uniqueName(camelCase(target.name, true)));
@@ -353,6 +114,306 @@ export default function toScratchJS(
     const uniqueScriptName = uniqueNameGenerator();
     for (const script of target.scripts) {
       script.setName(uniqueScriptName(camelCase(script.name)));
+
+      const argNameMap = {};
+      customBlockArgNameMap.set(script, argNameMap);
+
+      const uniqueParamName = uniqueName.branch();
+      for (const block of script.blocks) {
+        if (block.opcode === OpCode.procedures_definition) {
+          for (const argument of block.inputs.ARGUMENTS.value) {
+            if (argument.type !== "label") {
+              const newName = uniqueParamName(camelCase(argument.name));
+              argNameMap[argument.name] = newName;
+              argument.name = newName;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  function scriptToJS(script: Script, target: Target): string {
+    const body = script.body.map(blockToJS).join(";\n");
+    if (script.hat && script.hat.opcode === OpCode.procedures_definition) {
+      return `
+        * ${script.name}(${script.hat.inputs.ARGUMENTS.value
+        .filter(arg => arg.type !== "label")
+        .map(arg => arg.name)
+        .join(", ")}) {
+          ${body}
+        }
+      `;
+    }
+    return `
+      * ${script.name}(g, s) {
+        ${body}
+      }
+    `;
+
+    function inputToJS(input: BlockInput.Any): string {
+      // TODO: Right now, inputs can be completely undefined if imported from
+      // the .sb3 format (because sb3 is weird). This little check will replace
+      // undefined inputs with the value `null`. In theory, this should
+      // eventually be removed when the sb3 import script is improved.
+      if (input === undefined) {
+        return "null";
+      }
+
+      switch (input.type) {
+        case "block":
+          return blockToJS(input.value as Block);
+        case "blocks":
+          return input.value.map(block => blockToJS(block as Block)).join(";\n");
+        case "color":
+          const { r, g, b } = input.value;
+          const toHexDigits = (n: number) => {
+            if (n < 16) {
+              return "0" + n.toString(16);
+            }
+            return n.toString(16);
+          };
+          return JSON.stringify(`#${toHexDigits(r)}${toHexDigits(g)}${toHexDigits(b)}`);
+        default:
+          return JSON.stringify(input.value);
+      }
+    }
+
+    function blockToJS(block: Block): string {
+      const warp = script.hat && script.hat.opcode === OpCode.procedures_definition && script.hat.inputs.WARP.value;
+
+      switch (block.opcode) {
+        case OpCode.motion_movesteps:
+          return `this.move(${inputToJS(block.inputs.STEPS)})`;
+        case OpCode.motion_turnright:
+          return `this.direction += (${inputToJS(block.inputs.DEGREES)})`;
+        case OpCode.motion_turnleft:
+          return `this.direction -= (${inputToJS(block.inputs.DEGREES)})`;
+        case OpCode.motion_gotoxy:
+          return `this.goto((${inputToJS(block.inputs.X)}), (${inputToJS(block.inputs.Y)}))`;
+        case OpCode.motion_glidesecstoxy:
+          return `yield* this.glide((${inputToJS(block.inputs.SECS)}), (${inputToJS(block.inputs.X)}), (${inputToJS(
+            block.inputs.Y
+          )}))`;
+        case OpCode.motion_pointindirection:
+          return `this.direction = (${inputToJS(block.inputs.DIRECTION)})`;
+        case OpCode.motion_changexby:
+          return `this.x += (${inputToJS(block.inputs.DX)})`;
+        case OpCode.motion_setx:
+          return `this.x = (${inputToJS(block.inputs.X)})`;
+        case OpCode.motion_changeyby:
+          return `this.y += (${inputToJS(block.inputs.DY)})`;
+        case OpCode.motion_sety:
+          return `this.y = (${inputToJS(block.inputs.Y)})`;
+        case OpCode.motion_xposition:
+          return `this.x`;
+        case OpCode.motion_yposition:
+          return `this.y`;
+        case OpCode.motion_direction:
+          return `this.direction`;
+        case OpCode.looks_switchcostumeto:
+          return `this.costume = (${inputToJS(block.inputs.COSTUME)})`;
+        case OpCode.looks_nextcostume:
+          return `this.costume += 1;`;
+        case OpCode.looks_changesizeby:
+          return `this.size += (${inputToJS(block.inputs.CHANGE)})`;
+        case OpCode.looks_setsizeto:
+          return `this.size = (${inputToJS(block.inputs.SIZE)})`;
+        case OpCode.looks_show:
+          return `this.visible = true`;
+        case OpCode.looks_hide:
+          return `this.visible = false`;
+        case OpCode.looks_costumenumbername:
+          switch (block.inputs.NUMBER_NAME.value) {
+            case "name":
+              return `this.costume.name`;
+            case "number":
+            default:
+              return `this.costumeNumber`;
+          }
+        case OpCode.looks_size:
+          return `this.size`;
+        case OpCode.sound_playuntildone:
+          return `yield* this.playSound(/* TODO: Get url for sound ${block.inputs.SOUND_MENU} */)`;
+        case OpCode.sound_play:
+          return `this.playSound(/* TODO: Get url for sound ${block.inputs.SOUND_MENU} */)`;
+        case OpCode.sound_stopallsounds:
+          return `this.stopAllSounds()`;
+        case OpCode.event_broadcast:
+          return `this.broadcast(${inputToJS(block.inputs.BROADCAST_INPUT)})`;
+        case OpCode.event_broadcastandwait:
+          return `yield* this.broadcastAndWait(${inputToJS(block.inputs.BROADCAST_INPUT)})`;
+        case OpCode.control_wait:
+          return `yield* this.wait(${inputToJS(block.inputs.DURATION)})`;
+        case OpCode.control_repeat:
+          return `for (let i = 0; i < (${inputToJS(block.inputs.TIMES)}); i++) {
+            ${inputToJS(block.inputs.SUBSTACK)};
+            ${warp ? "" : "yield;"}
+          }`;
+        case OpCode.control_forever:
+          return `while (true) {
+            ${inputToJS(block.inputs.SUBSTACK)};
+            ${warp ? "" : "yield;"}
+          }`;
+        case OpCode.control_if:
+          return `if (${inputToJS(block.inputs.CONDITION)}) {
+            ${inputToJS(block.inputs.SUBSTACK)}
+          }`;
+        case OpCode.control_wait_until:
+          return `while (!(${inputToJS(block.inputs.CONDITION)})) { yield; }`;
+        case OpCode.control_repeat_until:
+          return `while(!(${inputToJS(block.inputs.CONDITION)})) {
+            ${inputToJS(block.inputs.SUBSTACK)}
+          }`;
+        case OpCode.sensing_touchingobject:
+          switch (block.inputs.TOUCHINGOBJECTMENU.value) {
+            case "_mouse_":
+              return `/* TODO: Create touching "mouse" option */`;
+            default:
+              return `this.touching(${inputToJS(block.inputs.TOUCHINGOBJECTMENU)})`;
+          }
+        case OpCode.sensing_keypressed:
+          return `this.keyPressed(${inputToJS(block.inputs.KEY_OPTION)})`;
+        case OpCode.sensing_mousex:
+          return `this.mouse.x`;
+        case OpCode.sensing_mousey:
+          return `this.mouse.y`;
+        case OpCode.sensing_timer:
+          return `this.timer`;
+        case OpCode.sensing_resettimer:
+          return `this.restartTimer()`;
+        case OpCode.sensing_current:
+          switch (block.inputs.CURRENTMENU.value) {
+            case "YEAR":
+              return `(new Date().getFullYear())`;
+            case "MONTH":
+              return `(new Date().getMonth() + 1)`;
+            case "DATE":
+              return `(new Date().getDate())`;
+            case "DAYOFWEEK":
+              return `(new Date().getDay() + 1)`;
+            case "HOUR":
+              return `(new Date().getHours())`;
+            case "MINUTE":
+              return `(new Date().getMinutes())`;
+            case "SECOND":
+              return `(new Date().getSeconds())`;
+          }
+        case OpCode.sensing_dayssince2000:
+          return `(((new Date().getTime() - new Date(2000, 0, 1)) / 1000 / 60 + new Date().getTimezoneOffset()) / 60 / 24)`;
+        case OpCode.sensing_username:
+          return `(/* no username */ "")`;
+        case OpCode.operator_add:
+          return `((${inputToJS(block.inputs.NUM1)}) + (${inputToJS(block.inputs.NUM2)}))`;
+        case OpCode.operator_subtract:
+          return `((${inputToJS(block.inputs.NUM1)}) - (${inputToJS(block.inputs.NUM2)}))`;
+        case OpCode.operator_multiply:
+          return `((${inputToJS(block.inputs.NUM1)}) * (${inputToJS(block.inputs.NUM2)}))`;
+        case OpCode.operator_divide:
+          return `((${inputToJS(block.inputs.NUM1)}) / (${inputToJS(block.inputs.NUM2)}))`;
+        case OpCode.operator_random:
+          return `this.random(${inputToJS(block.inputs.FROM)}, ${inputToJS(block.inputs.TO)})`;
+        case OpCode.operator_gt:
+          return `((${inputToJS(block.inputs.OPERAND1)}) > (${inputToJS(block.inputs.OPERAND2)}))`;
+        case OpCode.operator_lt:
+          return `((${inputToJS(block.inputs.OPERAND1)}) < (${inputToJS(block.inputs.OPERAND2)}))`;
+        case OpCode.operator_equals:
+          return `((${inputToJS(block.inputs.OPERAND1)}) == (${inputToJS(block.inputs.OPERAND2)}))`;
+        case OpCode.operator_and:
+          return `((${inputToJS(block.inputs.OPERAND1)}) && (${inputToJS(block.inputs.OPERAND2)}))`;
+        case OpCode.operator_or:
+          return `((${inputToJS(block.inputs.OPERAND1)}) || (${inputToJS(block.inputs.OPERAND2)}))`;
+        case OpCode.operator_not:
+          return `(!(${inputToJS(block.inputs.OPERAND)}))`;
+        case OpCode.operator_join:
+          return `("" + (${inputToJS(block.inputs.STRING1)}) + (${inputToJS(block.inputs.STRING2)}))`;
+        case OpCode.operator_letter_of:
+          return `((${inputToJS(block.inputs.STRING)})[${inputToJS(block.inputs.LETTER)}])`;
+        case OpCode.operator_length:
+          return `(${inputToJS(block.inputs.STRING)}).length`;
+        case OpCode.operator_contains:
+          return `(${inputToJS(block.inputs.STRING1)}).includes(${inputToJS(block.inputs.STRING2)})`;
+        case OpCode.operator_mod:
+          return `((${inputToJS(block.inputs.NUM1)}) % (${inputToJS(block.inputs.NUM2)}))`;
+        case OpCode.operator_round:
+          return `Math.round(${inputToJS(block.inputs.NUM)})`;
+        case OpCode.operator_mathop:
+          switch (block.inputs.OPERATOR.value) {
+            case "abs":
+              return `Math.abs(${inputToJS(block.inputs.NUM)})`;
+            case "floor":
+              return `Math.floor(${inputToJS(block.inputs.NUM)})`;
+            case "ceiling":
+              return `Math.ceil(${inputToJS(block.inputs.NUM)})`;
+            case "sqrt":
+              return `Math.sqrt(${inputToJS(block.inputs.NUM)})`;
+            case "sin":
+              return `Math.sin(this.scratchToRad(${inputToJS(block.inputs.NUM)}))`;
+            case "cos":
+              return `Math.cos(this.scratchToRad(${inputToJS(block.inputs.NUM)}))`;
+            case "tan":
+              return `Math.tan(this.scratchToRad(${inputToJS(block.inputs.NUM)}))`;
+            case "asin":
+              return `this.radToScratch(Math.asin(${inputToJS(block.inputs.NUM)}))`;
+            case "acos":
+              return `this.radToScratch(Math.acos(${inputToJS(block.inputs.NUM)}))`;
+            case "atan":
+              return `this.radToScratch(Math.atan(${inputToJS(block.inputs.NUM)}))`;
+            case "ln":
+              return `Math.log(${inputToJS(block.inputs.NUM)})`;
+            case "log":
+              return `Math.log10(${inputToJS(block.inputs.NUM)})`;
+            case "e ^":
+              return `(Math.E ** (${inputToJS(block.inputs.NUM)}))`;
+            case "10 ^":
+              return `(10 ** (${inputToJS(block.inputs.NUM)}))`;
+          }
+          break;
+        case OpCode.data_variable:
+          // TODO: Detect variable scope (for all variable types)
+          // It might make sense for this to happen at the library level rather than during compilation
+          // (Consider possibility of dynamic variable names with hacked blocks)
+          return `g.get(${inputToJS(block.inputs.VARIABLE)})`;
+        case OpCode.data_setvariableto:
+          return `g.set((${inputToJS(block.inputs.VARIABLE)}), (${inputToJS(block.inputs.VALUE)}))`;
+        case OpCode.data_changevariableby:
+          return `g.change((${inputToJS(block.inputs.VARIABLE)}), (${inputToJS(block.inputs.VALUE)}))`;
+        case OpCode.data_showvariable:
+          return `g.show(${inputToJS(block.inputs.VARIABLE)})`;
+        case OpCode.data_hidevariable:
+          return `g.hide(${inputToJS(block.inputs.VARIABLE)})`;
+        case OpCode.data_listcontents:
+          return `g.get(${inputToJS(block.inputs.LIST)})`;
+        case OpCode.procedures_call:
+          return `yield* this.${
+            // Get name of custom block script with given PROCCODE:
+            target.scripts.find(
+              script =>
+                script.hat !== null &&
+                script.hat.opcode === OpCode.procedures_definition &&
+                script.hat.inputs.PROCCODE.value === block.inputs.PROCCODE.value
+            ).name
+          }(${block.inputs.INPUTS.value.map(inputToJS).join(", ")})`;
+        case OpCode.argument_reporter_string_number:
+        case OpCode.argument_reporter_boolean:
+          return customBlockArgNameMap.get(script)[block.inputs.VALUE.value];
+        case OpCode.pen_clear:
+          return `this.clearPen()`;
+        case OpCode.pen_stamp:
+          return `this.stamp()`;
+        case OpCode.pen_penDown:
+          return `this.penDown = true`;
+        case OpCode.pen_penUp:
+          return `this.penDown = false`;
+        case OpCode.pen_setPenColorToColor:
+          return `this.penColor = (${inputToJS(block.inputs.COLOR)})`;
+        case OpCode.pen_setPenSizeTo:
+          return `this.penSize = (${inputToJS(block.inputs.SIZE)})`;
+        case OpCode.pen_changePenSizeBy:
+          return `this.penSize += (${inputToJS(block.inputs.SIZE)})`;
+        default:
+          return `/* TODO: Implement ${block.opcode} */`;
+      }
     }
   }
 
@@ -420,13 +481,8 @@ export default function toScratchJS(
         }
 
         ${sprite.scripts
-          .map(script => {
-            return `
-            * ${script.name}(g, s) {
-              ${script.body.map(blockToJS).join(";\n")}
-            }
-        `;
-          })
+          .filter(script => script.hat !== null)
+          .map(script => scriptToJS(script, sprite))
           .join("\n\n")}
       }
     `;

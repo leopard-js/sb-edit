@@ -65,6 +65,7 @@ If you make any changes to the sb-edit source code, you'll have to rebuild the p
 ```shell
 > cd sb-edit # Cloned from Github and then edited
 > npm run build # Build the new version!
+> npm run watch # Watch files and rebuild automatically when code is changed
 ```
 
 You can also run the [Jest](https://jestjs.io/) tests to make sure you didn't break anything:

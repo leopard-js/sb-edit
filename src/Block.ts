@@ -51,8 +51,6 @@ export class BlockBase<MyOpCode extends OpCode, MyInputs extends { [key: string]
   }
 }
 
-// TODO: Big question: Are block inputs always optional?
-
 export type KnownBlock =
   // Motion
   | BlockBase<OpCode.motion_movesteps, { STEPS: BlockInput.Number }>
@@ -129,11 +127,11 @@ export type KnownBlock =
 
   // Control
   | BlockBase<OpCode.control_wait, { DURATION: BlockInput.Number }>
-  | BlockBase<OpCode.control_repeat, { TIMES: BlockInput.Number; SUBSTACK?: BlockInput.Blocks }>
-  | BlockBase<OpCode.control_forever, { SUBSTACK?: BlockInput.Blocks }>
-  | BlockBase<OpCode.control_if, { CONDITION: BlockInput.Boolean; SUBSTACK?: BlockInput.Blocks }>
-  | BlockBase<OpCode.control_if_else, { SUBSTACK?: BlockInput.Blocks; SUBSTACK2?: BlockInput.Blocks }>
-  | BlockBase<OpCode.control_wait_until, { CONDITION?: BlockInput.Boolean }>
+  | BlockBase<OpCode.control_repeat, { TIMES: BlockInput.Number; SUBSTACK: BlockInput.Blocks }>
+  | BlockBase<OpCode.control_forever, { SUBSTACK: BlockInput.Blocks }>
+  | BlockBase<OpCode.control_if, { CONDITION: BlockInput.Boolean; SUBSTACK: BlockInput.Blocks }>
+  | BlockBase<OpCode.control_if_else, { SUBSTACK: BlockInput.Blocks; SUBSTACK2: BlockInput.Blocks }>
+  | BlockBase<OpCode.control_wait_until, { CONDITION: BlockInput.Boolean }>
   | BlockBase<OpCode.control_repeat_until, { CONDITION: BlockInput.Boolean; SUBSTACK: BlockInput.Blocks }>
   | BlockBase<OpCode.control_stop, { STOP_OPTION: BlockInput.StopMenu }>
   | BlockBase<OpCode.control_start_as_clone, {}>
@@ -204,7 +202,14 @@ export type KnownBlock =
   | BlockBase<OpCode.data_showlist, { LIST: BlockInput.List }>
   | BlockBase<OpCode.data_hidelist, { LIST: BlockInput.List }>
 
-  // TODO: Custom blocks
+  // Custom Blocks
+  | BlockBase<
+      OpCode.procedures_definition,
+      { PROCCODE: BlockInput.String; ARGUMENTS: BlockInput.CustomBlockArguments; WARP: BlockInput.Boolean }
+    >
+  | BlockBase<OpCode.procedures_call, { PROCCODE: BlockInput.String; INPUTS: BlockInput.CustomBlockInputValues }>
+  | BlockBase<OpCode.argument_reporter_string_number, { VALUE: BlockInput.String }>
+  | BlockBase<OpCode.argument_reporter_boolean, { VALUE: BlockInput.String }>
 
   // Extension: Pen
   | BlockBase<OpCode.pen_clear, {}>
@@ -224,6 +229,9 @@ export type KnownBlock =
 
 export type UnknownBlock = BlockBase<Exclude<OpCode, KnownBlock["opcode"]>, { [key: string]: BlockInput.Any }>;
 
+// TODO: This method of defining `Block` provides excellent autocomplete
+// sugguestions but seems to make the Typescript compiler work very hard.
+// Is there a better way?
 export type Block = KnownBlock | UnknownBlock;
 
 export default Block;

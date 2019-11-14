@@ -21,6 +21,11 @@ export default class Script {
         case OpCode.event_whenkeypressed:
           this.name = `when_key_${this.blocks[0].inputs.KEY_OPTION.value}_pressed`;
           break;
+        case OpCode.procedures_definition:
+          this.name = this.blocks[0].inputs.ARGUMENTS.value
+            .map(argument => (argument.type === "label" ? argument.name : ""))
+            .join("_");
+          break;
         default:
           this.name = this.blocks[0].opcode
             .split("_")

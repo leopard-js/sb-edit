@@ -77,7 +77,7 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
     function translateInputs(inputs: sb3.Block["inputs"]): Block["inputs"] {
       let result = {};
 
-      const addInput = (name, value) => {
+      const addInput = (name: string, value: BlockInput.Any) => {
         result = { ...result, [name]: value };
       };
 
@@ -93,16 +93,15 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
               // information from the shadow block down into
               // the block containing the shadow.
               if (blocks[value].opcode === "procedures_prototype") {
-                // addInput('')
                 const { mutation } = blocks[value];
-                addInput("WARP", mutation.warp === "true");
 
                 // Split proccode (such as "letter %n of %s") into ["letter", "%n", "of", "%s"]
                 let parts = mutation.proccode.split(/((^|[^\\])%[nsb])/);
                 parts = parts.map(str => str.trim());
                 parts = parts.filter(str => str !== "");
-                const argNames = JSON.parse(mutation.argumentnames);
-                const argDefaults = JSON.parse(mutation.argumentdefaults);
+
+                const argNames: string[] = JSON.parse(mutation.argumentnames);
+                const argDefaults: any[] = JSON.parse(mutation.argumentdefaults);
 
                 const args: BlockInput.CustomBlockArgument[] = parts.map(part => {
                   switch (part) {
@@ -126,7 +125,9 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
                   }
                 });
 
+                addInput("PROCCODE", { type: "string", value: mutation.proccode });
                 addInput("ARGUMENTS", { type: "customBlockArguments", value: args });
+                addInput("WARP", { type: "boolean", value: mutation.warp === "true" });
               } else {
                 // In most cases, just copy the shadow block's fields and inputs
                 // into its parent
@@ -143,7 +144,7 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
             addInput(inputName, { type: "blocks", value: inputScript });
           }
         } else if (value === null) {
-          addInput(inputName, { type: "null", value: null });
+          addInput(inputName, { type: "string", value: null });
         } else {
           switch (value[0]) {
             case 4:
@@ -194,6 +195,33 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
               break;
           }
         }
+      }
+
+      // TODO: In the sb3 format, it's possible for inputs to be
+      // completely missing if they were never given a value.
+      // If that happens, they should be added automatically here
+      // with a reasonable default (or maybe null?).
+
+      // The challenge is determining which inputs a given block *should*
+      // have. Ideally this would be done without duplicating the efforts
+      // in Block.ts
+
+      if (block.opcode === OpCode.procedures_call) {
+        result = {
+          PROCCODE: { type: "string", value: block.mutation.proccode },
+          INPUTS: {
+            type: "customBlockInputValues",
+            value: JSON.parse(block.mutation.argumentids).map((argumentid: string) => {
+              let value = result[argumentid];
+              if (typeof value.value === "string") {
+                if (!isNaN(parseFloat(value.value))) {
+                  value.value = parseFloat(value.value);
+                }
+              }
+              return value;
+            })
+          }
+        };
       }
 
       return result;
@@ -248,22 +276,14 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
         [OpCode.data_lengthoflist]: { LIST: "list" },
         [OpCode.data_listcontainsitem]: { LIST: "list" },
         [OpCode.data_showlist]: { LIST: "list" },
-        [OpCode.data_hidelist]: { LIST: "list" }
-      };
-
-      const getFieldType = (opcode: OpCode, fieldName: string) => {
-        switch (opcode) {
-          case OpCode.argument_reporter_string_number:
-          case OpCode.argument_reporter_boolean:
-            return "string";
-          default:
-            return fieldTypeMap[opcode][fieldName];
-        }
+        [OpCode.data_hidelist]: { LIST: "list" },
+        [OpCode.argument_reporter_string_number]: { VALUE: "string" },
+        [OpCode.argument_reporter_boolean]: { VALUE: "string" }
       };
 
       let result = {};
       for (const [fieldName, values] of Object.entries(fields)) {
-        const type = getFieldType(opcode, fieldName);
+        const type = fieldTypeMap[opcode][fieldName];
         result[fieldName] = { type, value: values[0] };
       }
 
