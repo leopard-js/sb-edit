@@ -7,7 +7,7 @@ export enum OpCode {
   motion_turnleft = "motion_turnleft",
   motion_goto = "motion_goto",
   motion_gotoxy = "motion_gotoxy",
-  motion_glidesecsto = "motion_glidesecsto",
+  motion_glideto = "motion_glideto",
   motion_glidesecstoxy = "motion_glidesecstoxy",
   motion_pointindirection = "motion_pointindirection",
   motion_pointtowards = "motion_pointtowards",

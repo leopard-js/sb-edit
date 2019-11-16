@@ -86,7 +86,7 @@ export interface SoundEffect extends Base {
 
 export interface GoToTarget extends Base {
   type: "goToTarget";
-  value: string;
+  value: "_random_" | "_mouse_" | string;
 }
 
 export interface PointTowardsTarget extends Base {

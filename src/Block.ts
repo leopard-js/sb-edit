@@ -58,7 +58,7 @@ export type KnownBlock =
   | BlockBase<OpCode.motion_turnleft, { DEGREES: BlockInput.Number }>
   | BlockBase<OpCode.motion_goto, { TO: BlockInput.GoToTarget }>
   | BlockBase<OpCode.motion_gotoxy, { X: BlockInput.Number; Y: BlockInput.Number }>
-  | BlockBase<OpCode.motion_glidesecsto, { SECS: BlockInput.Number; TO: BlockInput.GoToTarget }>
+  | BlockBase<OpCode.motion_glideto, { SECS: BlockInput.Number; TO: BlockInput.GoToTarget }>
   | BlockBase<OpCode.motion_glidesecstoxy, { SECS: BlockInput.Number; X: BlockInput.Number; Y: BlockInput.Number }>
   | BlockBase<OpCode.motion_pointindirection, { DIRECTION: BlockInput.Angle }>
   | BlockBase<OpCode.motion_pointtowards, { TOWARDS: BlockInput.PointTowardsTarget }>

@@ -19,18 +19,26 @@ export default class Abby extends Sprite {
       new Costume(\\"abbyD\\", \\"./Abby/costumes/abbyD.svg\\", { x: 64, y: 202 })
     ];
 
-    this.triggers = [];
+    this.triggers = [
+      new Trigger(
+        Trigger.KEY_PRESSED,
+        { key: \\"any\\" },
+        this.whenKeyAnyPressed.bind(this)
+      )
+    ];
   }
 
-  *movesteps(g, s) {
+  *startAsClone(g, s) {
     this.move(10);
   }
 
-  *turnright(g, s) {
+  *whenKeyAnyPressed(g, s) {
     this.direction += this.costumeNumber;
     this.direction -= 15;
-    /* TODO: Implement motion_goto */ this.goto(this.y, -23);
-    /* TODO: Implement motion_glideto */ yield* this.glide(1, -36, this.x);
+    this.goto(this.random(-240, 240), this.random(-180, 180));
+    this.goto(this.y, -23);
+    yield* this.glide(1, this.mouse.x, this.mouse.y);
+    yield* this.glide(1, -36, this.x);
     this.direction = 90;
     /* TODO: Implement motion_pointtowards */ this.x += this.direction;
     this.x = -36;
@@ -38,22 +46,8 @@ export default class Abby extends Sprite {
     this.y = -23;
     /* TODO: Implement motion_ifonedgebounce */
     /* TODO: Implement motion_setrotationstyle */
-  }
-
-  *touchingcolor(g, s) {
-    /* TODO: Implement sensing_touchingcolor */
-  }
-
-  *coloristouchingcolor(g, s) {
-    /* TODO: Implement sensing_coloristouchingcolor */
-  }
-
-  *distanceto(g, s) {
-    /* TODO: Implement sensing_distanceto */
-  }
-
-  *setdragmode(g, s) {
-    /* TODO: Implement sensing_setdragmode */
+    /* TODO: Implement control_create_clone_of */
+    /* TODO: Implement control_delete_this_clone */
   }
 }
 ",

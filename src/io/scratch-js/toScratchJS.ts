@@ -82,6 +82,7 @@ export default function toScratchJS(
   const uniqueName = uniqueNameGenerator(["g", "s"]);
 
   let customBlockArgNameMap: Map<Script, { [key: string]: string }> = new Map();
+  let variableNameMap: Map<Target, { [key: string]: string }> = new Map();
 
   for (const target of [project.stage, ...project.sprites]) {
     target.setName(uniqueName(camelCase(target.name, true)));
@@ -96,19 +97,21 @@ export default function toScratchJS(
       sound.setName(uniqueSoundName(camelCase(sound.name)));
     }
 
-    let uniqueVariableName: typeof uniqueName;
-    if (target.isStage) {
-      uniqueVariableName = uniqueName;
-    } else {
-      // Don't use existing names, but don't save to global "used" list either:
-      uniqueVariableName = uniqueName.branch();
-    }
+    let uniqueVariableName = uniqueName.branch();
+
+    const varNameMap = {};
+    variableNameMap.set(target, varNameMap);
+
     for (const list of target.lists) {
-      list.setName(uniqueVariableName(camelCase(list.name)));
+      const newName = uniqueVariableName(camelCase(list.name));
+      varNameMap[list.name] = newName;
+      list.setName(newName);
     }
 
     for (const variable of target.variables) {
-      variable.setName(uniqueVariableName(camelCase(variable.name)));
+      const newName = uniqueVariableName(camelCase(variable.name));
+      varNameMap[variable.name] = newName;
+      variable.setName(newName);
     }
 
     const uniqueScriptName = uniqueNameGenerator();
@@ -182,6 +185,26 @@ export default function toScratchJS(
     function blockToJS(block: Block): string {
       const warp = script.hat && script.hat.opcode === OpCode.procedures_definition && script.hat.inputs.WARP.value;
 
+      // If the block contains a variable or list dropdown,
+      // get the code to grab that variable now for convenience
+      let varName: string = null;
+      let selectedVarSource: string = null;
+      if ("VARIABLE" in block.inputs) {
+        varName = block.inputs.VARIABLE.value.toString();
+      }
+      if ("LIST" in block.inputs) {
+        varName = block.inputs.LIST.value.toString();
+      }
+      if (varName !== null) {
+        const spriteVars = variableNameMap.get(target);
+        if (varName in spriteVars) {
+          selectedVarSource = `this.vars.${spriteVars[varName]}`;
+        } else {
+          const stageVars = variableNameMap.get(project.stage);
+          selectedVarSource = `this.stage.vars.${stageVars[varName]}`;
+        }
+      }
+
       switch (block.opcode) {
         case OpCode.motion_movesteps:
           return `this.move(${inputToJS(block.inputs.STEPS)})`;
@@ -189,8 +212,28 @@ export default function toScratchJS(
           return `this.direction += (${inputToJS(block.inputs.DEGREES)})`;
         case OpCode.motion_turnleft:
           return `this.direction -= (${inputToJS(block.inputs.DEGREES)})`;
+        case OpCode.motion_goto:
+          switch (block.inputs.TO.value) {
+            case "_random_":
+              return `this.goto(this.random(-240, 240), this.random(-180, 180))`;
+            case "_mouse_":
+              return `this.goto(this.mouse.x, this.mouse.y)`;
+            default:
+              return `/* TODO: Implement go to sprite */`;
+          }
         case OpCode.motion_gotoxy:
           return `this.goto((${inputToJS(block.inputs.X)}), (${inputToJS(block.inputs.Y)}))`;
+        case OpCode.motion_glideto:
+          switch (block.inputs.TO.value) {
+            case "_random_":
+              return `yield* this.glide((${inputToJS(
+                block.inputs.SECS
+              )}), this.random(-240, 240), this.random(-180, 180))`;
+            case "_mouse_":
+              return `yield* this.glide((${inputToJS(block.inputs.SECS)}), this.mouse.x, this.mouse.y)`;
+            default:
+              return `/* TODO: Implement glide to sprite */`;
+          }
         case OpCode.motion_glidesecstoxy:
           return `yield* this.glide((${inputToJS(block.inputs.SECS)}), (${inputToJS(block.inputs.X)}), (${inputToJS(
             block.inputs.Y
@@ -274,6 +317,8 @@ export default function toScratchJS(
           }
         case OpCode.sensing_keypressed:
           return `this.keyPressed(${inputToJS(block.inputs.KEY_OPTION)})`;
+        case OpCode.sensing_mousedown:
+          return `this.mouse.down`;
         case OpCode.sensing_mousex:
           return `this.mouse.x`;
         case OpCode.sensing_mousey:
@@ -370,20 +415,35 @@ export default function toScratchJS(
           }
           break;
         case OpCode.data_variable:
-          // TODO: Detect variable scope (for all variable types)
-          // It might make sense for this to happen at the library level rather than during compilation
-          // (Consider possibility of dynamic variable names with hacked blocks)
-          return `g.get(${inputToJS(block.inputs.VARIABLE)})`;
+          return selectedVarSource;
         case OpCode.data_setvariableto:
-          return `g.set((${inputToJS(block.inputs.VARIABLE)}), (${inputToJS(block.inputs.VALUE)}))`;
+          return `${selectedVarSource} = (${inputToJS(block.inputs.VALUE)})`;
         case OpCode.data_changevariableby:
-          return `g.change((${inputToJS(block.inputs.VARIABLE)}), (${inputToJS(block.inputs.VALUE)}))`;
-        case OpCode.data_showvariable:
-          return `g.show(${inputToJS(block.inputs.VARIABLE)})`;
-        case OpCode.data_hidevariable:
-          return `g.hide(${inputToJS(block.inputs.VARIABLE)})`;
+          return `${selectedVarSource} += (${inputToJS(block.inputs.VALUE)})`;
         case OpCode.data_listcontents:
-          return `g.get(${inputToJS(block.inputs.LIST)})`;
+          return `${selectedVarSource}.join(" ")`;
+        case OpCode.data_addtolist:
+          return `${selectedVarSource}.push(${inputToJS(block.inputs.ITEM)})`;
+        case OpCode.data_deleteoflist:
+          return `${selectedVarSource}.splice((${inputToJS(block.inputs.INDEX)}), 1)`;
+        case OpCode.data_deletealloflist:
+          return `${selectedVarSource} = []`;
+        case OpCode.data_insertatlist:
+          return `${selectedVarSource}.splice((${inputToJS(block.inputs.INDEX)}), 0, (${inputToJS(
+            block.inputs.ITEM
+          )}))`;
+        case OpCode.data_replaceitemoflist:
+          return `${selectedVarSource}.splice((${inputToJS(block.inputs.INDEX)}), 1, (${inputToJS(
+            block.inputs.ITEM
+          )}))`;
+        case OpCode.data_itemoflist:
+          return `${selectedVarSource}[${inputToJS(block.inputs.INDEX)}]`;
+        case OpCode.data_itemnumoflist:
+          return `${selectedVarSource}.indexOf(${inputToJS(block.inputs.ITEM)})`;
+        case OpCode.data_lengthoflist:
+          return `${selectedVarSource}.length`;
+        case OpCode.data_listcontainsitem:
+          return `${selectedVarSource}.includes(${inputToJS(block.inputs.ITEM)})`;
         case OpCode.procedures_call:
           return `yield* this.${
             // Get name of custom block script with given PROCCODE:
@@ -422,11 +482,13 @@ export default function toScratchJS(
       import { Project } from '${config.sjsImport}';
 
       import Stage from './Stage/Stage.mjs';
-      ${project.sprites.map(
-        sprite => `
+      ${project.sprites
+        .map(
+          sprite => `
         import ${sprite.name} from './${sprite.name}/${sprite.name}.mjs';
       `
-      )}
+        )
+        .join("")}
 
       const stage = new Stage();
 
