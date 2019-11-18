@@ -35,6 +35,8 @@ export default class Project {
   public static fromSb3 = fromSb3;
   public static fromSb3JSON = fromSb3JSON;
 
+  public toScratchJS: typeof toScratchJS = toScratchJS.bind(this);
+
   public stage: Stage = new Stage();
   public sprites: Sprite[] = [];
   public tempo: number = 60;
@@ -55,15 +57,6 @@ export default class Project {
     for (const sprite of this.sprites) {
       sprite.project = this;
     }
-  }
-
-  // TODO: toSb3 it or don't
-  // public toSb3() {
-  //   return toSb3(this);
-  // }
-
-  public toScratchJS(prettierConfig?: prettier.Options) {
-    return toScratchJS(this, prettierConfig);
   }
 
   public sprite(id: string | number) {

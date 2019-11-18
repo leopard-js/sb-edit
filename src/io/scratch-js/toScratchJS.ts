@@ -7,10 +7,6 @@ import { OpCode } from "../../OpCode";
 import * as prettier from "prettier";
 import Target from "../../Target";
 
-const config = {
-  sjsImport: "https://pulljosh.github.io/scratch-js/scratch-js/index.mjs"
-};
-
 function formatJS(str: string, prettierConfig: prettier.Options = {}) {
   // tslint:disable-next-line:object-literal-sort-keys
   const formatted = prettier.format(str, { ...prettierConfig, parser: "babel" });
@@ -74,12 +70,38 @@ function camelCase(name: string, upper: boolean = false) {
 }
 
 export default function toScratchJS(
-  project: Project,
+  options: Partial<{
+    scratchJSURL: string;
+    getTargetURL: (info: { name: string }) => string;
+    getAssetURL: (info: {
+      type: "costume" | "sound";
+      target: string;
+      name: string;
+      md5: string;
+      ext: string;
+    }) => string;
+  }> = {},
   prettierConfig?: prettier.Options
 ): { [fileName: string]: string } {
+  const project: Project = this;
+
+  const defaultOptions = {
+    scratchJSURL: "https://pulljosh.github.io/scratch-js/scratch-js/index.mjs",
+    getTargetURL: ({ name }) => `./${name}/${name}.mjs`,
+    getAssetURL: ({ type, target, name, md5, ext }) => {
+      switch (type) {
+        case "costume":
+          return `./${target}/costumes/${name}.${ext}`;
+        case "sound":
+          return `./${target}/sounds/${name}.${ext}`;
+      }
+    }
+  };
+  options = { ...defaultOptions, ...options };
+
   // Update all identifying names in the project to be unique
   // Names changed first are less likely to be ugly
-  const uniqueName = uniqueNameGenerator(["g", "s"]);
+  const uniqueName = uniqueNameGenerator();
 
   let customBlockArgNameMap: Map<Script, { [key: string]: string }> = new Map();
   let variableNameMap: Map<Target, { [key: string]: string }> = new Map();
@@ -149,7 +171,7 @@ export default function toScratchJS(
       `;
     }
     return `
-      * ${script.name}(g, s) {
+      * ${script.name}() {
         ${body}
       }
     `;
@@ -178,6 +200,10 @@ export default function toScratchJS(
           };
           return JSON.stringify(`#${toHexDigits(r)}${toHexDigits(g)}${toHexDigits(b)}`);
         default:
+          const asNum = parseFloat(input.value as string);
+          if (!isNaN(asNum)) {
+            return JSON.stringify(asNum);
+          }
           return JSON.stringify(input.value);
       }
     }
@@ -479,18 +505,18 @@ export default function toScratchJS(
 
   let files: { [fileName: string]: string } = {
     "index.mjs": `
-      import { Project } from '${config.sjsImport}';
+      import { Project } from '${options.scratchJSURL}';
 
-      import Stage from './Stage/Stage.mjs';
+      import Stage from '${options.getTargetURL({ name: project.stage.name })}';
       ${project.sprites
         .map(
           sprite => `
-        import ${sprite.name} from './${sprite.name}/${sprite.name}.mjs';
+        import ${sprite.name} from '${options.getTargetURL({ name: sprite.name })}';
       `
         )
         .join("")}
 
-      const stage = new Stage();
+      const stage = new Stage(${JSON.stringify({ costumeNumber: project.stage.costumeNumber + 1 })});
 
       const sprites = [
         ${project.sprites
@@ -500,7 +526,7 @@ export default function toScratchJS(
             x: ${sprite.x},
             y: ${sprite.y},
             direction: ${sprite.direction},
-            costumeNumber: ${sprite.costumeNumber},
+            costumeNumber: ${sprite.costumeNumber + 1},
             size: ${sprite.size},
             visible: ${sprite.visible}
           })
@@ -515,36 +541,45 @@ export default function toScratchJS(
     `
   };
 
-  for (const sprite of project.sprites) {
-    files[`${sprite.name}/${sprite.name}.mjs`] = `
-      import { Sprite, Trigger, Costume } from '${config.sjsImport}';
+  for (const target of [project.stage, ...project.sprites]) {
+    files[`${target.name}/${target.name}.mjs`] = `
+      import { ${target.isStage ? "Stage as StageBase" : "Sprite"}, Trigger, Costume } from '${options.scratchJSURL}';
 
-      export default class ${sprite.name} extends Sprite {
+      export default class ${target.name} extends ${target.isStage ? "StageBase" : "Sprite"} {
         constructor(...args) {
           super(...args);
 
           this.costumes = [
-            ${sprite.costumes
+            ${target.costumes
               .map(
                 costume =>
-                  `new Costume("${costume.name}", "./${sprite.name}/costumes/${costume.name}.${
-                    costume.ext
-                  }", ${JSON.stringify({ x: costume.centerX, y: costume.centerY })})`
+                  `new Costume(${JSON.stringify(costume.name)}, ${JSON.stringify(
+                    options.getAssetURL({
+                      type: "costume",
+                      target: target.name,
+                      name: costume.name,
+                      md5: costume.md5,
+                      ext: costume.ext
+                    })
+                  )}, ${JSON.stringify({
+                    x: costume.centerX / costume.bitmapResolution,
+                    y: costume.centerY / costume.bitmapResolution
+                  })})`
               )
               .join(",\n")}
           ];
 
           this.triggers = [
-            ${sprite.scripts
+            ${target.scripts
               .map(triggerInitCode)
               .filter(trigger => trigger !== null)
               .join(",\n")}
           ];
         }
 
-        ${sprite.scripts
+        ${target.scripts
           .filter(script => script.hat !== null)
-          .map(script => scriptToJS(script, sprite))
+          .map(script => scriptToJS(script, target))
           .join("\n\n")}
       }
     `;
