@@ -66,7 +66,19 @@ function camelCase(name: string, upper: boolean = false) {
     parts[0] = parts[0].toLowerCase();
   }
 
-  return parts.join("");
+  let result = parts.join("");
+
+  // A blank string is no good
+  if (result.length === 0) {
+    result = "_";
+  }
+
+  // Variable names cannot start with a number
+  if (!isNaN(parseInt(result[0], 10))) {
+    result = "_" + result;
+  }
+
+  return result;
 }
 
 export default function toScratchJS(
@@ -283,7 +295,11 @@ export default function toScratchJS(
         case OpCode.looks_switchcostumeto:
           return `this.costume = (${inputToJS(block.inputs.COSTUME)})`;
         case OpCode.looks_nextcostume:
-          return `this.costume += 1;`;
+          return `this.costume += 1`;
+        case OpCode.looks_switchbackdropto:
+          return `this${target.isStage ? "" : ".stage"}.costume = (${inputToJS(block.inputs.BACKDROP)})`;
+        case OpCode.looks_nextbackdrop:
+          return `this${target.isStage ? "" : ".stage"}.costume += 1`;
         case OpCode.looks_changesizeby:
           return `this.size += (${inputToJS(block.inputs.CHANGE)})`;
         case OpCode.looks_setsizeto:

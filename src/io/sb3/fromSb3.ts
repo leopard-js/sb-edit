@@ -313,7 +313,26 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
 export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAsset: getAsset }): Promise<Project> {
   function getVariables(target: sb3.Target): Variable[] {
     return Object.entries(target.variables).map(([id, [name, value, cloud = false]]) => {
-      const monitor = json.monitors.find(monitor => monitor.id === id) as sb3.VariableMonitor;
+      let monitor = json.monitors.find(monitor => monitor.id === id) as sb3.VariableMonitor;
+      if (!monitor) {
+        // Sometimes .sb3 files are missing monitors. Fill in with reasonable defaults.
+        monitor = {
+          id,
+          mode: "default",
+          opcode: "data_variable",
+          params: { VARIABLE: name },
+          spriteName: target.name,
+          value,
+          width: null,
+          height: null,
+          x: 0,
+          y: 0,
+          visible: false,
+          sliderMin: 0,
+          sliderMax: 100,
+          isDiscrete: true
+        };
+      }
       return new Variable(
         {
           name,
@@ -334,7 +353,23 @@ export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAsset: ge
 
   function getLists(target: sb3.Target): List[] {
     return Object.entries(target.lists).map(([id, [name, value]]) => {
-      const monitor = json.monitors.find(monitor => monitor.id === id) as sb3.ListMonitor;
+      let monitor = json.monitors.find(monitor => monitor.id === id) as sb3.ListMonitor;
+      if (!monitor) {
+        // Sometimes .sb3 files are missing monitors. Fill in with reasonable defaults.
+        monitor = {
+          id,
+          mode: "list",
+          opcode: "data_listcontents",
+          params: { LIST: name },
+          spriteName: target.name,
+          value,
+          width: null,
+          height: null,
+          x: 0,
+          y: 0,
+          visible: false
+        };
+      }
       return new List(
         {
           name,

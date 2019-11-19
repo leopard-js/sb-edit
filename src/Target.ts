@@ -19,6 +19,8 @@ export default class Target {
 
   public project?: Project;
 
+  public isStage = false;
+
   constructor(options: TargetOptions) {
     Object.assign(this, options);
   }
@@ -38,6 +40,7 @@ type TargetOptions = Partial<Target> & { name: string };
 
 export class Stage extends Target {
   public name: string = "Stage";
+  public isStage = true;
 
   constructor(options: TargetOptions = { name: "Stage" }) {
     super(options);
@@ -49,10 +52,6 @@ export class Stage extends Target {
     const result = { ...this };
     delete result.project;
     return result;
-  }
-
-  get isStage() {
-    return true;
   }
 }
 
@@ -82,9 +81,5 @@ export class Sprite extends Target {
     const result = { ...this };
     delete result.project;
     return result;
-  }
-
-  get isStage() {
-    return false;
   }
 }

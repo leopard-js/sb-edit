@@ -203,7 +203,7 @@ interface Meta {
 
 export interface ProjectJSON {
   targets: Target[];
-  monitors: Monitor[];
+  monitors?: Monitor[];
   // TODO: extensions: Extension[];
   meta: Meta;
 }

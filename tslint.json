@@ -8,10 +8,7 @@
       true,
       "never-prefix"
     ],
-    "object-literal-sort-keys": [
-      true,
-      "match-declaration-order-only"
-    ],
+    "object-literal-sort-keys": false,
     "no-shadowed-variable": false,
     "prefer-const": false,
     "max-classes-per-file": false,
