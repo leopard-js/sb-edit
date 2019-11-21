@@ -7,12 +7,6 @@ import { OpCode } from "../../OpCode";
 import * as prettier from "prettier";
 import Target from "../../Target";
 
-function formatJS(str: string, prettierConfig: prettier.Options = {}) {
-  // tslint:disable-next-line:object-literal-sort-keys
-  const formatted = prettier.format(str, { ...prettierConfig, parser: "babel" });
-  return formatted;
-}
-
 function triggerInitCode(script: Script) {
   const hat = script.hat;
 
@@ -81,23 +75,20 @@ function camelCase(name: string, upper: boolean = false) {
   return result;
 }
 
+interface ToScratchJSOptions {
+  scratchJSURL: string;
+  getTargetURL: (info: { name: string }) => string;
+  getAssetURL: (info: { type: "costume" | "sound"; target: string; name: string; md5: string; ext: string }) => string;
+  indexURL: string;
+  autoplay: boolean;
+}
 export default function toScratchJS(
-  options: Partial<{
-    scratchJSURL: string;
-    getTargetURL: (info: { name: string }) => string;
-    getAssetURL: (info: {
-      type: "costume" | "sound";
-      target: string;
-      name: string;
-      md5: string;
-      ext: string;
-    }) => string;
-  }> = {},
-  prettierConfig?: prettier.Options
+  options: Partial<ToScratchJSOptions> = {},
+  prettierConfig: prettier.Options = {}
 ): { [fileName: string]: string } {
   const project: Project = this;
 
-  const defaultOptions = {
+  const defaultOptions: ToScratchJSOptions = {
     scratchJSURL: "https://pulljosh.github.io/scratch-js/scratch-js/index.mjs",
     getTargetURL: ({ name }) => `./${name}/${name}.mjs`,
     getAssetURL: ({ type, target, name, md5, ext }) => {
@@ -107,7 +98,9 @@ export default function toScratchJS(
         case "sound":
           return `./${target}/sounds/${name}.${ext}`;
       }
-    }
+    },
+    indexURL: "./index.mjs",
+    autoplay: true
   };
   options = { ...defaultOptions, ...options };
 
@@ -520,14 +513,37 @@ export default function toScratchJS(
   }
 
   let files: { [fileName: string]: string } = {
-    "index.mjs": `
-      import { Project } from '${options.scratchJSURL}';
+    "index.html": `
+      <!DOCTYPE html>
+      <html>
+        <body>
+          <button id="greenFlag">Green Flag</button>
+          <div id="project"></div>
 
-      import Stage from '${options.getTargetURL({ name: project.stage.name })}';
+          <script type="module">
+            import project from ${JSON.stringify(options.indexURL)};
+      
+            project.attach("#project");
+      
+            document
+              .querySelector("#greenFlag")
+              .addEventListener("click", () => {
+                project.greenFlag();
+              });
+
+            ${options.autoplay ? "// Autoplay\nproject.greenFlag();" : ""}
+          </script>
+        </body>
+      </html>
+    `,
+    "index.mjs": `
+      import { Project } from ${JSON.stringify(options.scratchJSURL)};
+
+      import Stage from ${JSON.stringify(options.getTargetURL({ name: project.stage.name }))};
       ${project.sprites
         .map(
           sprite => `
-        import ${sprite.name} from '${options.getTargetURL({ name: sprite.name })}';
+        import ${sprite.name} from ${JSON.stringify(options.getTargetURL({ name: sprite.name }))};
       `
         )
         .join("")}
@@ -537,23 +553,21 @@ export default function toScratchJS(
       const sprites = [
         ${project.sprites
           .map(
-            sprite => `
-          new ${sprite.name}({
-            x: ${sprite.x},
-            y: ${sprite.y},
-            direction: ${sprite.direction},
-            costumeNumber: ${sprite.costumeNumber + 1},
-            size: ${sprite.size},
-            visible: ${sprite.visible}
-          })
-        `
+            sprite =>
+              `new ${sprite.name}(${JSON.stringify({
+                x: sprite.x,
+                y: sprite.y,
+                direction: sprite.direction,
+                costumeNumber: sprite.costumeNumber + 1,
+                size: sprite.size,
+                visible: sprite.visible
+              })})`
           )
           .join(",\n")}
       ];
 
       const project = new Project(stage, sprites);
-
-      project.run();
+      export default project;
     `
   };
 
@@ -601,8 +615,8 @@ export default function toScratchJS(
     `;
   }
 
-  Object.keys(files).forEach(fileName => {
-    files[fileName] = formatJS(files[fileName], prettierConfig);
+  Object.keys(files).forEach(filepath => {
+    files[filepath] = prettier.format(files[filepath], { ...prettierConfig, filepath });
   });
 
   return files;

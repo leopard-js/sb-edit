@@ -13,10 +13,10 @@ export default class Abby extends Sprite {
     super(...args);
 
     this.costumes = [
-      new Costume(\\"abbyA\\", \\"./Abby/costumes/abbyA.svg\\", { x: 62, y: 200 }),
-      new Costume(\\"abbyB\\", \\"./Abby/costumes/abbyB.svg\\", { x: 62, y: 200 }),
-      new Costume(\\"abbyC\\", \\"./Abby/costumes/abbyC.svg\\", { x: 64, y: 200 }),
-      new Costume(\\"abbyD\\", \\"./Abby/costumes/abbyD.svg\\", { x: 64, y: 202 })
+      new Costume(\\"abbyA\\", \\"./Abby/costumes/abbyA.svg\\", { x: 31, y: 100 }),
+      new Costume(\\"abbyB\\", \\"./Abby/costumes/abbyB.svg\\", { x: 31, y: 100 }),
+      new Costume(\\"abbyC\\", \\"./Abby/costumes/abbyC.svg\\", { x: 32, y: 100 }),
+      new Costume(\\"abbyD\\", \\"./Abby/costumes/abbyD.svg\\", { x: 32, y: 101 })
     ];
 
     this.triggers = [
@@ -28,11 +28,11 @@ export default class Abby extends Sprite {
     ];
   }
 
-  *startAsClone(g, s) {
+  *startAsClone() {
     this.move(10);
   }
 
-  *whenKeyAnyPressed(g, s) {
+  *whenKeyAnyPressed() {
     this.direction += this.costumeNumber;
     this.direction -= 15;
     this.goto(this.random(-240, 240), this.random(-180, 180));
@@ -51,28 +51,164 @@ export default class Abby extends Sprite {
   }
 }
 ",
+  "Stage/Stage.mjs": "import {
+  Stage as StageBase,
+  Trigger,
+  Costume
+} from \\"https://pulljosh.github.io/scratch-js/scratch-js/index.mjs\\";
+
+export default class Stage extends StageBase {
+  constructor(...args) {
+    super(...args);
+
+    this.costumes = [
+      new Costume(\\"backdrop1\\", \\"./Stage/costumes/backdrop1.svg\\", {
+        x: 240,
+        y: 180
+      })
+    ];
+
+    this.triggers = [
+      new Trigger(Trigger.GREEN_FLAG, this.whenGreenFlagClicked.bind(this)),
+      new Trigger(
+        Trigger.KEY_PRESSED,
+        { key: \\"space\\" },
+        this.whenKeySpacePressed.bind(this)
+      ),
+      new Trigger(
+        Trigger.BROADCAST,
+        { name: \\"message1\\" },
+        this.whenIReceiveMessage1.bind(this)
+      )
+    ];
+  }
+
+  *whenGreenFlagClicked() {
+    this.costume = \\"backdrop1\\";
+    /* TODO: Implement looks_switchbackdroptoandwait */ this.costume += 1;
+    /* TODO: Implement looks_changeeffectby */
+    /* TODO: Implement looks_seteffectto */
+    /* TODO: Implement looks_cleargraphiceffects */
+  }
+
+  *whenKeySpacePressed() {
+    yield* this.playSound(/* TODO: Get url for sound [object Object] */);
+    this.playSound(/* TODO: Get url for sound [object Object] */);
+    this.stopAllSounds();
+    /* TODO: Implement sound_changeeffectby */
+    /* TODO: Implement sound_seteffectto */
+    /* TODO: Implement sound_cleareffects */
+    /* TODO: Implement sound_changevolumeby */
+    /* TODO: Implement sound_setvolumeto */
+  }
+
+  *whenbackdropswitchesto() {
+    yield* this.wait(1);
+    while (!null) {
+      yield;
+    }
+    /* TODO: Implement control_create_clone_of */ for (let i = 0; i < 10; i++) {
+      while (!this.keyPressed(\\"space\\")) {
+        if (this.mouse.down) {
+          /* TODO: Implement control_if_else */
+        }
+      }
+      /* TODO: Implement control_stop */ yield;
+    }
+    while (true) {
+      null;
+      yield;
+    }
+  }
+
+  *whengreaterthan() {
+    this.vars.CloudVar = this.vars.myVariable;
+    this.vars.CloudVar += 1;
+    this.vars.myVariable = 0;
+    this.vars.myVariable += this.vars.CloudVar;
+    /* TODO: Implement data_showvariable */ /* TODO: Implement data_hidevariable */ this.vars.testList.push(
+      this.vars.testList.includes(\\"thing\\")
+    );
+    this.vars.testList.splice(1, 1);
+    this.vars.testList = [];
+    this.vars.testList.splice(this.vars.testList.indexOf(\\"thing\\"), 0, \\"thing\\");
+    this.vars.testList.splice(
+      this.vars.testList[1],
+      1,
+      this.vars.testList.length
+    );
+    /* TODO: Implement data_showlist */
+    /* TODO: Implement data_hidelist */
+  }
+
+  *whenIReceiveMessage1() {
+    this.broadcast(\\"message1\\");
+    yield* this.broadcastAndWait(\\"message1\\");
+    /* TODO: Implement sensing_askandwait */
+    /* TODO: Implement sensing_askandwait */
+    /* TODO: Implement sensing_askandwait */
+    /* TODO: Implement sensing_askandwait */
+    /* TODO: Implement sensing_askandwait */
+    /* TODO: Implement sensing_askandwait */
+    /* TODO: Implement sensing_askandwait */
+    /* TODO: Implement sensing_askandwait */
+    /* TODO: Implement sensing_askandwait */
+    /* TODO: Implement sensing_askandwait */
+    /* TODO: Implement sensing_askandwait */
+    /* TODO: Implement sensing_askandwait */
+    /* TODO: Implement sensing_askandwait */
+  }
+
+  *blockNameLabelText(boolean, numberOrText) {
+    yield* this.playSound(/* TODO: Get url for sound [object Object] */);
+    if (boolean) {
+      null;
+    }
+  }
+}
+",
+  "index.html": "<!DOCTYPE html>
+<html>
+  <body>
+    <button id=\\"greenFlag\\">Green Flag</button>
+    <div id=\\"project\\"></div>
+
+    <script type=\\"module\\">
+      import project from \\"./index.mjs\\";
+
+      project.attach(\\"#project\\");
+
+      document.querySelector(\\"#greenFlag\\").addEventListener(\\"click\\", () => {
+        project.greenFlag();
+      });
+
+      // Autoplay
+      project.greenFlag();
+    </script>
+  </body>
+</html>
+",
   "index.mjs": "import { Project } from \\"https://pulljosh.github.io/scratch-js/scratch-js/index.mjs\\";
 
 import Stage from \\"./Stage/Stage.mjs\\";
 
 import Abby from \\"./Abby/Abby.mjs\\";
 
-const stage = new Stage();
+const stage = new Stage({ costumeNumber: 1 });
 
 const sprites = [
   new Abby({
     x: -36,
     y: -23,
     direction: 90,
-    costumeNumber: 0,
+    costumeNumber: 1,
     size: 100,
     visible: true
   })
 ];
 
 const project = new Project(stage, sprites);
-
-project.run();
+export default project;
 ",
 }
 `;
