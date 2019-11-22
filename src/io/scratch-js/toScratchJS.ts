@@ -337,6 +337,12 @@ export default function toScratchJS(
           return `if (${inputToJS(block.inputs.CONDITION)}) {
             ${inputToJS(block.inputs.SUBSTACK)}
           }`;
+        case OpCode.control_if_else:
+          return `if (${inputToJS(block.inputs.CONDITION)}) {
+            ${inputToJS(block.inputs.SUBSTACK)}
+          } else {
+            ${inputToJS(block.inputs.SUBSTACK2)}
+          }`;
         case OpCode.control_wait_until:
           return `while (!(${inputToJS(block.inputs.CONDITION)})) { yield; }`;
         case OpCode.control_repeat_until:

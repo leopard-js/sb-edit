@@ -130,7 +130,10 @@ export type KnownBlock =
   | BlockBase<OpCode.control_repeat, { TIMES: BlockInput.Number; SUBSTACK: BlockInput.Blocks }>
   | BlockBase<OpCode.control_forever, { SUBSTACK: BlockInput.Blocks }>
   | BlockBase<OpCode.control_if, { CONDITION: BlockInput.Boolean; SUBSTACK: BlockInput.Blocks }>
-  | BlockBase<OpCode.control_if_else, { SUBSTACK: BlockInput.Blocks; SUBSTACK2: BlockInput.Blocks }>
+  | BlockBase<
+      OpCode.control_if_else,
+      { CONDITION: BlockInput.Boolean; SUBSTACK: BlockInput.Blocks; SUBSTACK2: BlockInput.Blocks }
+    >
   | BlockBase<OpCode.control_wait_until, { CONDITION: BlockInput.Boolean }>
   | BlockBase<OpCode.control_repeat_until, { CONDITION: BlockInput.Boolean; SUBSTACK: BlockInput.Blocks }>
   | BlockBase<OpCode.control_stop, { STOP_OPTION: BlockInput.StopMenu }>
