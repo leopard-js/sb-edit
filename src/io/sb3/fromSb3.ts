@@ -106,6 +106,7 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
                 const args: BlockInput.CustomBlockArgument[] = parts.map(part => {
                   switch (part) {
                     case "%s":
+                    case "%n":
                       return {
                         type: "numberOrString",
                         name: argNames.splice(0, 1)[0],

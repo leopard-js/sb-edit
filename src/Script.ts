@@ -23,7 +23,8 @@ export default class Script {
           break;
         case OpCode.procedures_definition:
           this.name = this.blocks[0].inputs.ARGUMENTS.value
-            .map(argument => (argument.type === "label" ? argument.name : ""))
+            .filter(argument => argument.type === "label")
+            .map(argument => argument.name)
             .join("_");
           break;
         default:
