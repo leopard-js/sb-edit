@@ -77,7 +77,7 @@ function camelCase(name: string, upper: boolean = false) {
 
 interface ToScratchJSOptions {
   scratchJSURL: string;
-  getTargetURL: (info: { name: string }) => string;
+  getTargetURL: (info: { name: string; from: "index" | "target" }) => string;
   getAssetURL: (info: { type: "costume" | "sound"; target: string; name: string; md5: string; ext: string }) => string;
   indexURL: string;
   autoplay: boolean;
@@ -90,7 +90,14 @@ export default function toScratchJS(
 
   const defaultOptions: ToScratchJSOptions = {
     scratchJSURL: "https://pulljosh.github.io/scratch-js/scratch-js/index.mjs",
-    getTargetURL: ({ name }) => `./${name}/${name}.mjs`,
+    getTargetURL: ({ name, from }) => {
+      switch (from) {
+        case "index":
+          return `./${name}/${name}.mjs`;
+        case "target":
+          return `../${name}/${name}.mjs`;
+      }
+    },
     getAssetURL: ({ type, target, name, md5, ext }) => {
       switch (type) {
         case "costume":
@@ -108,15 +115,25 @@ export default function toScratchJS(
   // Names changed first are less likely to be ugly
   const uniqueName = uniqueNameGenerator();
 
+  let targetNameMap = {};
   let customBlockArgNameMap: Map<Script, { [key: string]: string }> = new Map();
   let variableNameMap: Map<Target, { [key: string]: string }> = new Map();
+  let costumeNameMap: Map<Target, { [key: string]: string }> = new Map();
 
   for (const target of [project.stage, ...project.sprites]) {
-    target.setName(uniqueName(camelCase(target.name, true)));
+    const newTargetName = uniqueName(camelCase(target.name, true));
+    targetNameMap[target.name] = newTargetName;
+    target.setName(newTargetName);
 
     const uniqueCostumeName = uniqueNameGenerator();
+
+    const cNameMap = {};
+    costumeNameMap.set(target, cNameMap);
+
     for (const costume of target.costumes) {
-      costume.setName(uniqueCostumeName(camelCase(costume.name)));
+      const newName = uniqueCostumeName(camelCase(costume.name));
+      cNameMap[costume.name] = newName;
+      costume.setName(newName);
     }
 
     const uniqueSoundName = uniqueNameGenerator();
@@ -250,7 +267,7 @@ export default function toScratchJS(
             case "_mouse_":
               return `this.goto(this.mouse.x, this.mouse.y)`;
             default:
-              return `/* TODO: Implement go to sprite */`;
+              return `/* TODO: Implement go to sprite */ null`;
           }
         case OpCode.motion_gotoxy:
           return `this.goto((${inputToJS(block.inputs.X)}), (${inputToJS(block.inputs.Y)}))`;
@@ -263,7 +280,7 @@ export default function toScratchJS(
             case "_mouse_":
               return `yield* this.glide((${inputToJS(block.inputs.SECS)}), this.mouse.x, this.mouse.y)`;
             default:
-              return `/* TODO: Implement glide to sprite */`;
+              return `/* TODO: Implement glide to sprite */ null`;
           }
         case OpCode.motion_glidesecstoxy:
           return `yield* this.glide((${inputToJS(block.inputs.SECS)}), (${inputToJS(block.inputs.X)}), (${inputToJS(
@@ -285,12 +302,23 @@ export default function toScratchJS(
           return `this.y`;
         case OpCode.motion_direction:
           return `this.direction`;
+        case OpCode.looks_sayforsecs:
+          return `yield* this.sayAndWait((${inputToJS(block.inputs.MESSAGE)}), (${inputToJS(block.inputs.SECS)}))`;
+        case OpCode.looks_say:
+          return `this.say(${inputToJS(block.inputs.MESSAGE)})`;
+        case OpCode.looks_thinkforsecs:
+          return `yield* this.thinkAndWait((${inputToJS(block.inputs.MESSAGE)}), (${inputToJS(block.inputs.SECS)}))`;
+        case OpCode.looks_think:
+          return `this.think(${inputToJS(block.inputs.MESSAGE)})`;
         case OpCode.looks_switchcostumeto:
-          return `this.costume = (${inputToJS(block.inputs.COSTUME)})`;
+          return `this.costume = (${JSON.stringify(costumeNameMap.get(target)[block.inputs.COSTUME.value])})`;
         case OpCode.looks_nextcostume:
           return `this.costume += 1`;
         case OpCode.looks_switchbackdropto:
-          return `this${target.isStage ? "" : ".stage"}.costume = (${inputToJS(block.inputs.BACKDROP)})`;
+          // TODO: Next backdrop, previous backdrop, etc...
+          return `this${target.isStage ? "" : ".stage"}.costume = (${JSON.stringify(
+            costumeNameMap.get(project.stage)[block.inputs.BACKDROP.value]
+          )})`;
         case OpCode.looks_nextbackdrop:
           return `this${target.isStage ? "" : ".stage"}.costume += 1`;
         case OpCode.looks_changesizeby:
@@ -308,6 +336,14 @@ export default function toScratchJS(
             case "number":
             default:
               return `this.costumeNumber`;
+          }
+        case OpCode.looks_backdropnumbername:
+          switch (block.inputs.NUMBER_NAME.value) {
+            case "name":
+              return `this.stage.costume.name`;
+            case "number":
+            default:
+              return `this.stage.costumeNumber`;
           }
         case OpCode.looks_size:
           return `this.size`;
@@ -352,12 +388,15 @@ export default function toScratchJS(
         case OpCode.sensing_touchingobject:
           switch (block.inputs.TOUCHINGOBJECTMENU.value) {
             case "_mouse_":
-              return `/* TODO: Create touching "mouse" option */`;
+              return `this.touching("mouse")`;
             default:
-              return `this.touching(${inputToJS(block.inputs.TOUCHINGOBJECTMENU)})`;
+              return `this.touching(${targetNameMap[block.inputs.TOUCHINGOBJECTMENU.value]})`;
           }
         case OpCode.sensing_keypressed:
-          return `this.keyPressed(${inputToJS(block.inputs.KEY_OPTION)})`;
+          const getKeyName = key => {
+            return key.split(" ")[0];
+          };
+          return `this.keyPressed(${JSON.stringify(getKeyName(block.inputs.KEY_OPTION.value))})`;
         case OpCode.sensing_mousedown:
           return `this.mouse.down`;
         case OpCode.sensing_mousex:
@@ -466,21 +505,32 @@ export default function toScratchJS(
         case OpCode.data_addtolist:
           return `${selectedVarSource}.push(${inputToJS(block.inputs.ITEM)})`;
         case OpCode.data_deleteoflist:
-          return `${selectedVarSource}.splice((${inputToJS(block.inputs.INDEX)}), 1)`;
+          // Supposed to be a numerical index, but can be
+          // string "all" when sb2 converted to sb3 by Scratch
+          if (block.inputs.INDEX.value === "all") {
+            return `${selectedVarSource} = []`;
+          }
+          if (block.inputs.INDEX.value === "last") {
+            return `${selectedVarSource}.splice(${selectedVarSource}.length - 1, 1)`;
+          }
+          return `${selectedVarSource}.splice(((${inputToJS(block.inputs.INDEX)}) - 1), 1)`;
         case OpCode.data_deletealloflist:
           return `${selectedVarSource} = []`;
         case OpCode.data_insertatlist:
-          return `${selectedVarSource}.splice((${inputToJS(block.inputs.INDEX)}), 0, (${inputToJS(
+          return `${selectedVarSource}.splice(((${inputToJS(block.inputs.INDEX)}) - 1), 0, (${inputToJS(
             block.inputs.ITEM
           )}))`;
         case OpCode.data_replaceitemoflist:
-          return `${selectedVarSource}.splice((${inputToJS(block.inputs.INDEX)}), 1, (${inputToJS(
+          return `${selectedVarSource}.splice(((${inputToJS(block.inputs.INDEX)}) - 1), 1, (${inputToJS(
             block.inputs.ITEM
           )}))`;
         case OpCode.data_itemoflist:
-          return `${selectedVarSource}[${inputToJS(block.inputs.INDEX)}]`;
+          if (block.inputs.INDEX.value === "last") {
+            return `${selectedVarSource}[${selectedVarSource}.length - 1]`;
+          }
+          return `${selectedVarSource}[(${inputToJS(block.inputs.INDEX)}) - 1]`;
         case OpCode.data_itemnumoflist:
-          return `${selectedVarSource}.indexOf(${inputToJS(block.inputs.ITEM)})`;
+          return `(${selectedVarSource}.indexOf(${inputToJS(block.inputs.ITEM)}) + 1)`;
         case OpCode.data_lengthoflist:
           return `${selectedVarSource}.length`;
         case OpCode.data_listcontainsitem:
@@ -513,7 +563,7 @@ export default function toScratchJS(
         case OpCode.pen_changePenSizeBy:
           return `this.penSize += (${inputToJS(block.inputs.SIZE)})`;
         default:
-          return `/* TODO: Implement ${block.opcode} */`;
+          return `/* TODO: Implement ${block.opcode} */ null`;
       }
     }
   }
@@ -545,14 +595,12 @@ export default function toScratchJS(
     "index.mjs": `
       import { Project } from ${JSON.stringify(options.scratchJSURL)};
 
-      import Stage from ${JSON.stringify(options.getTargetURL({ name: project.stage.name }))};
-      ${project.sprites
+      ${[project.stage, ...project.sprites]
         .map(
-          sprite => `
-        import ${sprite.name} from ${JSON.stringify(options.getTargetURL({ name: sprite.name }))};
-      `
+          target =>
+            `import ${target.name} from ${JSON.stringify(options.getTargetURL({ name: target.name, from: "index" }))};`
         )
-        .join("")}
+        .join("\n")}
 
       const stage = new Stage(${JSON.stringify({ costumeNumber: project.stage.costumeNumber + 1 })});
 
@@ -577,9 +625,31 @@ export default function toScratchJS(
     `
   };
 
+  const optionalToNumber = value => {
+    if (Array.isArray(value)) {
+      return value.map(optionalToNumber);
+    }
+    if (typeof value !== "string") {
+      return value;
+    }
+    const asNum = parseFloat(value);
+    if (!isNaN(asNum)) {
+      return asNum;
+    }
+    return value;
+  };
+
   for (const target of [project.stage, ...project.sprites]) {
     files[`${target.name}/${target.name}.mjs`] = `
       import { ${target.isStage ? "Stage as StageBase" : "Sprite"}, Trigger, Costume } from '${options.scratchJSURL}';
+
+      ${project.sprites
+        .filter(sprite => sprite !== target)
+        .map(
+          sprite =>
+            `import ${sprite.name} from ${JSON.stringify(options.getTargetURL({ name: sprite.name, from: "target" }))};`
+        )
+        .join("\n")}
 
       export default class ${target.name} extends ${target.isStage ? "StageBase" : "Sprite"} {
         constructor(...args) {
@@ -611,6 +681,10 @@ export default function toScratchJS(
               .filter(trigger => trigger !== null)
               .join(",\n")}
           ];
+
+          ${[...target.variables, ...target.lists]
+            .map(variable => `this.vars.${variable.name} = ${JSON.stringify(optionalToNumber(variable.value))};`)
+            .join("\n")}
         }
 
         ${target.scripts

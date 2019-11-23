@@ -217,6 +217,7 @@ export enum OpCode {
 
   control_create_clone_of_menu = "control_create_clone_of_menu",
 
+  sensing_touchingobjectmenu = "sensing_touchingobjectmenu",
   sensing_distancetomenu = "sensing_distancetomenu",
   sensing_keyoptions = "sensing_keyoptions",
   sensing_of_object_menu = "sensing_of_object_menu"

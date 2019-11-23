@@ -104,13 +104,24 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
                 const argDefaults: any[] = JSON.parse(mutation.argumentdefaults);
 
                 const args: BlockInput.CustomBlockArgument[] = parts.map(part => {
+                  const optionalToNumber = value => {
+                    if (typeof value !== "string") {
+                      return value;
+                    }
+                    const asNum = parseFloat(value);
+                    if (!isNaN(asNum)) {
+                      return asNum;
+                    }
+                    return value;
+                  };
+
                   switch (part) {
                     case "%s":
                     case "%n":
                       return {
                         type: "numberOrString",
                         name: argNames.splice(0, 1)[0],
-                        defaultValue: argDefaults.splice(0, 1)[0]
+                        defaultValue: optionalToNumber(argDefaults.splice(0, 1)[0])
                       };
                     case "%b":
                       return {
@@ -152,7 +163,10 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
             case 5:
             case 6:
             case 7:
-              addInput(inputName, { type: "number", value: parseFloat(value[1]) });
+              addInput(inputName, {
+                type: "number",
+                value: isNaN(parseFloat(value[1])) ? (value[1] as string) : parseFloat(value[1])
+              });
               break;
             case 8:
               addInput(inputName, { type: "angle", value: parseFloat(value[1]) });
@@ -240,6 +254,7 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
         [OpCode.motion_goto_menu]: { TO: "goToTarget" },
         [OpCode.looks_costume]: { COSTUME: "costume" },
         [OpCode.looks_gotofrontback]: { FRONT_BACK: "frontBackMenu" },
+        [OpCode.looks_goforwardbackwardlayers]: { FORWARD_BACKWARD: "forwardBackwardMenu" },
         [OpCode.looks_changeeffectby]: { EFFECT: "graphicEffect" },
         [OpCode.looks_backdropnumbername]: { NUMBER_NAME: "costumeNumberName" },
         [OpCode.looks_costumenumbername]: { NUMBER_NAME: "costumeNumberName" },
@@ -254,6 +269,7 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
         [OpCode.event_whenbroadcastreceived]: { BROADCAST_OPTION: "broadcast" },
         [OpCode.control_stop]: { STOP_OPTION: "stopMenu" },
         [OpCode.control_create_clone_of_menu]: { CLONE_OPTION: "cloneTarget" },
+        [OpCode.sensing_touchingobjectmenu]: { TOUCHINGOBJECTMENU: "touchingTarget" },
         [OpCode.sensing_distancetomenu]: { DISTANCETOMENU: "distanceToMenu" },
         [OpCode.sensing_keyoptions]: { KEY_OPTION: "key" },
         [OpCode.sensing_setdragmode]: { DRAG_MODE: "dragModeMenu" },

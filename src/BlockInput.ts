@@ -7,7 +7,7 @@ export interface Base {
 
 export interface Number extends Base {
   type: "number";
-  value: number;
+  value: number | string;
 }
 
 export interface String extends Base {
