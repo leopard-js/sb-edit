@@ -255,6 +255,8 @@ export default function toScratchJS(
         }
       }
 
+      const stage = "this" + (target.isStage ? "" : ".stage");
+
       switch (block.opcode) {
         case OpCode.motion_movesteps:
           return `this.move(${inputToJS(block.inputs.STEPS)})`;
@@ -318,11 +320,11 @@ export default function toScratchJS(
           return `this.costumeNumber += 1`;
         case OpCode.looks_switchbackdropto:
           // TODO: Next backdrop, previous backdrop, etc...
-          return `this${target.isStage ? "" : ".stage"}.costume = (${JSON.stringify(
+          return `${stage}.costume = (${JSON.stringify(
             costumeNameMap.get(project.stage)[block.inputs.BACKDROP.value]
           )})`;
         case OpCode.looks_nextbackdrop:
-          return `this${target.isStage ? "" : ".stage"}.costume += 1`;
+          return `${stage}.costume += 1`;
         case OpCode.looks_changesizeby:
           return `this.size += (${inputToJS(block.inputs.CHANGE)})`;
         case OpCode.looks_setsizeto:
@@ -342,10 +344,10 @@ export default function toScratchJS(
         case OpCode.looks_backdropnumbername:
           switch (block.inputs.NUMBER_NAME.value) {
             case "name":
-              return `this.stage.costume.name`;
+              return `${stage}.costume.name`;
             case "number":
             default:
-              return `this.stage.costumeNumber`;
+              return `${stage}.costumeNumber`;
           }
         case OpCode.looks_size:
           return `this.size`;
