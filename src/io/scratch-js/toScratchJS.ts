@@ -22,6 +22,8 @@ function triggerInitCode(script: Script) {
       return triggerInitStr("GREEN_FLAG");
     case OpCode.event_whenkeypressed:
       return triggerInitStr("KEY_PRESSED", { key: hat.inputs.KEY_OPTION.value });
+    case OpCode.event_whenthisspriteclicked:
+      return triggerInitStr("CLICKED");
     case OpCode.event_whenbroadcastreceived:
       return triggerInitStr("BROADCAST", { name: hat.inputs.BROADCAST_OPTION.value });
     default:
@@ -313,7 +315,7 @@ export default function toScratchJS(
         case OpCode.looks_switchcostumeto:
           return `this.costume = (${JSON.stringify(costumeNameMap.get(target)[block.inputs.COSTUME.value])})`;
         case OpCode.looks_nextcostume:
-          return `this.costume += 1`;
+          return `this.costumeNumber += 1`;
         case OpCode.looks_switchbackdropto:
           // TODO: Next backdrop, previous backdrop, etc...
           return `this${target.isStage ? "" : ".stage"}.costume = (${JSON.stringify(
