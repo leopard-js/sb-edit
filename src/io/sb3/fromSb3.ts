@@ -212,22 +212,19 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
         }
       }
 
-      // TODO: In the sb3 format, it's possible for inputs to be
-      // completely missing if they were never given a value.
-      // If that happens, they should be added automatically here
-      // with a reasonable default (or maybe null?).
-
-      // The challenge is determining which inputs a given block *should*
-      // have. Ideally this would be done without duplicating the efforts
-      // in Block.ts
-
       if (block.opcode === OpCode.procedures_call) {
         result = {
           PROCCODE: { type: "string", value: block.mutation.proccode },
           INPUTS: {
             type: "customBlockInputValues",
-            value: JSON.parse(block.mutation.argumentids).map((argumentid: string) => {
+            value: (JSON.parse(block.mutation.argumentids) as string[]).map((argumentid, i) => {
               let value = result[argumentid];
+              if (value === undefined) {
+                // TODO: Find a way to determine type of missing input value
+                // (Caused by things like boolean procedure_call inputs that
+                // were never filled at any time.)
+                return { type: "string", value: null };
+              }
               if (typeof value.value === "string") {
                 if (!isNaN(parseFloat(value.value))) {
                   value.value = parseFloat(value.value);
