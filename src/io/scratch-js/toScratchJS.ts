@@ -160,7 +160,24 @@ export default function toScratchJS(
       variable.setName(newName);
     }
 
-    const uniqueScriptName = uniqueNameGenerator();
+    const uniqueScriptName = uniqueNameGenerator([
+      "stage",
+      "direction",
+      "x",
+      "y",
+      "penDown",
+      "penColor",
+      "vars",
+      "costumeNumber",
+      "costume",
+      "mouse",
+      "timer",
+      "triggers",
+      "costumes",
+      "size",
+      "visible",
+      "penSize"
+    ]);
     for (const script of target.scripts) {
       script.setName(uniqueScriptName(camelCase(script.name)));
 
