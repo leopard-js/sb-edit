@@ -4,8 +4,6 @@ import fromSb3, { fromSb3JSON } from "./io/sb3/fromSb3";
 import toSb3 from "./io/sb3/toSb3";
 import toScratchJS from "./io/scratch-js/toScratchJS";
 
-import * as prettier from "prettier";
-
 type TextToSpeechLanguage =
   | "ar"
   | "zh-cn"
