@@ -40,7 +40,9 @@ export default class Abby extends Sprite {
     yield* this.glide(1, this.mouse.x, this.mouse.y);
     yield* this.glide(1, -36, this.x);
     this.direction = 90;
-    /* TODO: Implement motion_pointtowards */ null;
+    this.direction = this.radToScratch(
+      Math.atan2(this.mouse.y - this.y, this.mouse.x - this.x)
+    );
     this.x += this.direction;
     this.x = -36;
     this.y += 10;
@@ -57,8 +59,6 @@ export default class Abby extends Sprite {
   Trigger,
   Costume
 } from \\"https://pulljosh.github.io/scratch-js/scratch-js/index.mjs\\";
-
-import Abby from \\"../Abby/Abby.mjs\\";
 
 export default class Stage extends StageBase {
   constructor(...args) {
@@ -213,8 +213,8 @@ import Abby from \\"./Abby/Abby.mjs\\";
 
 const stage = new Stage({ costumeNumber: 1 });
 
-const sprites = [
-  new Abby({
+const sprites = {
+  Abby: new Abby({
     x: -36,
     y: -23,
     direction: 90,
@@ -222,7 +222,7 @@ const sprites = [
     size: 100,
     visible: true
   })
-];
+};
 
 const project = new Project(stage, sprites);
 export default project;

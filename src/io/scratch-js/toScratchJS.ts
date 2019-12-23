@@ -287,8 +287,10 @@ export default function toScratchJS(
               return `this.goto(this.random(-240, 240), this.random(-180, 180))`;
             case "_mouse_":
               return `this.goto(this.mouse.x, this.mouse.y)`;
-            default:
-              return `/* TODO: Implement go to sprite */ null`;
+            default: {
+              const sprite = `(this.sprites[${JSON.stringify(targetNameMap[block.inputs.TO.value])}])`;
+              return `this.goto(${sprite}.x, ${sprite}.y)`;
+            }
           }
         case OpCode.motion_gotoxy:
           return `this.goto((${inputToJS(block.inputs.X)}), (${inputToJS(block.inputs.Y)}))`;
@@ -309,6 +311,15 @@ export default function toScratchJS(
           )}))`;
         case OpCode.motion_pointindirection:
           return `this.direction = (${inputToJS(block.inputs.DIRECTION)})`;
+        case OpCode.motion_pointtowards:
+          switch (block.inputs.TOWARDS.value) {
+            case "_mouse_":
+              return `this.direction = this.radToScratch(Math.atan2(this.mouse.y - this.y, this.mouse.x - this.x))`;
+            default: {
+              const sprite = `(this.sprites[${JSON.stringify(targetNameMap[block.inputs.TOWARDS.value])}])`;
+              return `this.direction = this.radToScratch(Math.atan2(${sprite}.y - this.y, ${sprite}.x - this.x))`;
+            }
+          }
         case OpCode.motion_changexby:
           return `this.x += (${inputToJS(block.inputs.DX)})`;
         case OpCode.motion_setx:
@@ -411,7 +422,9 @@ export default function toScratchJS(
             case "_mouse_":
               return `this.touching("mouse")`;
             default:
-              return `this.touching(${targetNameMap[block.inputs.TOUCHINGOBJECTMENU.value]})`;
+              return `this.touching(this.sprites[${JSON.stringify(
+                targetNameMap[block.inputs.TOUCHINGOBJECTMENU.value]
+              )}])`;
           }
         case OpCode.sensing_keypressed:
           const getKeyName = key => {
@@ -625,11 +638,11 @@ export default function toScratchJS(
 
       const stage = new Stage(${JSON.stringify({ costumeNumber: project.stage.costumeNumber + 1 })});
 
-      const sprites = [
+      const sprites = {
         ${project.sprites
           .map(
             sprite =>
-              `new ${sprite.name}(${JSON.stringify({
+              `${sprite.name}: new ${sprite.name}(${JSON.stringify({
                 x: sprite.x,
                 y: sprite.y,
                 direction: sprite.direction,
@@ -639,7 +652,7 @@ export default function toScratchJS(
               })})`
           )
           .join(",\n")}
-      ];
+      };
 
       const project = new Project(stage, sprites);
       export default project;
@@ -663,14 +676,6 @@ export default function toScratchJS(
   for (const target of [project.stage, ...project.sprites]) {
     files[`${target.name}/${target.name}.mjs`] = `
       import { ${target.isStage ? "Stage as StageBase" : "Sprite"}, Trigger, Costume } from '${options.scratchJSURL}';
-
-      ${project.sprites
-        .filter(sprite => sprite !== target)
-        .map(
-          sprite =>
-            `import ${sprite.name} from ${JSON.stringify(options.getTargetURL({ name: sprite.name, from: "target" }))};`
-        )
-        .join("\n")}
 
       export default class ${target.name} extends ${target.isStage ? "StageBase" : "Sprite"} {
         constructor(...args) {
