@@ -302,8 +302,10 @@ export default function toScratchJS(
               )}), this.random(-240, 240), this.random(-180, 180))`;
             case "_mouse_":
               return `yield* this.glide((${inputToJS(block.inputs.SECS)}), this.mouse.x, this.mouse.y)`;
-            default:
-              return `/* TODO: Implement glide to sprite */ null`;
+            default: {
+              const sprite = `(this.sprites[${JSON.stringify(targetNameMap[block.inputs.TO.value])}])`;
+              return `yield* this.glide((${inputToJS(block.inputs.SECS)}), ${sprite}.x, ${sprite}.y)`;
+            }
           }
         case OpCode.motion_glidesecstoxy:
           return `yield* this.glide((${inputToJS(block.inputs.SECS)}), (${inputToJS(block.inputs.X)}), (${inputToJS(
@@ -426,6 +428,15 @@ export default function toScratchJS(
                 targetNameMap[block.inputs.TOUCHINGOBJECTMENU.value]
               )}])`;
           }
+        case OpCode.sensing_distanceto:
+          switch (block.inputs.DISTANCETOMENU.value) {
+            case "_mouse_":
+              return `(Math.hypot(this.mouse.x - this.x, this.mouse.y - this.y))`;
+            default: {
+              const sprite = `this.sprites[${JSON.stringify(targetNameMap[block.inputs.DISTANCETOMENU.value])}]`;
+              return `(Math.hypot(${sprite}.x - this.x, ${sprite}.y - this.y))`;
+            }
+          }
         case OpCode.sensing_keypressed:
           const getKeyName = key => {
             return key.split(" ")[0];
@@ -441,6 +452,54 @@ export default function toScratchJS(
           return `this.timer`;
         case OpCode.sensing_resettimer:
           return `this.restartTimer()`;
+        case OpCode.sensing_of: {
+          let propName: string;
+          switch (block.inputs.PROPERTY.value) {
+            case "x position":
+              propName = "x";
+              break;
+            case "y position":
+              propName = "y";
+              break;
+            case "direction":
+              propName = "direction";
+              break;
+            case "costume #":
+            case "backdrop #":
+              propName = "costumeNumber";
+              break;
+            case "costume name":
+            case "backdrop name":
+              propName = "costume.name";
+              break;
+            case "size":
+              propName = "size";
+              break;
+            case "volume":
+              propName = null;
+              break;
+            default:
+              let varOwner: Target = project.stage;
+              if (block.inputs.OBJECT.value !== "_stage_") {
+                varOwner = project.sprites.find(sprite => sprite.name === targetNameMap[block.inputs.OBJECT.value]);
+              }
+              propName = `vars[${JSON.stringify(variableNameMap.get(varOwner)[block.inputs.PROPERTY.value])}]`;
+              break;
+          }
+
+          if (propName === null) {
+            return `/* Cannot access property ${block.inputs.PROPERTY.value} of target */ null`;
+          }
+
+          let targetObj: string;
+          if (block.inputs.OBJECT.value === "_stage_") {
+            targetObj = `this.stage`;
+          } else {
+            targetObj = `this.sprites[${JSON.stringify(targetNameMap[block.inputs.OBJECT.value])}]`;
+          }
+
+          return `${targetObj}.${propName}`;
+        }
         case OpCode.sensing_current:
           switch (block.inputs.CURRENTMENU.value) {
             case "YEAR":

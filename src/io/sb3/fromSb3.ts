@@ -270,7 +270,7 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
         [OpCode.sensing_distancetomenu]: { DISTANCETOMENU: "distanceToMenu" },
         [OpCode.sensing_keyoptions]: { KEY_OPTION: "key" },
         [OpCode.sensing_setdragmode]: { DRAG_MODE: "dragModeMenu" },
-        [OpCode.sensing_of]: { PROPERTY: "target" },
+        [OpCode.sensing_of]: { PROPERTY: "propertyOfMenu" },
         [OpCode.sensing_of_object_menu]: { OBJECT: "target" },
         [OpCode.sensing_current]: { CURRENTMENU: "currentMenu" },
         [OpCode.operator_mathop]: { OPERATOR: "mathopMenu" },
