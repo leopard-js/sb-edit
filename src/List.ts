@@ -1,3 +1,5 @@
+import { generateID } from "./util/id";
+
 export default class List {
   public name: string;
   public value: string[];
@@ -29,11 +31,7 @@ export default class List {
       this.id = id;
     } else {
       // If not provided, generate id randomly.
-      let id = "";
-      for (let i = 0; i < 24; i++) {
-        id += Math.floor(Math.random() * 36).toString(36);
-      }
-      this.id = id;
+      this.id = generateID();
     }
   }
 

@@ -1,5 +1,6 @@
 import * as BlockInput from "./BlockInput";
 import { OpCode } from "./OpCode";
+import { generateID } from "./util/id";
 
 export class BlockBase<MyOpCode extends OpCode, MyInputs extends { [key: string]: BlockInput.Any }> {
   public opcode: MyOpCode;
@@ -13,11 +14,7 @@ export class BlockBase<MyOpCode extends OpCode, MyInputs extends { [key: string]
 
     if (typeof options.id !== "string") {
       // If not provided, generate id randomly.
-      let id = "";
-      for (let i = 0; i < 24; i++) {
-        id += Math.floor(Math.random() * 36).toString(36);
-      }
-      this.id = id;
+      this.id = generateID();
     }
   }
 
