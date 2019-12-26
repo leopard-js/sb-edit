@@ -20,11 +20,8 @@ export default class Abby extends Sprite {
     ];
 
     this.triggers = [
-      new Trigger(
-        Trigger.KEY_PRESSED,
-        { key: \\"any\\" },
-        this.whenKeyAnyPressed.bind(this)
-      )
+      new Trigger(Trigger.CLONE_START, this.startAsClone),
+      new Trigger(Trigger.KEY_PRESSED, { key: \\"any\\" }, this.whenKeyAnyPressed)
     ];
   }
 
@@ -49,8 +46,8 @@ export default class Abby extends Sprite {
     this.y = -23;
     /* TODO: Implement motion_ifonedgebounce */ null;
     /* TODO: Implement motion_setrotationstyle */ null;
-    /* TODO: Implement control_create_clone_of */ null;
-    /* TODO: Implement control_delete_this_clone */ null;
+    this.createClone();
+    this.deleteThisClone();
   }
 }
 ",
@@ -72,16 +69,16 @@ export default class Stage extends StageBase {
     ];
 
     this.triggers = [
-      new Trigger(Trigger.GREEN_FLAG, this.whenGreenFlagClicked.bind(this)),
+      new Trigger(Trigger.GREEN_FLAG, this.whenGreenFlagClicked),
       new Trigger(
         Trigger.KEY_PRESSED,
         { key: \\"space\\" },
-        this.whenKeySpacePressed.bind(this)
+        this.whenKeySpacePressed
       ),
       new Trigger(
         Trigger.BROADCAST,
         { name: \\"message1\\" },
-        this.whenIReceiveMessage1.bind(this)
+        this.whenIReceiveMessage1
       )
     ];
 
@@ -115,7 +112,7 @@ export default class Stage extends StageBase {
     while (!null) {
       yield;
     }
-    /* TODO: Implement control_create_clone_of */ null;
+    this.sprites[undefined].createClone();
     for (let i = 0; i < 10; i++) {
       while (!this.keyPressed(\\"space\\")) {
         if (this.mouse.down) {
@@ -125,6 +122,7 @@ export default class Stage extends StageBase {
             null;
           }
         }
+        yield;
       }
       /* TODO: Implement control_stop */ null;
       yield;

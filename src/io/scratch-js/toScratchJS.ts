@@ -15,7 +15,7 @@ function triggerInitCode(script: Script) {
   }
 
   const triggerInitStr = (name: string, options?: object) =>
-    `new Trigger(Trigger.${name}${options ? `, ${JSON.stringify(options)}` : ""}, this.${script.name}.bind(this))`;
+    `new Trigger(Trigger.${name}${options ? `, ${JSON.stringify(options)}` : ""}, this.${script.name})`;
 
   switch (hat.opcode) {
     case OpCode.event_whenflagclicked:
@@ -26,6 +26,8 @@ function triggerInitCode(script: Script) {
       return triggerInitStr("CLICKED");
     case OpCode.event_whenbroadcastreceived:
       return triggerInitStr("BROADCAST", { name: hat.inputs.BROADCAST_OPTION.value });
+    case OpCode.control_start_as_clone:
+      return triggerInitStr("CLONE_START");
     default:
       return null;
   }
@@ -417,8 +419,18 @@ export default function toScratchJS(
           return `while (!(${inputToJS(block.inputs.CONDITION)})) { yield; }`;
         case OpCode.control_repeat_until:
           return `while(!(${inputToJS(block.inputs.CONDITION)})) {
-            ${inputToJS(block.inputs.SUBSTACK)}
+            ${inputToJS(block.inputs.SUBSTACK)};
+            ${warp ? "" : "yield;"}
           }`;
+        case OpCode.control_create_clone_of:
+          switch (block.inputs.CLONE_OPTION.value) {
+            case "_myself_":
+              return `this.createClone()`;
+            default:
+              return `this.sprites[${JSON.stringify(targetNameMap[block.inputs.CLONE_OPTION.value])}].createClone()`;
+          }
+        case OpCode.control_delete_this_clone:
+          return `this.deleteThisClone()`;
         case OpCode.sensing_touchingobject:
           switch (block.inputs.TOUCHINGOBJECTMENU.value) {
             case "_mouse_":
