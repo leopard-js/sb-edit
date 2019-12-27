@@ -425,7 +425,7 @@ export default function toScratchJS(
         case OpCode.control_stop:
           switch (block.inputs.STOP_OPTION.value) {
             case "this script":
-              return `return;`
+              return `return;`;
             default:
               return `/* TODO: Implement stop ${block.inputs.STOP_OPTION.value} */ null`;
           }
