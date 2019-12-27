@@ -422,6 +422,13 @@ export default function toScratchJS(
             ${inputToJS(block.inputs.SUBSTACK)};
             ${warp ? "" : "yield;"}
           }`;
+        case OpCode.control_stop:
+          switch (block.inputs.STOP_OPTION.value) {
+            case "this script":
+              return `return;`
+            default:
+              return `/* TODO: Implement stop ${block.inputs.STOP_OPTION.value} */ null`;
+          }
         case OpCode.control_create_clone_of:
           switch (block.inputs.CLONE_OPTION.value) {
             case "_myself_":

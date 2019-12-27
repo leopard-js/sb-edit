@@ -124,7 +124,7 @@ export default class Stage extends StageBase {
         }
         yield;
       }
-      /* TODO: Implement control_stop */ null;
+      /* TODO: Implement stop all */ null;
       yield;
     }
     while (true) {
