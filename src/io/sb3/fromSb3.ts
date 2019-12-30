@@ -292,7 +292,8 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
         [OpCode.data_showlist]: { LIST: "list" },
         [OpCode.data_hidelist]: { LIST: "list" },
         [OpCode.argument_reporter_string_number]: { VALUE: "string" },
-        [OpCode.argument_reporter_boolean]: { VALUE: "string" }
+        [OpCode.argument_reporter_boolean]: { VALUE: "string" },
+        [OpCode.pen_menu_colorParam]: { colorParam: "penColorParam" }
       };
 
       let result = {};

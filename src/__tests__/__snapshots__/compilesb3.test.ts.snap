@@ -5,7 +5,8 @@ Object {
   "Abby/Abby.mjs": "import {
   Sprite,
   Trigger,
-  Costume
+  Costume,
+  Color
 } from \\"https://pulljosh.github.io/scratch-js/scratch-js/index.mjs\\";
 
 export default class Abby extends Sprite {
@@ -54,7 +55,8 @@ export default class Abby extends Sprite {
   "Stage/Stage.mjs": "import {
   Stage as StageBase,
   Trigger,
-  Costume
+  Costume,
+  Color
 } from \\"https://pulljosh.github.io/scratch-js/scratch-js/index.mjs\\";
 
 export default class Stage extends StageBase {

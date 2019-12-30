@@ -233,17 +233,8 @@ export default function toScratchJS(
           return blockToJS(input.value as Block);
         case "blocks":
           return input.value.map(block => blockToJS(block as Block)).join(";\n");
-        case "color":
-          const { r, g, b } = input.value;
-          const toHexDigits = (n: number) => {
-            if (n < 16) {
-              return "0" + n.toString(16);
-            }
-            return n.toString(16);
-          };
-          return JSON.stringify(`#${toHexDigits(r)}${toHexDigits(g)}${toHexDigits(b)}`);
         default:
-          const asNum = parseFloat(input.value as string);
+          const asNum = Number(input.value as string);
           if (!isNaN(asNum)) {
             return JSON.stringify(asNum);
           }
@@ -668,8 +659,40 @@ export default function toScratchJS(
           return `this.penDown = true`;
         case OpCode.pen_penUp:
           return `this.penDown = false`;
-        case OpCode.pen_setPenColorToColor:
-          return `this.penColor = (${inputToJS(block.inputs.COLOR)})`;
+        case OpCode.pen_setPenColorToColor: {
+          if (block.inputs.COLOR.type === "color") {
+            const { r, g, b } = block.inputs.COLOR.value;
+            return `this.penColor = Color.rgb(${r}, ${g}, ${b})`;
+          } else {
+            return `this.penColor = Color.num(${inputToJS(block.inputs.COLOR)})`;
+          }
+        }
+        case OpCode.pen_changePenColorParamBy: {
+          switch (block.inputs.colorParam.value) {
+            case "color":
+              return `this.penColor.h += (${inputToJS(block.inputs.VALUE)})`;
+            case "saturation":
+              return `this.penColor.s += (${inputToJS(block.inputs.VALUE)})`;
+            case "brightness":
+              return `this.penColor.v += (${inputToJS(block.inputs.VALUE)})`;
+            case "transparency":
+              return `this.penColor.a -= ((${inputToJS(block.inputs.VALUE)}) / 100)`;
+          }
+          break;
+        }
+        case OpCode.pen_setPenColorParamTo: {
+          switch (block.inputs.colorParam.value) {
+            case "color":
+              return `this.penColor.h = (${inputToJS(block.inputs.VALUE)})`;
+            case "saturation":
+              return `this.penColor.s = (${inputToJS(block.inputs.VALUE)})`;
+            case "brightness":
+              return `this.penColor.v = (${inputToJS(block.inputs.VALUE)})`;
+            case "transparency":
+              return `this.penColor.a = (1 - ((${inputToJS(block.inputs.VALUE)}) / 100))`;
+          }
+          break;
+        }
         case OpCode.pen_setPenSizeTo:
           return `this.penSize = (${inputToJS(block.inputs.SIZE)})`;
         case OpCode.pen_changePenSizeBy:
@@ -753,7 +776,9 @@ export default function toScratchJS(
 
   for (const target of [project.stage, ...project.sprites]) {
     files[`${target.name}/${target.name}.mjs`] = `
-      import { ${target.isStage ? "Stage as StageBase" : "Sprite"}, Trigger, Costume } from '${options.scratchJSURL}';
+      import { ${target.isStage ? "Stage as StageBase" : "Sprite"}, Trigger, Costume, Color } from '${
+      options.scratchJSURL
+    }';
 
       export default class ${target.name} extends ${target.isStage ? "StageBase" : "Sprite"} {
         constructor(...args) {

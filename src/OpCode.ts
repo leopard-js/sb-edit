@@ -220,5 +220,7 @@ export enum OpCode {
   sensing_touchingobjectmenu = "sensing_touchingobjectmenu",
   sensing_distancetomenu = "sensing_distancetomenu",
   sensing_keyoptions = "sensing_keyoptions",
-  sensing_of_object_menu = "sensing_of_object_menu"
+  sensing_of_object_menu = "sensing_of_object_menu",
+
+  pen_menu_colorParam = "pen_menu_colorParam"
 }

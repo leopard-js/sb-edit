@@ -217,8 +217,8 @@ export type KnownBlock =
   | BlockBase<OpCode.pen_penDown, {}>
   | BlockBase<OpCode.pen_penUp, {}>
   | BlockBase<OpCode.pen_setPenColorToColor, { COLOR: BlockInput.Color }>
-  | BlockBase<OpCode.pen_changePenColorParamBy, { COLOR_PARAM: BlockInput.PenColorParam; VALUE: BlockInput.Number }>
-  | BlockBase<OpCode.pen_setPenColorParamTo, { COLOR_PARAM: BlockInput.PenColorParam; VALUE: BlockInput.Number }>
+  | BlockBase<OpCode.pen_changePenColorParamBy, { colorParam: BlockInput.PenColorParam; VALUE: BlockInput.Number }>
+  | BlockBase<OpCode.pen_setPenColorParamTo, { colorParam: BlockInput.PenColorParam; VALUE: BlockInput.Number }>
   | BlockBase<OpCode.pen_changePenSizeBy, { SIZE: BlockInput.Number }>
   | BlockBase<OpCode.pen_setPenSizeTo, { SIZE: BlockInput.Number }>
   // Deprecated:
