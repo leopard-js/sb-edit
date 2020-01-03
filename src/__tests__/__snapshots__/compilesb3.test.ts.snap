@@ -162,19 +162,19 @@ export default class Stage extends StageBase {
   *whenIReceiveMessage1() {
     this.broadcast(\\"message1\\");
     yield* this.broadcastAndWait(\\"message1\\");
-    /* TODO: Implement sensing_askandwait */ null;
-    /* TODO: Implement sensing_askandwait */ null;
-    /* TODO: Implement sensing_askandwait */ null;
-    /* TODO: Implement sensing_askandwait */ null;
-    /* TODO: Implement sensing_askandwait */ null;
-    /* TODO: Implement sensing_askandwait */ null;
-    /* TODO: Implement sensing_askandwait */ null;
-    /* TODO: Implement sensing_askandwait */ null;
-    /* TODO: Implement sensing_askandwait */ null;
-    /* TODO: Implement sensing_askandwait */ null;
-    /* TODO: Implement sensing_askandwait */ null;
-    /* TODO: Implement sensing_askandwait */ null;
-    /* TODO: Implement sensing_askandwait */ null;
+    yield* this.askAndWait(5 + this.random(8 / 4, 10));
+    yield* this.askAndWait(0 - 0);
+    yield* this.askAndWait(0 * 0);
+    yield* this.askAndWait(0 / 0);
+    yield* this.askAndWait(0 < 50 && 0 > 50);
+    yield* this.askAndWait(0 == 50 || 0);
+    yield* this.askAndWait(!null);
+    yield* this.askAndWait(\\"\\" + \\"apple \\" + \\"apple\\"[1 - 1]);
+    yield* this.askAndWait(\\"apple\\".length);
+    yield* this.askAndWait(\\"apple\\".includes(\\"a\\"));
+    yield* this.askAndWait(12 % 7);
+    yield* this.askAndWait(Math.round(0));
+    yield* this.askAndWait(10 ** 15);
   }
 
   *blockNameLabelText(boolean, numberOrText) {
@@ -187,6 +187,12 @@ export default class Stage extends StageBase {
 ",
   "index.html": "<!DOCTYPE html>
 <html>
+  <head>
+    <link
+      rel=\\"stylesheet\\"
+      href=\\"https://pulljosh.github.io/scratch-js/scratch-js/index.css\\"
+    />
+  </head>
   <body>
     <button id=\\"greenFlag\\">Green Flag</button>
     <div id=\\"project\\"></div>

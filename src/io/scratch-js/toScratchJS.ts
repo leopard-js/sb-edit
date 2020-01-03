@@ -81,6 +81,7 @@ function camelCase(name: string, upper: boolean = false) {
 
 interface ToScratchJSOptions {
   scratchJSURL: string;
+  scratchJSCSSURL: string;
   getTargetURL: (info: { name: string; from: "index" | "target" }) => string;
   getAssetURL: (info: { type: "costume" | "sound"; target: string; name: string; md5: string; ext: string }) => string;
   indexURL: string;
@@ -94,6 +95,7 @@ export default function toScratchJS(
 
   const defaultOptions: ToScratchJSOptions = {
     scratchJSURL: "https://pulljosh.github.io/scratch-js/scratch-js/index.mjs",
+    scratchJSCSSURL: "https://pulljosh.github.io/scratch-js/scratch-js/index.css",
     getTargetURL: ({ name, from }) => {
       switch (from) {
         case "index":
@@ -178,7 +180,12 @@ export default function toScratchJS(
       "costumes",
       "size",
       "visible",
-      "penSize"
+      "penSize",
+      "askAndWait",
+      "answer",
+      "parent",
+      "clones",
+      "andClones"
     ]);
     for (const script of target.scripts) {
       script.setName(uniqueScriptName(camelCase(script.name)));
@@ -447,6 +454,10 @@ export default function toScratchJS(
               return `(Math.hypot(${sprite}.x - this.x, ${sprite}.y - this.y))`;
             }
           }
+        case OpCode.sensing_askandwait:
+          return `yield* this.askAndWait(${inputToJS(block.inputs.QUESTION)})`;
+        case OpCode.sensing_answer:
+          return `this.answer`;
         case OpCode.sensing_keypressed:
           const getKeyName = key => {
             return key.split(" ")[0];
@@ -707,6 +718,9 @@ export default function toScratchJS(
     "index.html": `
       <!DOCTYPE html>
       <html>
+        <head>
+          <link rel="stylesheet" href="${options.scratchJSCSSURL}" />
+        </head>
         <body>
           <button id="greenFlag">Green Flag</button>
           <div id="project"></div>
