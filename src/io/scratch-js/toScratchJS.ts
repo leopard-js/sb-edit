@@ -185,7 +185,9 @@ export default function toScratchJS(
       "answer",
       "parent",
       "clones",
-      "andClones"
+      "andClones",
+      "effects",
+      "rotationStyle"
     ]);
     for (const script of target.scripts) {
       script.setName(uniqueScriptName(camelCase(script.name)));
@@ -330,6 +332,16 @@ export default function toScratchJS(
           return `this.y += (${inputToJS(block.inputs.DY)})`;
         case OpCode.motion_sety:
           return `this.y = (${inputToJS(block.inputs.Y)})`;
+        case OpCode.motion_setrotationstyle:
+          switch (block.inputs.STYLE.value) {
+            case "left-right":
+              return `this.rotationStyle = Sprite.RotationStyle.LEFT_RIGHT`;
+            case "don't rotate":
+              return `this.rotationStyle = Sprite.RotationStyle.DONT_ROTATE`;
+            case "all around":
+              return `this.rotationStyle = Sprite.RotationStyle.ALL_AROUND`;
+          }
+          break;
         case OpCode.motion_xposition:
           return `this.x`;
         case OpCode.motion_yposition:
@@ -359,6 +371,16 @@ export default function toScratchJS(
           return `this.size += (${inputToJS(block.inputs.CHANGE)})`;
         case OpCode.looks_setsizeto:
           return `this.size = (${inputToJS(block.inputs.SIZE)})`;
+        case OpCode.looks_changeeffectby: {
+          const effectName = block.inputs.EFFECT.value.toLowerCase();
+          return `this.effects.${effectName} += ${inputToJS(block.inputs.CHANGE)}`;
+        }
+        case OpCode.looks_seteffectto: {
+          const effectName = block.inputs.EFFECT.value.toLowerCase();
+          return `this.effects.${effectName} = ${inputToJS(block.inputs.VALUE)}`;
+        }
+        case OpCode.looks_cleargraphiceffects:
+          return `this.effects.clear()`;
         case OpCode.looks_show:
           return `this.visible = true`;
         case OpCode.looks_hide:
@@ -443,8 +465,35 @@ export default function toScratchJS(
             default:
               return `this.touching(this.sprites[${JSON.stringify(
                 targetNameMap[block.inputs.TOUCHINGOBJECTMENU.value]
-              )}])`;
+              )}].andClones())`;
           }
+        case OpCode.sensing_touchingcolor:
+          if (block.inputs.COLOR.type === "color") {
+            const { r, g, b } = block.inputs.COLOR.value;
+            return `this.touching(Color.rgb(${r}, ${g}, ${b}))`;
+          } else {
+            return `this.touching(Color.num(${inputToJS(block.inputs.COLOR)}))`;
+          }
+        case OpCode.sensing_coloristouchingcolor: {
+          let color1: string;
+          let color2: string;
+
+          if (block.inputs.COLOR.type === "color") {
+            const { r, g, b } = block.inputs.COLOR.value;
+            color1 = `Color.rgb(${r}, ${g}, ${b})`;
+          } else {
+            color1 = `Color.num(${inputToJS(block.inputs.COLOR)})`;
+          }
+
+          if (block.inputs.COLOR2.type === "color") {
+            const { r, g, b } = block.inputs.COLOR2.value;
+            color2 = `Color.rgb(${r}, ${g}, ${b})`;
+          } else {
+            color2 = `Color.num(${inputToJS(block.inputs.COLOR2)})`;
+          }
+
+          return `this.colorTouching((${color1}), (${color2}))`;
+        }
         case OpCode.sensing_distanceto:
           switch (block.inputs.DISTANCETOMENU.value) {
             case "_mouse_":

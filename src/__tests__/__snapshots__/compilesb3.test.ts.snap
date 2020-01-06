@@ -46,7 +46,7 @@ export default class Abby extends Sprite {
     this.y += 10;
     this.y = -23;
     /* TODO: Implement motion_ifonedgebounce */ null;
-    /* TODO: Implement motion_setrotationstyle */ null;
+    this.rotationStyle = Sprite.RotationStyle.LEFT_RIGHT;
     this.createClone();
     this.deleteThisClone();
   }
@@ -93,9 +93,9 @@ export default class Stage extends StageBase {
     this.costume = \\"backdrop1\\";
     /* TODO: Implement looks_switchbackdroptoandwait */ null;
     this.costume += 1;
-    /* TODO: Implement looks_changeeffectby */ null;
-    /* TODO: Implement looks_seteffectto */ null;
-    /* TODO: Implement looks_cleargraphiceffects */ null;
+    this.effects.color += this.costumeNumber;
+    this.effects.color = this.costume.name;
+    this.effects.clear();
   }
 
   *whenKeySpacePressed() {
