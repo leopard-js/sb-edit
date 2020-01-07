@@ -452,6 +452,8 @@ export default function toScratchJS(
             ${inputToJS(block.inputs.SUBSTACK)}
             ${warp ? "" : "yield;"}
           }`;
+        case OpCode.control_all_at_once:
+          return inputToJS(block.inputs.SUBSTACK);
         case OpCode.control_stop:
           switch (block.inputs.STOP_OPTION.value) {
             case "this script":
