@@ -266,6 +266,7 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
         [OpCode.event_whenbroadcastreceived]: { BROADCAST_OPTION: "broadcast" },
         [OpCode.control_stop]: { STOP_OPTION: "stopMenu" },
         [OpCode.control_create_clone_of_menu]: { CLONE_OPTION: "cloneTarget" },
+        [OpCode.control_for_each]: { VARIABLE: "variable" },
         [OpCode.sensing_touchingobjectmenu]: { TOUCHINGOBJECTMENU: "touchingTarget" },
         [OpCode.sensing_distancetomenu]: { DISTANCETOMENU: "distanceToMenu" },
         [OpCode.sensing_keyoptions]: { KEY_OPTION: "key" },

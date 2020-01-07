@@ -439,7 +439,12 @@ export default function toScratchJS(
           return `while (!(${inputToJS(block.inputs.CONDITION)})) { yield; }`;
         case OpCode.control_repeat_until:
           return `while (!(${inputToJS(block.inputs.CONDITION)})) {
-            ${inputToJS(block.inputs.SUBSTACK)};
+            ${inputToJS(block.inputs.SUBSTACK)}
+            ${warp ? "" : "yield;"}
+          }`;
+        case OpCode.control_for_each:
+          return `for (${selectedVarSource} = 1; ${selectedVarSource} <= (${inputToJS(block.inputs.VALUE)}); ${selectedVarSource}++) {
+            ${inputToJS(block.inputs.SUBSTACK)}
             ${warp ? "" : "yield;"}
           }`;
         case OpCode.control_stop:
