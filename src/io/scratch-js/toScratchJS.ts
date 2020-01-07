@@ -438,7 +438,7 @@ export default function toScratchJS(
         case OpCode.control_wait_until:
           return `while (!(${inputToJS(block.inputs.CONDITION)})) { yield; }`;
         case OpCode.control_repeat_until:
-          return `while(!(${inputToJS(block.inputs.CONDITION)})) {
+          return `while (!(${inputToJS(block.inputs.CONDITION)})) {
             ${inputToJS(block.inputs.SUBSTACK)};
             ${warp ? "" : "yield;"}
           }`;
@@ -776,9 +776,9 @@ export default function toScratchJS(
 
           <script type="module">
             import project from ${JSON.stringify(options.indexURL)};
-      
+
             project.attach("#project");
-      
+
             document
               .querySelector("#greenFlag")
               .addEventListener("click", () => {
