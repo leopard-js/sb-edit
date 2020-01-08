@@ -393,6 +393,11 @@ export default function toScratchJS(
           return `this.visible = true`;
         case OpCode.looks_hide:
           return `this.visible = false`;
+        // Obsolete no-op blocks:
+        case OpCode.looks_hideallsprites:
+        case OpCode.looks_changestretchby:
+        case OpCode.looks_setstretchto:
+          return ``;
         case OpCode.looks_costumenumbername:
           switch (block.inputs.NUMBER_NAME.value) {
             case "name":
@@ -617,6 +622,8 @@ export default function toScratchJS(
           return `(((new Date().getTime() - new Date(2000, 0, 1)) / 1000 / 60 + new Date().getTimezoneOffset()) / 60 / 24)`;
         case OpCode.sensing_username:
           return `(/* no username */ "")`;
+        case OpCode.sensing_userid:
+          return `undefined`; // Obsolete no-op block.
         case OpCode.operator_add:
           return `((${inputToJS(block.inputs.NUM1)}) + (${inputToJS(block.inputs.NUM2)}))`;
         case OpCode.operator_subtract:
