@@ -348,6 +348,14 @@ export default function toScratchJS(
           return `this.y`;
         case OpCode.motion_direction:
           return `this.direction`;
+        // Obsolete no-op blocks:
+        case OpCode.motion_scroll_right:
+        case OpCode.motion_scroll_up:
+        case OpCode.motion_align_scene:
+          return ``;
+        case OpCode.motion_xscroll:
+        case OpCode.motion_yscroll:
+          return `undefined`; // Compatibility with Scratch 3.0 \:)/
         case OpCode.looks_sayforsecs:
           return `yield* this.sayAndWait((${inputToJS(block.inputs.MESSAGE)}), (${inputToJS(block.inputs.SECS)}))`;
         case OpCode.looks_say:
