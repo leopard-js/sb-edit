@@ -484,11 +484,11 @@ export default function toScratchJS(
         case OpCode.control_delete_this_clone:
           return `this.deleteThisClone()`;
         case OpCode.control_get_counter:
-          return `${stage}.counter`;
+          return `${stage}.__counter`;
         case OpCode.control_incr_counter:
-          return `${stage}.counter++`;
+          return `${stage}.__counter++`;
         case OpCode.control_clear_counter:
-          return `${stage}.counter = 0`;
+          return `${stage}.__counter = 0`;
         case OpCode.sensing_touchingobject:
           switch (block.inputs.TOUCHINGOBJECTMENU.value) {
             case "_mouse_":
