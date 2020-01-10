@@ -3,6 +3,7 @@ import { Sprite, Stage } from "./Target";
 import fromSb3, { fromSb3JSON } from "./io/sb3/fromSb3";
 import toSb3 from "./io/sb3/toSb3";
 import toScratchJS from "./io/scratch-js/toScratchJS";
+import toScratchblocks from "./io/scratchblocks/toScratchblocks";
 
 type TextToSpeechLanguage =
   | "ar"
@@ -34,6 +35,7 @@ export default class Project {
   public static fromSb3JSON = fromSb3JSON;
 
   public toScratchJS: typeof toScratchJS = toScratchJS.bind(this);
+  public toScratchblocks: typeof toScratchblocks = toScratchblocks.bind(this);
 
   public stage: Stage = new Stage();
   public sprites: Sprite[] = [];
