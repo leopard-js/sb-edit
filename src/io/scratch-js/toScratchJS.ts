@@ -461,7 +461,9 @@ export default function toScratchJS(
             ${warp ? "" : "yield;"}
           }`;
         case OpCode.control_for_each:
-          return `for (${selectedVarSource} = 1; ${selectedVarSource} <= (${inputToJS(block.inputs.VALUE)}); ${selectedVarSource}++) {
+          return `for (${selectedVarSource} = 1; ${selectedVarSource} <= (${inputToJS(
+            block.inputs.VALUE
+          )}); ${selectedVarSource}++) {
             ${inputToJS(block.inputs.SUBSTACK)}
             ${warp ? "" : "yield;"}
           }`;
