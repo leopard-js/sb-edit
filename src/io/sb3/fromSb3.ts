@@ -249,7 +249,7 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
         [OpCode.motion_pointtowards_menu]: { TOWARDS: "pointTowardsTarget" },
         [OpCode.motion_glideto_menu]: { TO: "goToTarget" },
         [OpCode.motion_goto_menu]: { TO: "goToTarget" },
-        [OpCode.motion_align_scene]: { ALIGNMENT: "string" }, // obsolete no-op so the value really doesn't matter
+        [OpCode.motion_align_scene]: { ALIGNMENT: "scrollAlignment" },
         [OpCode.looks_costume]: { COSTUME: "costume" },
         [OpCode.looks_gotofrontback]: { FRONT_BACK: "frontBackMenu" },
         [OpCode.looks_goforwardbackwardlayers]: { FORWARD_BACKWARD: "forwardBackwardMenu" },

@@ -99,6 +99,12 @@ export interface RotationStyle extends Base {
   value: string;
 }
 
+// Deprecated field for "align scene" block.
+export interface ScrollAlignment extends Base {
+  type: "scrollAlignment";
+  value: string;
+}
+
 export interface PenColorParam extends Base {
   type: "penColorParam";
   value: string;
@@ -254,6 +260,7 @@ export type FieldAny =
   | GoToTarget
   | PointTowardsTarget
   | RotationStyle
+  | ScrollAlignment
   | PenColorParam
   | Key
   | GreaterThanMenu
