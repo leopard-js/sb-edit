@@ -189,8 +189,8 @@ export enum OpCode {
   control_incr_counter = "control_incr_counter",
   control_clear_counter = "control_clear_counter",
   control_all_at_once = "control_all_at_once",
-  sensing_userid = "sensing_userid",
 
+  sensing_userid = "sensing_userid",
   sensing_loud = "sensing_loud",
 
   music_midiPlayDrumForBeats = "music_midiPlayDrumForBeats",
@@ -222,5 +222,17 @@ export enum OpCode {
   sensing_keyoptions = "sensing_keyoptions",
   sensing_of_object_menu = "sensing_of_object_menu",
 
-  pen_menu_colorParam = "pen_menu_colorParam"
+  pen_menu_colorParam = "pen_menu_colorParam",
+
+  music_menu_DRUM = "music_menu_DRUM",
+  music_menu_INSTRUMENT = "music_menu_INSTRUMENT",
+
+  videoSensing_menu_ATTRIBUTE = "videoSensing_menu_ATTRIBUTE",
+  videoSensing_menu_SUBJECT = "videoSensing_menu_SUBJECT",
+  videoSensing_menu_VIDEO_STATE = "videoSensing_menu_VIDEO_STATE",
+
+  wedo2_menu_MOTOR_ID = "wedo2_menu_MOTOR_ID",
+  wedo2_menu_MOTOR_DIRECTION = "wedo2_MOTOR_DIRECTION",
+  wedo2_menu_TILT_DIRECTION = "wedo2_TILT_DIRECTION",
+  wedo2_menu_TILT_DIRECTION_ANY = "wedo2_TILT_DIRECTION_ANY"
 }

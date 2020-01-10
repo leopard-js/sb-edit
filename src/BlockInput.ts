@@ -104,6 +104,52 @@ export interface PenColorParam extends Base {
   value: string;
 }
 
+export interface MusicDrum extends Base {
+  type: "musicDrum";
+  value: string;
+}
+
+export interface MusicInstrument extends Base {
+  type: "musicInstrument";
+  // There's technically only specific values this menu can take, but there's so many choices it doesn't seem reasonable to copy them all here.
+  value: string;
+}
+
+export interface VideoSensingAttribute extends Base {
+  type: "videoSensingAttribute";
+  value: "motion" | "direction";
+}
+
+export interface VideoSensingSubject extends Base {
+  type: "videoSensingSubject";
+  value: "Stage" | "this sprite";
+}
+
+export interface VideoSensingVideoState extends Base {
+  type: "videoSensingVideoState";
+  value: "off" | "on" | "on-flipped";
+}
+
+export interface WeDo2MotorId extends Base {
+  type: "wedo2MotorId";
+  value: "motor" | "motor A" | "motor B" | "all motors";
+}
+
+export interface WeDo2MotorDirection extends Base {
+  type: "wedo2MotorDirection";
+  value: "this way" | "that way" | "reverse";
+}
+
+export interface WeDo2TiltDirection extends Base {
+  type: "wedo2TiltDirection";
+  value: "up" | "down" | "left" | "right";
+}
+
+export interface WeDo2TiltDirectionAny extends Base {
+  type: "wedo2TiltDirectionAny";
+  value: "up" | "down" | "left" | "right" | "any";
+}
+
 export interface Key extends Base {
   type: "key";
   value:
@@ -255,6 +301,15 @@ export type FieldAny =
   | PointTowardsTarget
   | RotationStyle
   | PenColorParam
+  | MusicDrum
+  | MusicInstrument
+  | VideoSensingAttribute
+  | VideoSensingSubject
+  | VideoSensingVideoState
+  | WeDo2MotorId
+  | WeDo2MotorDirection
+  | WeDo2TiltDirection
+  | WeDo2TiltDirectionAny
   | Key
   | GreaterThanMenu
   | StopMenu
