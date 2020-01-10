@@ -295,7 +295,16 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
         [OpCode.data_hidelist]: { LIST: "list" },
         [OpCode.argument_reporter_string_number]: { VALUE: "string" },
         [OpCode.argument_reporter_boolean]: { VALUE: "string" },
-        [OpCode.pen_menu_colorParam]: { colorParam: "penColorParam" }
+        [OpCode.pen_menu_colorParam]: { colorParam: "penColorParam" },
+        [OpCode.music_menu_DRUM]: { DRUM: "musicDrum" },
+        [OpCode.music_menu_INSTRUMENT]: { INSTRUMENT: "musicInstrument" },
+        [OpCode.videoSensing_menu_ATTRIBUTE]: { ATTRIBUTE: "videoSensingAttribute" },
+        [OpCode.videoSensing_menu_SUBJECT]: { SUBJECT: "videoSensingSubject" },
+        [OpCode.videoSensing_menu_VIDEO_STATE]: { VIDEO_STATE: "videoSensingVideoState" },
+        [OpCode.wedo2_menu_MOTOR_ID]: { MOTOR_ID: "wedo2MotorId" },
+        [OpCode.wedo2_menu_MOTOR_DIRECTION]: { MOTOR_DIRECTION: "wedo2MotorDirection" },
+        [OpCode.wedo2_menu_TILT_DIRECTION]: { TILT_DIRECTION: "wedo2TiltDirection" },
+        [OpCode.wedo2_menu_TILT_DIRECTION_ANY]: { TILT_DIRECTION_ANY: "wedo2TiltDirectionAny" }
       };
 
       let result = {};
