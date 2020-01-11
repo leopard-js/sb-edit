@@ -348,6 +348,14 @@ export default function toScratchJS(
           return `this.y`;
         case OpCode.motion_direction:
           return `this.direction`;
+        // Obsolete no-op blocks:
+        case OpCode.motion_scroll_right:
+        case OpCode.motion_scroll_up:
+        case OpCode.motion_align_scene:
+          return ``;
+        case OpCode.motion_xscroll:
+        case OpCode.motion_yscroll:
+          return `undefined`; // Compatibility with Scratch 3.0 \:)/
         case OpCode.looks_sayforsecs:
           return `yield* this.sayAndWait((${inputToJS(block.inputs.MESSAGE)}), (${inputToJS(block.inputs.SECS)}))`;
         case OpCode.looks_say:
@@ -385,6 +393,11 @@ export default function toScratchJS(
           return `this.visible = true`;
         case OpCode.looks_hide:
           return `this.visible = false`;
+        // Obsolete no-op blocks:
+        case OpCode.looks_hideallsprites:
+        case OpCode.looks_changestretchby:
+        case OpCode.looks_setstretchto:
+          return ``;
         case OpCode.looks_costumenumbername:
           switch (block.inputs.NUMBER_NAME.value) {
             case "name":
@@ -438,10 +451,24 @@ export default function toScratchJS(
         case OpCode.control_wait_until:
           return `while (!(${inputToJS(block.inputs.CONDITION)})) { yield; }`;
         case OpCode.control_repeat_until:
-          return `while(!(${inputToJS(block.inputs.CONDITION)})) {
-            ${inputToJS(block.inputs.SUBSTACK)};
+          return `while (!(${inputToJS(block.inputs.CONDITION)})) {
+            ${inputToJS(block.inputs.SUBSTACK)}
             ${warp ? "" : "yield;"}
           }`;
+        case OpCode.control_while:
+          return `while (${inputToJS(block.inputs.CONDITION)}) {
+            ${inputToJS(block.inputs.SUBSTACK)}
+            ${warp ? "" : "yield;"}
+          }`;
+        case OpCode.control_for_each:
+          return `for (${selectedVarSource} = 1; ${selectedVarSource} <= (${inputToJS(
+            block.inputs.VALUE
+          )}); ${selectedVarSource}++) {
+            ${inputToJS(block.inputs.SUBSTACK)}
+            ${warp ? "" : "yield;"}
+          }`;
+        case OpCode.control_all_at_once:
+          return inputToJS(block.inputs.SUBSTACK);
         case OpCode.control_stop:
           switch (block.inputs.STOP_OPTION.value) {
             case "this script":
@@ -458,6 +485,12 @@ export default function toScratchJS(
           }
         case OpCode.control_delete_this_clone:
           return `this.deleteThisClone()`;
+        case OpCode.control_get_counter:
+          return `${stage}.__counter`;
+        case OpCode.control_incr_counter:
+          return `${stage}.__counter++`;
+        case OpCode.control_clear_counter:
+          return `${stage}.__counter = 0`;
         case OpCode.sensing_touchingobject:
           switch (block.inputs.TOUCHINGOBJECTMENU.value) {
             case "_mouse_":
@@ -591,6 +624,8 @@ export default function toScratchJS(
           return `(((new Date().getTime() - new Date(2000, 0, 1)) / 1000 / 60 + new Date().getTimezoneOffset()) / 60 / 24)`;
         case OpCode.sensing_username:
           return `(/* no username */ "")`;
+        case OpCode.sensing_userid:
+          return `undefined`; // Obsolete no-op block.
         case OpCode.operator_add:
           return `((${inputToJS(block.inputs.NUM1)}) + (${inputToJS(block.inputs.NUM2)}))`;
         case OpCode.operator_subtract:
@@ -776,9 +811,9 @@ export default function toScratchJS(
 
           <script type="module">
             import project from ${JSON.stringify(options.indexURL)};
-      
+
             project.attach("#project");
-      
+
             document
               .querySelector("#greenFlag")
               .addEventListener("click", () => {

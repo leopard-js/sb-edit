@@ -137,6 +137,12 @@ export type KnownBlock =
   | BlockBase<OpCode.control_start_as_clone, {}>
   | BlockBase<OpCode.control_create_clone_of, { CLONE_OPTION: BlockInput.CloneTarget }>
   | BlockBase<OpCode.control_delete_this_clone, {}>
+  | BlockBase<OpCode.control_all_at_once, { SUBSTACK: BlockInput.Blocks }>
+  | BlockBase<
+      OpCode.control_for_each,
+      { VARIABLE: BlockInput.Variable; VALUE: BlockInput.Number; SUBSTACK: BlockInput.Blocks }
+    >
+  | BlockBase<OpCode.control_while, { CONDITION: BlockInput.Boolean; SUBSTACK: BlockInput.Blocks }>
 
   // Sensing
   | BlockBase<OpCode.sensing_touchingobject, { TOUCHINGOBJECTMENU: BlockInput.TouchingTarget }>
