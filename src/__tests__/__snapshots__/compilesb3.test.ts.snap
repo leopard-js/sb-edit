@@ -77,6 +77,7 @@ export default class Stage extends StageBase {
         { key: \\"space\\" },
         this.whenKeySpacePressed
       ),
+      new Trigger(Trigger.CLICKED, this.whenstageclicked),
       new Trigger(
         Trigger.BROADCAST,
         { name: \\"message1\\" },
@@ -107,6 +108,28 @@ export default class Stage extends StageBase {
     /* TODO: Implement sound_cleareffects */ null;
     /* TODO: Implement sound_changevolumeby */ null;
     /* TODO: Implement sound_setvolumeto */ null;
+  }
+
+  *whenstageclicked() {
+    yield* this.askAndWait(\\"What's your name?\\");
+    yield* this.askAndWait(this.answer);
+    yield* this.askAndWait(this.keyPressed(\\"space\\"));
+    yield* this.askAndWait(this.mouse.down);
+    yield* this.askAndWait(this.mouse.x);
+    yield* this.askAndWait(this.mouse.y);
+    yield* this.askAndWait(/* TODO: Implement sensing_loudness */ null);
+    yield* this.askAndWait(this.timer);
+    yield* this.askAndWait(this.stage.costumeNumber);
+    yield* this.askAndWait(this.stage.vars[\\"CloudVar\\"]);
+    yield* this.askAndWait(new Date().getDay() + 1);
+    yield* this.askAndWait(
+      ((new Date().getTime() - new Date(2000, 0, 1)) / 1000 / 60 +
+        new Date().getTimezoneOffset()) /
+        60 /
+        24
+    );
+    yield* this.askAndWait(/* no username */ \\"\\");
+    this.restartTimer();
   }
 
   *whenbackdropswitchesto() {

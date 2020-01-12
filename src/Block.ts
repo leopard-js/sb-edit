@@ -38,6 +38,7 @@ export class BlockBase<MyOpCode extends OpCode, MyInputs extends { [key: string]
       OpCode.event_whenflagclicked,
       OpCode.event_whenkeypressed,
       OpCode.event_whenthisspriteclicked,
+      OpCode.event_whenstageclicked,
       OpCode.event_whenbackdropswitchesto,
       OpCode.event_whengreaterthan,
       OpCode.event_whenbroadcastreceived,
@@ -113,6 +114,7 @@ export type KnownBlock =
   | BlockBase<OpCode.event_whenflagclicked, {}>
   | BlockBase<OpCode.event_whenkeypressed, { KEY_OPTION: BlockInput.Key }>
   | BlockBase<OpCode.event_whenthisspriteclicked, {}>
+  | BlockBase<OpCode.event_whenstageclicked, {}>
   | BlockBase<OpCode.event_whenbackdropswitchesto, { BACKDROP: BlockInput.Backdrop }>
   | BlockBase<
       OpCode.event_whengreaterthan,

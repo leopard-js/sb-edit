@@ -23,6 +23,7 @@ function triggerInitCode(script: Script) {
     case OpCode.event_whenkeypressed:
       return triggerInitStr("KEY_PRESSED", { key: hat.inputs.KEY_OPTION.value });
     case OpCode.event_whenthisspriteclicked:
+    case OpCode.event_whenstageclicked:
       return triggerInitStr("CLICKED");
     case OpCode.event_whenbroadcastreceived:
       return triggerInitStr("BROADCAST", { name: hat.inputs.BROADCAST_OPTION.value });

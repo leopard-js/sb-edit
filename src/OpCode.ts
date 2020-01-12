@@ -55,6 +55,7 @@ export enum OpCode {
   event_whenflagclicked = "event_whenflagclicked",
   event_whenkeypressed = "event_whenkeypressed",
   event_whenthisspriteclicked = "event_whenthisspriteclicked",
+  event_whenstageclicked = "event_whenstageclicked",
   event_whenbackdropswitchesto = "event_whenbackdropswitchesto",
   event_whengreaterthan = "event_whengreaterthan",
   event_whenbroadcastreceived = "event_whenbroadcastreceived",
