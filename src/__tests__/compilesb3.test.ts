@@ -9,3 +9,10 @@ test("sb3 -> scratch-js", async () => {
 
   expect(project.toScratchJS()).toMatchSnapshot();
 });
+
+test("sb3 -> scratchblocks", async () => {
+  const file = fs.readFileSync(path.join(__dirname, "test.sb3"));
+  const project = await Project.fromSb3(file);
+
+  expect(project.toScratchblocks()).toMatchSnapshot();
+});
