@@ -31,7 +31,7 @@ export default function toScratchblocks(
       return "";
     }
 
-    const escape = (value: string): string => value.replace(/[()\[\]]|v$/g, m => "\\" + m);
+    const escape = (value: string): string => (value || "").replace(/[()\[\]]|v$/g, m => "\\" + m);
 
     switch (inp.type) {
       case "number":
@@ -46,6 +46,7 @@ export default function toScratchblocks(
       case "graphicEffect":
       case "rotationStyle":
       case "scrollAlignment":
+      case "soundEffect":
       case "greaterThanMenu":
       case "stopMenu":
       case "dragModeMenu":
@@ -241,6 +242,8 @@ export default function toScratchblocks(
         return `when ${i("KEY_OPTION", true)} key pressed`;
       case OpCode.event_whenthisspriteclicked:
         return "when this sprite clicked";
+      case OpCode.event_whenstageclicked:
+        return "when stage clicked";
       case OpCode.event_whenbackdropswitchesto:
         return `when backdrop switches to ${i("BACKDROP", true)}`;
       case OpCode.event_whengreaterthan:
@@ -513,6 +516,30 @@ export default function toScratchblocks(
       case OpCode.videoSensing_setVideoTransparency:
         return `set video transparency to ${i("TRANSPARENCY")}`;
 
+        // leftover menu "blocks" ----------------------------------- //
+      case OpCode.motion_pointtowards_menu:
+      case OpCode.motion_glideto_menu:
+      case OpCode.motion_goto_menu:
+      case OpCode.looks_costume:
+      case OpCode.looks_backdrops:
+      case OpCode.sound_sounds_menu:
+      case OpCode.control_create_clone_of_menu:
+      case OpCode.sensing_touchingobjectmenu:
+      case OpCode.sensing_distancetomenu:
+      case OpCode.sensing_keyoptions:
+      case OpCode.sensing_of_object_menu:
+      case OpCode.pen_menu_colorParam:
+      case OpCode.music_menu_DRUM:
+      case OpCode.music_menu_INSTRUMENT:
+      case OpCode.videoSensing_menu_ATTRIBUTE:
+      case OpCode.videoSensing_menu_SUBJECT:
+      case OpCode.videoSensing_menu_VIDEO_STATE:
+      case OpCode.wedo2_menu_MOTOR_ID:
+      case OpCode.wedo2_menu_MOTOR_DIRECTION:
+      case OpCode.wedo2_menu_TILT_DIRECTION:
+      case OpCode.wedo2_menu_TILT_DIRECTION_ANY:
+        return "";
+
       default:
         return `unknown block [${block.opcode}] \\(${Object.keys(block.inputs)
           .map(k => `[${k}]`)
@@ -531,7 +558,10 @@ export default function toScratchblocks(
   const targets: { [targetName: string]: string } = {};
 
   for (const target of [project.stage, ...project.sprites]) {
-    targets[target.name] = target.scripts.map(script => scriptToScratchblocks(script, target)).join("\n\n");
+    targets[target.name] = target.scripts
+      .map(script => scriptToScratchblocks(script, target))
+      .filter(scratchblocks => scratchblocks.length > 0)
+      .join("\n\n");
   }
 
   return targets;
