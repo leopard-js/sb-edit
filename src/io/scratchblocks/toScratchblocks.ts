@@ -303,7 +303,7 @@ export default function toScratchblocks(
       case OpCode.sensing_touchingcolor:
         return `<touching ${i("COLOR")} ?>`;
       case OpCode.sensing_coloristouchingcolor:
-        return `<${i("COLOR")} is touching ${i("COLOR2")} ?>`;
+        return `<color ${i("COLOR")} is touching ${i("COLOR2")} ?>`;
       case OpCode.sensing_distanceto:
         return `(distance to ${i("DISTANCETOMENU")})`;
       case OpCode.sensing_askandwait:
