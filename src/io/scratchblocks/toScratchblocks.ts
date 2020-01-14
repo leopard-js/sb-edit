@@ -74,6 +74,7 @@ export default function toScratchblocks(
       case "pointTowardsTarget":
       case "cloneTarget":
       case "distanceToMenu":
+      case "touchingTarget":
       case "target": {
         const value = {
           "_mouse_": "mouse-pointer",
@@ -86,17 +87,12 @@ export default function toScratchblocks(
 
       case "costume":
       case "sound":
-      case "goToTarget":
-      case "pointTowardsTarget":
       case "penColorParam":
       case "musicDrum":
       case "musicInstrument":
       case "videoSensingAttribute":
       case "videoSensingSubject":
       case "videoSensingVideoState":
-      case "target":
-      case "cloneTarget":
-      case "touchingTarget":
         return `(${escape(inp.value)} v)`;
 
       case "broadcast":
