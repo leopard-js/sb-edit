@@ -47,17 +47,23 @@ export default function toScratchblocks(
       case "string":
         return `[${escape(inp.value)}]`;
 
+      case "graphicEffect":
+      case "soundEffect":
+      case "currentMenu":
+      case "greaterThanMenu":
+        const value = {
+          "PAN": "pan left/right",
+          "DAYOFWEEK": "day of week"
+        }[inp.value] || inp.value.toLowerCase();
+        return `[${escape(value)} v]`;
+
       case "variable":
       case "list":
-      case "graphicEffect":
       case "rotationStyle":
       case "scrollAlignment":
-      case "soundEffect":
-      case "greaterThanMenu":
       case "stopMenu":
       case "dragModeMenu":
       case "propertyOfMenu":
-      case "currentMenu":
       case "mathopMenu":
       case "frontBackMenu":
       case "forwardBackwardMenu":
@@ -66,11 +72,14 @@ export default function toScratchblocks(
 
       case "goToTarget":
       case "pointTowardsTarget":
-      case "cloneTarget": {
+      case "cloneTarget":
+      case "distanceToMenu":
+      case "target": {
         const value = {
           "_mouse_": "mouse-pointer",
+          "_myself_": "myself",
           "_random_": "random position",
-          "_myself_": "myself"
+          "_stage_": "Stage"
         }[inp.value] || inp.value;
         return `(${escape(value)} v)`;
       }
@@ -88,7 +97,6 @@ export default function toScratchblocks(
       case "target":
       case "cloneTarget":
       case "touchingTarget":
-      case "distanceToMenu":
         return `(${escape(inp.value)} v)`;
 
       case "broadcast":
