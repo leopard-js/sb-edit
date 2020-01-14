@@ -109,7 +109,7 @@ export default function toScratchblocks(
           return "\n" + indent(blockToScratchblocks(inp.value, target)) + "\n";
         } else {
           const ret: string = blockToScratchblocks(inp.value, target);
-          if (ret[0] === "(") {
+          if (ret[0] === "(" || ret[0] === "<") {
             return ret;
           } else {
             return "(" + ret + ")";
