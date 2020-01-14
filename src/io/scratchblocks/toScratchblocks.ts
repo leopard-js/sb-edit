@@ -131,7 +131,13 @@ export default function toScratchblocks(
 
     const i = (key: string, ...args): string => input(block.inputs[key], target, ...args);
     const operator = (op: string): string => `(${i("NUM1")} ${op} ${i("NUM2")})`;
-    const boolop = (op: string): string => `<${i("OPERAND1")} ${op} ${i("OPERAND2")}>`;
+    const boolop = (op: string, flag: boolean = false): string => {
+      if (flag) {
+        return `<${i("OPERAND1") || "<>"} ${op} ${i("OPERAND2") || "<>"}>`;
+      } else {
+        return `<${i("OPERAND1")} ${op} ${i("OPERAND2")}>`;
+      }
+    };
 
     switch (block.opcode) {
       // motion ------------------------------------------------------ //
@@ -374,9 +380,9 @@ export default function toScratchblocks(
       case OpCode.operator_equals:
         return boolop("=");
       case OpCode.operator_and:
-        return boolop("and");
+        return boolop("and", true);
       case OpCode.operator_or:
-        return boolop("or");
+        return boolop("or", true);
       case OpCode.operator_not:
         return `<not ${i("OPERAND") || "<>"}>`;
       case OpCode.operator_join:
