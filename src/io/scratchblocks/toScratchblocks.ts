@@ -266,7 +266,7 @@ export default function toScratchblocks(
       case OpCode.event_whenthisspriteclicked:
         return "when this sprite clicked";
       case OpCode.event_whenstageclicked:
-        return "when stage clicked";
+        return "when stage clicked :: control hat";
       case OpCode.event_whenbackdropswitchesto:
         return `when backdrop switches to ${i("BACKDROP", true)}`;
       case OpCode.event_whengreaterthan:
