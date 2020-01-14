@@ -125,23 +125,11 @@ export default function toScratchJS(
   let targetNameMap = {};
   let customBlockArgNameMap: Map<Script, { [key: string]: string }> = new Map();
   let variableNameMap: Map<Target, { [key: string]: string }> = new Map();
-  let costumeNameMap: Map<Target, { [key: string]: string }> = new Map();
 
   for (const target of [project.stage, ...project.sprites]) {
     const newTargetName = uniqueName(camelCase(target.name, true));
     targetNameMap[target.name] = newTargetName;
     target.setName(newTargetName);
-
-    const uniqueCostumeName = uniqueNameGenerator();
-
-    const cNameMap = {};
-    costumeNameMap.set(target, cNameMap);
-
-    for (const costume of target.costumes) {
-      const newName = uniqueCostumeName(camelCase(costume.name));
-      cNameMap[costume.name] = newName;
-      costume.setName(newName);
-    }
 
     const uniqueSoundName = uniqueNameGenerator();
     for (const sound of target.sounds) {
@@ -366,16 +354,13 @@ export default function toScratchJS(
         case OpCode.looks_think:
           return `this.think(${inputToJS(block.inputs.MESSAGE)})`;
         case OpCode.looks_switchcostumeto:
-          return `this.costume = (${JSON.stringify(costumeNameMap.get(target)[block.inputs.COSTUME.value])})`;
+          return `this.costume = (${inputToJS(block.inputs.COSTUME)})`;
         case OpCode.looks_nextcostume:
           return `this.costumeNumber += 1`;
         case OpCode.looks_switchbackdropto:
-          // TODO: Next backdrop, previous backdrop, etc...
-          return `${stage}.costume = (${JSON.stringify(
-            costumeNameMap.get(project.stage)[block.inputs.BACKDROP.value]
-          )})`;
+          return `${stage}.costume = (${inputToJS(block.inputs.BACKDROP)})`;
         case OpCode.looks_nextbackdrop:
-          return `${stage}.costume += 1`;
+          return `${stage}.costumeNumber += 1`;
         case OpCode.looks_changesizeby:
           return `this.size += (${inputToJS(block.inputs.CHANGE)})`;
         case OpCode.looks_setsizeto:
