@@ -35,6 +35,12 @@ export default function toScratchblocks(
 
     switch (inp.type) {
       case "number":
+        if (typeof inp.value === "number") {
+          return `(${inp.value})`;
+        } else {
+          return `[${escape(inp.value)}]`;
+        }
+
       case "angle":
         return `(${inp.value})`;
 
