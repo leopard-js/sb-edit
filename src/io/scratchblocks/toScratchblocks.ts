@@ -58,6 +58,17 @@ export default function toScratchblocks(
       case "costumeNumberName":
         return `[${escape(inp.value)} v]`;
 
+      case "goToTarget":
+      case "pointTowardsTarget":
+      case "cloneTarget": {
+        const value = {
+          "_mouse_": "mouse-pointer",
+          "_random_": "random position",
+          "_myself_": "myself"
+        }[inp.value] || inp.value;
+        return `(${escape(value)} v)`;
+      }
+
       case "costume":
       case "sound":
       case "goToTarget":
