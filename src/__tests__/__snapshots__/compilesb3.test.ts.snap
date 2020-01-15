@@ -263,9 +263,9 @@ exports[`sb3 -> scratchblocks 1`] = `
 Object {
   "Abby": "<touching [#859dde] ?>
 
-<[#ee9128] is touching [#935b58] ?>
+<color [#ee9128] is touching [#935b58] ?>
 
-(distance to (_mouse_ v))
+(distance to (mouse-pointer v))
 
 set drag mode [not draggable v]
 
@@ -275,50 +275,50 @@ move (10) steps
 when [any v] key pressed
 turn cw (costume [number v]) degrees
 turn ccw (15) degrees
-go to (_random_ v)
+go to (random position v)
 go to x: (y position) y: (-23)
-glide (1) secs to (_mouse_ v)
+glide (1) secs to (mouse-pointer v)
 glide (1) secs to x: (-36) y: (x position)
 point in direction (90)
-point towards (_mouse_ v)
+point towards (mouse-pointer v)
 change x by (direction)
 set x to (-36)
 change y by (10)
 set y to (-23)
 if on edge, bounce
 set rotation style [left-right v]
-create clone of (_myself_ v)
+create clone of (myself v)
 delete this clone",
   "Stage": "when green flag clicked
 switch backdrop to (backdrop1 v)
 switch backdrop to (next backdrop v) and wait
 next backdrop
-change [COLOR v] effect by (backdrop [number v]) :: looks
-set [COLOR v] effect to (backdrop [name v]) :: looks
+change [color v] effect by (backdrop [number v]) :: looks
+set [color v] effect to (backdrop [name v]) :: looks
 clear graphic effects
 
 when [space v] key pressed
 play sound (pop v) until done
 start sound (pop v)
 stop all sounds
-change [PAN v] effect by (10) :: sound
-set [PAN v] effect to (volume) :: sound
+change [pan left/right v] effect by (10) :: sound
+set [pan left/right v] effect to (volume) :: sound
 clear sound effects
 change volume by (-10)
 set volume to (100) %
 
-when stage clicked
+when stage clicked :: control hat
 ask [What's your name?] and wait
 ask (answer) and wait
-ask (<key (space v) pressed?>) and wait
-ask (<mouse down?>) and wait
+ask <key (space v) pressed?> and wait
+ask <mouse down?> and wait
 ask (mouse x) and wait
 ask (mouse y) and wait
 ask (loudness) and wait
 ask (timer) and wait
-ask ([backdrop # v] of (_stage_ v)) and wait
-ask ([☁ cloud var v] of (_stage_ v)) and wait
-ask (current [DAYOFWEEK v]) and wait
+ask ([backdrop # v] of (Stage v)) and wait
+ask ([☁ cloud var v] of (Stage v)) and wait
+ask (current [day of week v]) and wait
 ask (days since 2000) and wait
 ask (username) and wait
 reset timer
@@ -328,8 +328,8 @@ wait (1) seconds
 wait until <>
 create clone of ( v)
 repeat (10)
-	repeat until (<key (space v) pressed?>)
-		if (<mouse down?>) then
+	repeat until <key (space v) pressed?>
+		if <mouse down?> then
 			if <> then
 			else
 			end
@@ -340,14 +340,14 @@ end
 forever
 end
 
-when [LOUDNESS v] > (10)
+when [loudness v] > (10)
 set [☁ cloud var v] to (my variable :: variables)
 change [☁ cloud var v] by (1)
 set [my variable v] to [0]
 change [my variable v] by (☁ cloud var :: variables)
 show variable [☁ cloud var v]
 hide variable [my variable v]
-add (<[test list v] contains [thing] ? :: list>) to [test list v]
+add <[test list v] contains [thing] ? :: list> to [test list v]
 delete (1) of [test list v]
 delete all of [test list v]
 insert [thing] at (item # of [thing] in [test list v]) of [test list v]
@@ -359,22 +359,22 @@ when I receive [message1 v]
 broadcast (message1 v)
 broadcast (message1 v) and wait
 ask ((5) + (pick random ((8) / (4)) to (10))) and wait
-ask (() - ()) and wait
-ask (() * ()) and wait
-ask (() / ()) and wait
-ask (<(<[] < [50]>) and (<[] > [50]>)>) and wait
-ask (<(<[] = [50]>) or []>) and wait
-ask (<not <>>) and wait
+ask ([] - []) and wait
+ask ([] * []) and wait
+ask ([] / []) and wait
+ask <<[] < [50]> and <[] > [50]>> and wait
+ask <<[] = [50]> or []> and wait
+ask <not <>> and wait
 ask (join [apple ] (letter (1) of [apple])) and wait
 ask (length of [apple]) and wait
-ask (<[apple] contains [a] ? :: operators>) and wait
+ask <[apple] contains [a] ? :: operators> and wait
 ask ((12) mod (7)) and wait
-ask (round ()) and wait
+ask (round []) and wait
 ask ([10 ^ v] of (15)) and wait
 
 define block name <boolean> label text (number or text) // run without screen refresh
 play sound (number or text :: custom-arg) until done
-if (<boolean :: custom-arg>) then
+if <boolean :: custom-arg> then
 end",
 }
 `;
