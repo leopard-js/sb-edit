@@ -359,9 +359,9 @@ when I receive [message1 v]
 broadcast (message1 v)
 broadcast (message1 v) and wait
 ask ((5) + (pick random ((8) / (4)) to (10))) and wait
-ask ([] - []) and wait
-ask ([] * []) and wait
-ask ([] / []) and wait
+ask (() - ()) and wait
+ask (() * ()) and wait
+ask (() / ()) and wait
 ask <<[] < [50]> and <[] > [50]>> and wait
 ask <<[] = [50]> or []> and wait
 ask <not <>> and wait
@@ -369,7 +369,7 @@ ask (join [apple ] (letter (1) of [apple])) and wait
 ask (length of [apple]) and wait
 ask <[apple] contains [a] ? :: operators> and wait
 ask ((12) mod (7)) and wait
-ask (round []) and wait
+ask (round ()) and wait
 ask ([10 ^ v] of (15)) and wait
 
 define block name <boolean> label text (number or text) // run without screen refresh

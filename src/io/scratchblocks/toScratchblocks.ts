@@ -35,7 +35,7 @@ export default function toScratchblocks(
 
     switch (inp.type) {
       case "number":
-        if (typeof inp.value === "number") {
+        if (typeof inp.value === "number" || inp.value.trim().length === 0) {
           return `(${inp.value})`;
         } else {
           return `[${escape(inp.value)}]`;
