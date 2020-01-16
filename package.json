@@ -1,6 +1,6 @@
 {
   "name": "sb-edit",
-  "version": "1.0.0",
+  "version": "0.9.0",
   "description": "Import, edit, and export Scratch project files",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",

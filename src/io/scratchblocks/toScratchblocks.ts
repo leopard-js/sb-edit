@@ -51,11 +51,10 @@ export default function toScratchblocks(
       case "soundEffect":
       case "currentMenu":
       case "greaterThanMenu":
-        const value =
-          {
-            PAN: "pan left/right",
-            DAYOFWEEK: "day of week"
-          }[inp.value] || inp.value.toLowerCase();
+        const value = {
+          "PAN": "pan left/right",
+          "DAYOFWEEK": "day of week"
+        }[inp.value] || inp.value.toLowerCase();
         return `[${escape(value)} v]`;
 
       case "variable":
@@ -77,13 +76,12 @@ export default function toScratchblocks(
       case "distanceToMenu":
       case "touchingTarget":
       case "target": {
-        const value =
-          {
-            _mouse_: "mouse-pointer",
-            _myself_: "myself",
-            _random_: "random position",
-            _stage_: "Stage"
-          }[inp.value] || inp.value;
+        const value = {
+          "_mouse_": "mouse-pointer",
+          "_myself_": "myself",
+          "_random_": "random position",
+          "_stage_": "Stage"
+        }[inp.value] || inp.value;
         return `(${escape(value)} v)`;
       }
 
@@ -545,7 +543,7 @@ export default function toScratchblocks(
       case OpCode.videoSensing_setVideoTransparency:
         return `set video transparency to ${i("TRANSPARENCY")}`;
 
-      // leftover menu "blocks" ----------------------------------- //
+        // leftover menu "blocks" ----------------------------------- //
       case OpCode.motion_pointtowards_menu:
       case OpCode.motion_glideto_menu:
       case OpCode.motion_goto_menu:
