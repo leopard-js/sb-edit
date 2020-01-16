@@ -10,11 +10,12 @@ sb-edit is a javascript library for manipulating Scratch project files.
 
 sb-edit allows importing and exporting a variety of Scratch project file types:
 
-| File Format                                          | Import         | Export         |
-| ---------------------------------------------------- | -------------- | -------------- |
-| Scratch 3.0 (**.sb3**)                               | 🚧 In progress | 🕒 Planned     |
-| Scratch 2.0 (**.sb2**)                               | 🕒 Planned     | 🕒 Planned     |
-| [scratch-js](https://github.com/PullJosh/scratch-js) | ❌ No          | 🚧 In progress |
+| File Format                                            | Import         | Export         |
+| ------------------------------------------------------ | -------------- | -------------- |
+| Scratch 3.0 (**.sb3**)                                 | 🚧 In progress | 🕒 Planned     |
+| Scratch 2.0 (**.sb2**)                                 | 🕒 Planned     | 🕒 Planned     |
+| [scratch-js](https://github.com/PullJosh/scratch-js)   | ❌ No          | 🚧 In progress |
+| [scratchblocks](https://github.com/tjvr/scratchblocks) | 🚧 In progress | 👻 Maybe!      |
 
 ## Editing
 
