@@ -527,10 +527,7 @@ export default function toScratchJS(
         case OpCode.sensing_answer:
           return `this.answer`;
         case OpCode.sensing_keypressed:
-          const getKeyName = key => {
-            return key.split(" ")[0];
-          };
-          return `this.keyPressed(${JSON.stringify(getKeyName(block.inputs.KEY_OPTION.value))})`;
+          return `this.keyPressed(${inputToJS(block.inputs.KEY_OPTION)})`;
         case OpCode.sensing_mousedown:
           return `this.mouse.down`;
         case OpCode.sensing_mousex:
