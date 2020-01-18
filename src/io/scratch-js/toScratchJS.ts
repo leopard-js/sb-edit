@@ -131,11 +131,6 @@ export default function toScratchJS(
     targetNameMap[target.name] = newTargetName;
     target.setName(newTargetName);
 
-    const uniqueSoundName = uniqueNameGenerator();
-    for (const sound of target.sounds) {
-      sound.setName(uniqueSoundName(camelCase(sound.name)));
-    }
-
     let uniqueVariableName = uniqueName.branch();
 
     const varNameMap = {};
@@ -403,9 +398,9 @@ export default function toScratchJS(
         case OpCode.looks_size:
           return `this.size`;
         case OpCode.sound_playuntildone:
-          return `yield* this.playSound(/* TODO: Get url for sound ${block.inputs.SOUND_MENU} */)`;
+          return `yield* this.playSoundUntilDone(${inputToJS(block.inputs.SOUND_MENU)})`;
         case OpCode.sound_play:
-          return `this.playSound(/* TODO: Get url for sound ${block.inputs.SOUND_MENU} */)`;
+          return `this.startSound(${inputToJS(block.inputs.SOUND_MENU)})`;
         case OpCode.sound_stopallsounds:
           return `this.stopAllSounds()`;
         case OpCode.event_broadcast:
@@ -860,7 +855,7 @@ export default function toScratchJS(
 
   for (const target of [project.stage, ...project.sprites]) {
     files[`${target.name}/${target.name}.mjs`] = `
-      import { ${target.isStage ? "Stage as StageBase" : "Sprite"}, Trigger, Costume, Color } from '${
+      import { ${target.isStage ? "Stage as StageBase" : "Sprite"}, Trigger, Costume, Color, Sound } from '${
       options.scratchJSURL
     }';
 
@@ -886,6 +881,23 @@ export default function toScratchJS(
                   })})`
               )
               .join(",\n")}
+          ];
+
+          this.sounds = [
+            ${target.sounds
+              .map(
+                sound =>
+                  `new Sound(${JSON.stringify(sound.name)}, ${JSON.stringify(
+                    options.getAssetURL({
+                      type: "sound",
+                      target: target.name,
+                      name: sound.name,
+                      md5: sound.md5,
+                      ext: sound.ext
+                    })
+                  )})`
+                )
+                .join(",\n")}
           ];
 
           this.triggers = [
