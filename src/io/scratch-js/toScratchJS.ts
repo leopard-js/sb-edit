@@ -893,8 +893,8 @@ export default function toScratchJS(
                       ext: sound.ext
                     })
                   )})`
-                )
-                .join(",\n")}
+              )
+              .join(",\n")}
           ];
 
           this.triggers = [
