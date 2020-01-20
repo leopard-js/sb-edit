@@ -6,7 +6,8 @@ Object {
   Sprite,
   Trigger,
   Costume,
-  Color
+  Color,
+  Sound
 } from \\"https://pulljosh.github.io/scratch-js/scratch-js/index.mjs\\";
 
 export default class Abby extends Sprite {
@@ -19,6 +20,8 @@ export default class Abby extends Sprite {
       new Costume(\\"abby-c\\", \\"./Abby/costumes/abby-c.svg\\", { x: 32, y: 100 }),
       new Costume(\\"abby-d\\", \\"./Abby/costumes/abby-d.svg\\", { x: 32, y: 101 })
     ];
+
+    this.sounds = [new Sound(\\"pop\\", \\"./Abby/sounds/pop.wav\\")];
 
     this.triggers = [
       new Trigger(Trigger.CLONE_START, this.startAsClone),
@@ -56,7 +59,8 @@ export default class Abby extends Sprite {
   Stage as StageBase,
   Trigger,
   Costume,
-  Color
+  Color,
+  Sound
 } from \\"https://pulljosh.github.io/scratch-js/scratch-js/index.mjs\\";
 
 export default class Stage extends StageBase {
@@ -69,6 +73,8 @@ export default class Stage extends StageBase {
         y: 180
       })
     ];
+
+    this.sounds = [new Sound(\\"pop\\", \\"./Stage/sounds/pop.wav\\")];
 
     this.triggers = [
       new Trigger(Trigger.GREEN_FLAG, this.whenGreenFlagClicked),
@@ -100,8 +106,8 @@ export default class Stage extends StageBase {
   }
 
   *whenKeySpacePressed() {
-    yield* this.playSound(/* TODO: Get url for sound [object Object] */);
-    this.playSound(/* TODO: Get url for sound [object Object] */);
+    yield* this.playSoundUntilDone(\\"pop\\");
+    this.startSound(\\"pop\\");
     this.stopAllSounds();
     /* TODO: Implement sound_changeeffectby */ null;
     /* TODO: Implement sound_seteffectto */ null;
@@ -201,7 +207,7 @@ export default class Stage extends StageBase {
   }
 
   *blockNameLabelText(boolean, numberOrText) {
-    yield* this.playSound(/* TODO: Get url for sound [object Object] */);
+    yield* this.playSoundUntilDone(numberOrText);
     if (boolean) {
       null;
     }
