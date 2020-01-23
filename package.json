@@ -26,12 +26,12 @@
     "sb3",
     "scratch-js"
   ],
-  "author": {
-    "name": "Josh Pullen",
-    "email": "hello@joshuapullen.com",
-    "url": "https://joshuapullen.com/"
-  },
-  "license": "ISC",
+  "author": "Josh Pullen <hello@joshuapullen.com> (https://joshuapullen.com/)",
+  "contributors": [
+    "Florrie Haero Miller <towerofnix@gmail.com> (https://github.com/towerofnix)",
+    "adroitwhiz <adroitwhiz@protonmail.com> (https://github.com/adroitwhiz)"
+  ],
+  "license": "MIT",
   "devDependencies": {
     "@types/jest": "^24.0.22",
     "@types/jszip": "^3.1.6",
