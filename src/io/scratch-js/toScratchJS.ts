@@ -400,7 +400,7 @@ export default function toScratchJS(
         case OpCode.sound_playuntildone:
           return `yield* this.playSoundUntilDone(${inputToJS(block.inputs.SOUND_MENU)})`;
         case OpCode.sound_play:
-          return `this.startSound(${inputToJS(block.inputs.SOUND_MENU)})`;
+          return `yield* this.startSound(${inputToJS(block.inputs.SOUND_MENU)})`;
         case OpCode.sound_stopallsounds:
           return `this.stopAllSounds()`;
         case OpCode.event_broadcast:
