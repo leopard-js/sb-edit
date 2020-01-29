@@ -401,6 +401,30 @@ export default function toScratchJS(
           return `yield* this.playSoundUntilDone(${inputToJS(block.inputs.SOUND_MENU)})`;
         case OpCode.sound_play:
           return `this.startSound(${inputToJS(block.inputs.SOUND_MENU)})`;
+        case OpCode.sound_setvolumeto:
+          return `this.setAudioEffect("volume", ${inputToJS(block.inputs.VOLUME)})`;
+        case OpCode.sound_changevolumeby:
+          return `this.changeAudioEffect("volume", ${inputToJS(block.inputs.VOLUME)})`;
+        case OpCode.sound_seteffectto: {
+          let effect: string;
+          if (block.inputs.EFFECT.type === "soundEffect") {
+            effect = JSON.stringify(block.inputs.EFFECT.value.toLowerCase());
+          } else {
+            effect = inputToJS(block.inputs.EFFECT);
+          }
+          return `this.setAudioEffect(${effect}, ${inputToJS(block.inputs.VALUE)})`;
+        }
+        case OpCode.sound_changeeffectby: {
+          let effect: string;
+          if (block.inputs.EFFECT.type === "soundEffect") {
+            effect = JSON.stringify(block.inputs.EFFECT.value.toLowerCase());
+          } else {
+            effect = inputToJS(block.inputs.EFFECT);
+          }
+          return `this.changeAudioEffect(${effect}, ${inputToJS(block.inputs.VALUE)})`;
+        }
+        case OpCode.sound_cleareffects:
+          return `this.clearAudioEffects()`;
         case OpCode.sound_stopallsounds:
           return `this.stopAllSounds()`;
         case OpCode.event_broadcast:
