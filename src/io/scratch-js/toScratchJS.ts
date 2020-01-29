@@ -928,6 +928,8 @@ export default function toScratchJS(
               .join(",\n")}
           ];
 
+          ${target.volume !== 100 ? `this.setAudioEffect("volume", ${target.volume});` : ""}
+
           ${[...target.variables, ...target.lists]
             .map(variable => `this.vars.${variable.name} = ${JSON.stringify(optionalToNumber(variable.value))};`)
             .join("\n")}
