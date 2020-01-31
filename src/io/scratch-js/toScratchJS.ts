@@ -405,6 +405,8 @@ export default function toScratchJS(
           return `this.audioEffects.volume = ${inputToJS(block.inputs.VOLUME)}`;
         case OpCode.sound_changevolumeby:
           return `this.audioEffects.volume += ${inputToJS(block.inputs.VOLUME)}`;
+        case OpCode.sound_volume:
+          return `this.audioEffects.volume`;
         case OpCode.sound_seteffectto: {
           const value = inputToJS(block.inputs.VALUE);
           if (block.inputs.EFFECT.type === "soundEffect") {
