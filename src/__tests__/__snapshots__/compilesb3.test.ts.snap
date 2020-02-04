@@ -107,7 +107,7 @@ export default class Stage extends StageBase {
 
   *whenKeySpacePressed() {
     yield* this.playSoundUntilDone(\\"pop\\");
-    this.startSound(\\"pop\\");
+    yield* this.startSound(\\"pop\\");
     this.stopAllSounds();
     /* TODO: Implement sound_changeeffectby */ null;
     /* TODO: Implement sound_seteffectto */ null;
