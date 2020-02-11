@@ -23,8 +23,8 @@ sb-edit can also be used to modify Scratch projects. A few things you can/will b
 
 |                     | Add        | Edit       | Delete     |
 | ------------------- | ---------- | ---------- | ---------- |
-| Sprites             | 🕒 Planned | ✔️ Yes     | ✔️ Yes     |
-| Stage               | ❌ No      | ✔️ Yes     | ❌ No      |
+| Sprites             | 🕒 Planned | ✅ Yes     | ✅ Yes     |
+| Stage               | ❌ No      | ✅ Yes     | ❌ No      |
 | Scripts             | 🕒 Planned | 🕒 Planned | 🕒 Planned |
 | Costumes and sounds | 🕒 Planned | 🕒 Planned | 🕒 Planned |
 
