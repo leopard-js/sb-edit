@@ -109,11 +109,11 @@ export default class Stage extends StageBase {
     yield* this.playSoundUntilDone(\\"pop\\");
     yield* this.startSound(\\"pop\\");
     this.stopAllSounds();
-    /* TODO: Implement sound_changeeffectby */ null;
-    /* TODO: Implement sound_seteffectto */ null;
-    /* TODO: Implement sound_cleareffects */ null;
-    /* TODO: Implement sound_changevolumeby */ null;
-    /* TODO: Implement sound_setvolumeto */ null;
+    this.audioEffects.pan += 10;
+    this.audioEffects.pan = this.audioEffects.volume;
+    this.audioEffects.clear();
+    this.audioEffects.volume += -10;
+    this.audioEffects.volume = 100;
   }
 
   *whenstageclicked() {
