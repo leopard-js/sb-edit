@@ -401,6 +401,30 @@ export default function toScratchJS(
           return `yield* this.playSoundUntilDone(${inputToJS(block.inputs.SOUND_MENU)})`;
         case OpCode.sound_play:
           return `yield* this.startSound(${inputToJS(block.inputs.SOUND_MENU)})`;
+        case OpCode.sound_setvolumeto:
+          return `this.audioEffects.volume = ${inputToJS(block.inputs.VOLUME)}`;
+        case OpCode.sound_changevolumeby:
+          return `this.audioEffects.volume += ${inputToJS(block.inputs.VOLUME)}`;
+        case OpCode.sound_volume:
+          return `this.audioEffects.volume`;
+        case OpCode.sound_seteffectto: {
+          const value = inputToJS(block.inputs.VALUE);
+          if (block.inputs.EFFECT.type === "soundEffect") {
+            return `this.audioEffects.${block.inputs.EFFECT.value.toLowerCase()} = ${value}`;
+          } else {
+            return `this.audioEffects[${inputToJS(block.inputs.EFFECT)}] = ${value}`;
+          }
+        }
+        case OpCode.sound_changeeffectby: {
+          const value = inputToJS(block.inputs.VALUE);
+          if (block.inputs.EFFECT.type === "soundEffect") {
+            return `this.audioEffects.${block.inputs.EFFECT.value.toLowerCase()} += ${value}`;
+          } else {
+            return `this.audioEffects[${inputToJS(block.inputs.EFFECT)}] += ${value}`;
+          }
+        }
+        case OpCode.sound_cleareffects:
+          return `this.audioEffects.clear()`;
         case OpCode.sound_stopallsounds:
           return `this.stopAllSounds()`;
         case OpCode.event_broadcast:
@@ -903,6 +927,8 @@ export default function toScratchJS(
               .filter(trigger => trigger !== null)
               .join(",\n")}
           ];
+
+          ${target.volume !== 100 ? `this.audioEffects.volume = ${target.volume};` : ""}
 
           ${[...target.variables, ...target.lists]
             .map(variable => `this.vars.${variable.name} = ${JSON.stringify(optionalToNumber(variable.value))};`)
