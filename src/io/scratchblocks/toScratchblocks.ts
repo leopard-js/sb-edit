@@ -31,7 +31,7 @@ export default function toScratchblocks(
       return "";
     }
 
-    const escape = (value: string): string => (value || "").replace(/[()\[\]]|v$/g, m => "\\" + m);
+    const escape = (value: string): string => (value || "").toString().replace(/[()\[\]]|v$/g, m => "\\" + m);
 
     switch (inp.type) {
       case "number":
