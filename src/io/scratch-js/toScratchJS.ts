@@ -58,7 +58,8 @@ function uniqueNameGenerator(usedNames: string[] = []) {
 
 function camelCase(name: string, upper: boolean = false) {
   const validChars = /[^a-zA-Z0-9]/;
-  let parts = name.split(validChars);
+  const ignoredChars = /[']/g;
+  let parts = name.replace(ignoredChars, "").split(validChars);
   parts = parts.map(part => part.trim());
   parts = parts.map(part => part.slice(0, 1).toUpperCase() + part.slice(1).toLowerCase());
   if (!upper) {
