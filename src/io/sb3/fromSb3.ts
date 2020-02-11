@@ -456,7 +456,7 @@ export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAsset: ge
                 ),
               variables: getVariables(spriteData),
               lists: getLists(spriteData),
-              volume: stage.volume,
+              volume: spriteData.volume,
               layerOrder: spriteData.layerOrder,
               x: spriteData.x,
               y: spriteData.y,
