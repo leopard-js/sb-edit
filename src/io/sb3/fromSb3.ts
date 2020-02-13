@@ -39,9 +39,9 @@ function extractCostumes(target: sb3.Target, getAssetData: getAssetData): Promis
           md5: costumeData.assetId,
           ext: costumeData.dataFormat,
 
-          bitmapResolution: 2,
-          centerX: costumeData.rotationCenterX * 2,
-          centerY: costumeData.rotationCenterY * 2,
+          bitmapResolution: costumeData.bitmapResolution,
+          centerX: costumeData.rotationCenterX,
+          centerY: costumeData.rotationCenterY,
         })
     )
   );
