@@ -90,75 +90,75 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
         const value = input[1];
         if (typeof value === "string") {
           const inputScript = blockWithNext(value);
-          if (inputScript.length === 1) {
-            if (blocks[value].shadow) {
-              // Input contains a shadow block.
-              // Conceptually, shadow blocks are weird.
-              // We basically just want to copy the important
-              // information from the shadow block down into
-              // the block containing the shadow.
-              if (blocks[value].opcode === "procedures_prototype") {
-                const { mutation } = blocks[value];
+          if (inputScript.length === 1 && blocks[value].shadow) {
+            // Input contains a shadow block.
+            // Conceptually, shadow blocks are weird.
+            // We basically just want to copy the important
+            // information from the shadow block down into
+            // the block containing the shadow.
+            if (blocks[value].opcode === "procedures_prototype") {
+              const { mutation } = blocks[value];
 
-                // Split proccode (such as "letter %n of %s") into ["letter", "%n", "of", "%s"]
-                let parts = mutation.proccode.split(/((^|[^\\])%[nsb])/);
-                parts = parts.map(str => str.trim());
-                parts = parts.filter(str => str !== "");
+              // Split proccode (such as "letter %n of %s") into ["letter", "%n", "of", "%s"]
+              let parts = mutation.proccode.split(/((^|[^\\])%[nsb])/);
+              parts = parts.map(str => str.trim());
+              parts = parts.filter(str => str !== "");
 
-                const argNames: string[] = JSON.parse(mutation.argumentnames);
-                const argDefaults: any[] = JSON.parse(mutation.argumentdefaults);
+              const argNames: string[] = JSON.parse(mutation.argumentnames);
+              const argDefaults: any[] = JSON.parse(mutation.argumentdefaults);
 
-                const args: BlockInput.CustomBlockArgument[] = parts.map(part => {
-                  const optionalToNumber = value => {
-                    if (typeof value !== "string") {
-                      return value;
-                    }
-                    const asNum = parseFloat(value);
-                    if (!isNaN(asNum)) {
-                      return asNum;
-                    }
+              const args: BlockInput.CustomBlockArgument[] = parts.map(part => {
+                const optionalToNumber = value => {
+                  if (typeof value !== "string") {
                     return value;
-                  };
-
-                  switch (part) {
-                    case "%s":
-                    case "%n":
-                      return {
-                        type: "numberOrString",
-                        name: argNames.splice(0, 1)[0],
-                        defaultValue: optionalToNumber(argDefaults.splice(0, 1)[0])
-                      };
-                    case "%b":
-                      return {
-                        type: "boolean",
-                        name: argNames.splice(0, 1)[0],
-                        defaultValue: argDefaults.splice(0, 1)[0] === "true"
-                      };
-                    default:
-                      return {
-                        type: "label",
-                        name: part
-                      };
                   }
-                });
-
-                addInput("PROCCODE", { type: "string", value: mutation.proccode });
-                addInput("ARGUMENTS", { type: "customBlockArguments", value: args });
-                addInput("WARP", { type: "boolean", value: mutation.warp === "true" });
-              } else {
-                // In most cases, just copy the shadow block's fields and inputs
-                // into its parent
-                result = {
-                  ...result,
-                  ...translateInputs(blocks[value].inputs),
-                  ...translateFields(blocks[value].fields, blocks[value].opcode)
+                  const asNum = parseFloat(value);
+                  if (!isNaN(asNum)) {
+                    return asNum;
+                  }
+                  return value;
                 };
-              }
+
+                switch (part) {
+                  case "%s":
+                  case "%n":
+                    return {
+                      type: "numberOrString",
+                      name: argNames.splice(0, 1)[0],
+                      defaultValue: optionalToNumber(argDefaults.splice(0, 1)[0])
+                    };
+                  case "%b":
+                    return {
+                      type: "boolean",
+                      name: argNames.splice(0, 1)[0],
+                      defaultValue: argDefaults.splice(0, 1)[0] === "true"
+                    };
+                  default:
+                    return {
+                      type: "label",
+                      name: part
+                    };
+                }
+              });
+
+              addInput("PROCCODE", { type: "string", value: mutation.proccode });
+              addInput("ARGUMENTS", { type: "customBlockArguments", value: args });
+              addInput("WARP", { type: "boolean", value: mutation.warp === "true" });
+            } else {
+              // In most cases, just copy the shadow block's fields and inputs
+              // into its parent
+              result = {
+                ...result,
+                ...translateInputs(blocks[value].inputs),
+                ...translateFields(blocks[value].fields, blocks[value].opcode)
+              };
+            }
+          } else {
+            if (inputName.includes("SUBSTACK") || inputScript.length > 1) {
+              addInput(inputName, { type: "blocks", value: inputScript });
             } else {
               addInput(inputName, { type: "block", value: inputScript[0] });
             }
-          } else {
-            addInput(inputName, { type: "blocks", value: inputScript });
           }
         } else if (value === null) {
           addInput(inputName, { type: "string", value: null });
