@@ -1,4 +1,4 @@
-import { generateID } from "./util/id";
+import { generateId } from "./util/id";
 
 type ScalarValue = string | number | boolean;
 
@@ -24,16 +24,14 @@ export default class List {
       y?: number;
       width?: number;
       height?: number;
-    },
-    id?: string
+
+      id?: string;
+    }
   ) {
     Object.assign(this, options);
 
-    if (id) {
-      this.id = id;
-    } else {
-      // If not provided, generate id randomly.
-      this.id = generateID();
+    if (!this.id) {
+      this.id = generateId();
     }
   }
 

@@ -300,6 +300,7 @@ export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAssetData
       return new Variable(
         {
           name,
+          id,
           value,
           cloud,
           visible: monitor.visible,
@@ -309,8 +310,7 @@ export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAssetData
           sliderMin: monitor.sliderMin,
           sliderMax: monitor.sliderMax,
           isDiscrete: monitor.isDiscrete
-        },
-        id
+        }
       );
     });
   }
@@ -337,14 +337,14 @@ export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAssetData
       return new List(
         {
           name,
+          id,
           value,
           visible: monitor.visible,
           x: monitor.x,
           y: monitor.y,
           width: monitor.width === 0 ? null : monitor.width,
           height: monitor.height === 0 ? null : monitor.height
-        },
-        id
+        }
       );
     });
   }
