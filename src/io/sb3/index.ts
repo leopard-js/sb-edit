@@ -111,7 +111,7 @@ interface Comment {
   text: string;
 }
 
-interface SpriteStageBase {
+export interface Target {
   isStage: boolean;
   name: string;
   variables: {
@@ -136,7 +136,7 @@ interface SpriteStageBase {
   layerOrder: number;
 }
 
-export interface Stage extends SpriteStageBase {
+export interface Stage extends Target {
   isStage: true;
   tempo: number;
   videoTransparency: number;
@@ -144,7 +144,7 @@ export interface Stage extends SpriteStageBase {
   textToSpeechLanguage: TextToSpeechLanguage;
 }
 
-export interface Sprite extends SpriteStageBase {
+export interface Sprite extends Target {
   isStage: false;
   visible: boolean;
   x: number;
@@ -154,8 +154,6 @@ export interface Sprite extends SpriteStageBase {
   draggable: boolean;
   rotationStyle: "all around" | "left-right" | "don't rotate";
 }
-
-export type Target = Sprite | Stage;
 
 interface MonitorBase {
   id: string;
