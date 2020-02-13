@@ -141,30 +141,7 @@ export interface Stage extends SpriteStageBase {
   tempo: number;
   videoTransparency: number;
   videoState: "on" | "off";
-  textToSpeechLanguage:
-    | "ar"
-    | "zh-cn"
-    | "da"
-    | "nl"
-    | "en"
-    | "fr"
-    | "de"
-    | "hi"
-    | "is"
-    | "it"
-    | "ja"
-    | "ko"
-    | "nb"
-    | "pl"
-    | "pt-br"
-    | "pt"
-    | "ro"
-    | "ru"
-    | "es"
-    | "es-419"
-    | "sv"
-    | "tr"
-    | "cy";
+  textToSpeechLanguage: TextToSpeechLanguage;
 }
 
 export interface Sprite extends SpriteStageBase {
