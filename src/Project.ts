@@ -5,7 +5,7 @@ import toSb3 from "./io/sb3/toSb3";
 import toScratchJS from "./io/scratch-js/toScratchJS";
 import toScratchblocks from "./io/scratchblocks/toScratchblocks";
 
-type TextToSpeechLanguage =
+export type TextToSpeechLanguage =
   | "ar"
   | "zh-cn"
   | "da"
