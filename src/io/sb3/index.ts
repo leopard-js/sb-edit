@@ -16,7 +16,9 @@ export type AssetId = string;
 // For example: ["Highscore", 3000, true]
 // Note: Scratch's server prevents uploading non-number values to the cloud
 // variable server, but this restriction is not enforced in the sb3 schema.
-export type Variable = [string, ScalarValue, boolean?];
+export type Variable =
+  | [string, ScalarValue]
+  | [string, ScalarValue, true];
 
 // [name, contents]
 // For example: ["My List", [1, 2, true, "banana"]]
