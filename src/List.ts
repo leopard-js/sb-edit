@@ -1,8 +1,10 @@
 import { generateID } from "./util/id";
 
+type ScalarValue = string | number | boolean;
+
 export default class List {
   public name: string;
-  public value: string[];
+  public value: ScalarValue[];
 
   public visible = true;
   public x = 0;
@@ -15,7 +17,7 @@ export default class List {
   constructor(
     options: {
       name: string;
-      value: string[];
+      value: ScalarValue[];
 
       visible?: boolean;
       x?: number;

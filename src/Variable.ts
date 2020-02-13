@@ -1,8 +1,10 @@
 import { generateID } from "./util/id";
 
+type ScalarValue = number | string | boolean;
+
 export default class Variable {
   public name: string;
-  public value: number | string;
+  public value: ScalarValue;
   public cloud = false;
 
   public visible = true;
@@ -18,7 +20,7 @@ export default class Variable {
   constructor(
     options: {
       name: string;
-      value: number | string;
+      value: ScalarValue;
       cloud?: boolean;
 
       visible?: boolean;
