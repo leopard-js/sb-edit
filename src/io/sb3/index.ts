@@ -195,8 +195,8 @@ export type Monitor = VariableMonitor | ListMonitor;
 
 interface Meta {
   semver: string;
-  vm: string;
-  agent: string;
+  vm?: string;
+  agent?: string;
 }
 
 export interface ProjectJSON {
