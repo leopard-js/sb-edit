@@ -1,25 +1,49 @@
 import { OpCode } from "../../OpCode";
+import { TextToSpeechLanguage } from "../../Project";
+import * as BlockInput from "../../BlockInput";
 
-type Variable = [string, string | number, boolean?];
-type List = [string, string[]];
+// Note: This schema is designed to match the definitions in
+// https://github.com/LLK/scratch-parser/blob/master/lib/sb3_definitions.json
 
-export interface Sound {
-  assetId: string;
-  name: string;
-  dataFormat: string;
-  format: string;
-  rate: number;
-  sampleCount: number;
-  md5ext: string;
-}
+// Values storable in variables and lists.
+export type ScalarValue = string | number | boolean;
+
+// 32-length hex string - the MD5 of the asset.
+// Does not include the asset's file extension.
+export type AssetId = string;
+
+// [name, value, cloud]
+// For example: ["Highscore", 3000, true]
+// Note: Scratch's server prevents uploading non-number values to the cloud
+// variable server, but this restriction is not enforced in the sb3 schema.
+export type Variable = [string, ScalarValue, boolean?];
+
+// [name, contents]
+// For example: ["My List", [1, 2, true, "banana"]]
+export type List = [string, ScalarValue[]];
 
 export interface Costume {
-  assetId: string;
+  assetId: AssetId;
+  dataFormat: "png" | "svg" | "jpeg" | "jpg" | "bmp" | "gif";
   name: string;
-  md5ext: string;
-  dataFormat: string;
-  rotationCenterX: number;
-  rotationCenterY: number;
+
+  md5ext?: string;
+
+  // Note: These aren't required, but are "highly recommended" per their
+  // descriptions in scratch-parse.
+  rotationCenterX?: number;
+  rotationCenterY?: number;
+}
+
+export interface Sound {
+  assetId: AssetId;
+  dataFormat: "wav" | "wave" | "mp3";
+  name: string;
+
+  md5ext?: string;
+
+  rate?: number;
+  sampleCount?: number;
 }
 
 export interface Block {
