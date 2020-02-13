@@ -188,7 +188,6 @@ interface MonitorBase {
     [key: string]: string;
   };
   spriteName: string;
-  value: number | string | string[];
   width: number;
   height: number;
   x: number;
@@ -202,7 +201,7 @@ export interface VariableMonitor extends MonitorBase {
   params: {
     VARIABLE: string;
   };
-  value: number | string;
+  value: ScalarValue;
   sliderMin: number;
   sliderMax: number;
   isDiscrete: boolean;
@@ -214,7 +213,7 @@ export interface ListMonitor extends MonitorBase {
   params: {
     LIST: string;
   };
-  value: string[];
+  value: ScalarValue[];
 }
 
 export type Monitor = VariableMonitor | ListMonitor;
