@@ -1,20 +1,29 @@
 import * as BlockInput from "./BlockInput";
 import { OpCode } from "./OpCode";
-import { generateID } from "./util/id";
+import { generateId } from "./util/id";
 
 export class BlockBase<MyOpCode extends OpCode, MyInputs extends { [key: string]: BlockInput.Any }> {
+  public id: string;
+
   public opcode: MyOpCode;
   public inputs: MyInputs;
-  public id: string;
+
   public parent: string = null;
   public next: string = null;
 
-  constructor(options: { opcode: MyOpCode; inputs: MyInputs; id?: string; parent?: string; next?: string }) {
+  constructor(options: {
+    id?: string;
+
+    opcode: MyOpCode;
+    inputs: MyInputs;
+
+    parent?: string;
+    next?: string
+  }) {
     Object.assign(this, options);
 
-    if (typeof options.id !== "string") {
-      // If not provided, generate id randomly.
-      this.id = generateID();
+    if (!this.id) {
+      this.id = generateId();
     }
   }
 

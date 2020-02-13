@@ -1,7 +1,11 @@
+import { generateId } from "./util/id";
+
 type CostumeDataFormat = "png" | "svg" | "jpeg" | "jpg" | "bmp" | "gif";
 
 export default class Costume {
   public name: string;
+  public id: string;
+
   public dataFormat: CostumeDataFormat;
   public data: any;
 
@@ -14,6 +18,8 @@ export default class Costume {
 
   constructor(options: {
     name: string;
+    id?: string;
+
     dataFormat: CostumeDataFormat;
     data: any;
 
@@ -24,16 +30,11 @@ export default class Costume {
     centerX: number;
     centerY: number;
   }) {
-    this.name = options.name;
-    this.dataFormat = options.dataFormat;
-    this.data = options.data;
+    Object.assign(this, options);
 
-    this.md5 = options.md5;
-    this.ext = options.ext;
-
-    this.bitmapResolution = options.bitmapResolution;
-    this.centerX = options.centerX;
-    this.centerY = options.centerY;
+    if (!this.id) {
+      this.id = generateId();
+    }
   }
 
   public setName(name: string): void {

@@ -35,6 +35,14 @@ export default class Target {
     this.name = name;
   }
 
+  public getCostume(name: string): Costume {
+    return this.costumes.find(costume => costume.name === name);
+  }
+
+  public getSound(name: string): Sound {
+    return this.sounds.find(sound => sound.name === name);
+  }
+
   public getVariable(name: string): Variable {
     return this.variables.find(variable => variable.name === name);
   }

@@ -1,9 +1,11 @@
-import { generateID } from "./util/id";
+import { generateId } from "./util/id";
 
 type ScalarValue = number | string | boolean;
 
 export default class Variable {
   public name: string;
+  public id: string;
+
   public value: ScalarValue;
   public cloud = false;
 
@@ -15,11 +17,11 @@ export default class Variable {
   public sliderMax = 100;
   public isDiscrete = true;
 
-  public id: string;
-
   constructor(
     options: {
       name: string;
+      id?: string;
+
       value: ScalarValue;
       cloud?: boolean;
 
@@ -30,16 +32,12 @@ export default class Variable {
       sliderMin?: number;
       sliderMax?: number;
       isDiscrete?: boolean;
-    },
-    id?: string
+    }
   ) {
     Object.assign(this, options);
 
-    if (id) {
-      this.id = id;
-    } else {
-      // If not provided, generate id randomly.
-      this.id = generateID();
+    if (!this.id) {
+      this.id = generateId();
     }
   }
 

@@ -1,7 +1,11 @@
+import { generateId } from "./util/id";
+
 type SoundDataFormat = "mp3" | "wav" | "wave";
 
 export default class Sound {
   public name: string;
+  public id: string;
+
   public dataFormat: SoundDataFormat;
   public data: any;
 
@@ -13,6 +17,8 @@ export default class Sound {
 
   constructor(options: {
     name: string;
+    id?: string;
+
     dataFormat: SoundDataFormat;
     data: any;
 
@@ -22,15 +28,11 @@ export default class Sound {
     sampleCount: number;
     sampleRate: number;
   }) {
-    this.name = options.name;
-    this.dataFormat = options.dataFormat;
-    this.data = options.data;
+    Object.assign(this, options);
 
-    this.md5 = options.md5;
-    this.ext = options.ext;
-
-    this.sampleCount = options.sampleCount;
-    this.sampleRate = options.sampleRate;
+    if (!this.id) {
+      this.id = generateId();
+    }
   }
 
   public setName(name: string): void {
