@@ -13,7 +13,7 @@ import { Sprite, Stage } from "../../Target";
 import Variable from "../../Variable";
 import Script from "../../Script";
 
-type getAsset = (info: {
+type getAssetData = (info: {
   type: "costume" | "sound";
   name: string;
   md5: string;
@@ -21,47 +21,52 @@ type getAsset = (info: {
   spriteName: string;
 }) => Promise<any>;
 
-function extractCostumes(target: sb3.Target, getAsset: getAsset): Promise<Costume[]> {
+function extractCostumes(target: sb3.Target, getAssetData: getAssetData): Promise<Costume[]> {
   return Promise.all(
     target.costumes.map(
       async (costumeData: sb3.Costume) =>
         new Costume({
           name: costumeData.name,
-          md5: costumeData.assetId,
-          ext: costumeData.dataFormat,
-          bitmapResolution: 2,
-          centerX: costumeData.rotationCenterX * 2,
-          centerY: costumeData.rotationCenterY * 2,
-          asset: await getAsset({
+          dataFormat: costumeData.dataFormat,
+          data: await getAssetData({
             type: "costume",
             name: costumeData.name,
             md5: costumeData.assetId,
             ext: costumeData.dataFormat,
             spriteName: target.name
-          })
+          }),
+
+          md5: costumeData.assetId,
+          ext: costumeData.dataFormat,
+
+          bitmapResolution: 2,
+          centerX: costumeData.rotationCenterX * 2,
+          centerY: costumeData.rotationCenterY * 2,
         })
     )
   );
 }
 
-async function extractSounds(target: sb3.Target, getAsset: getAsset): Promise<Sound[]> {
+async function extractSounds(target: sb3.Target, getAssetData: getAssetData): Promise<Sound[]> {
   return Promise.all(
     target.sounds.map(
       async (soundData: sb3.Sound) =>
         new Sound({
           name: soundData.name,
-          md5: soundData.assetId,
-          ext: soundData.dataFormat,
-          sampleCount: soundData.sampleCount,
-          sampleRate: soundData.rate,
-          format: soundData.format,
-          asset: await getAsset({
+          dataFormat: soundData.dataFormat,
+          data: await getAssetData({
             type: "sound",
             name: soundData.name,
             md5: soundData.assetId,
             ext: soundData.dataFormat,
             spriteName: target.name
-          })
+          }),
+
+          md5: soundData.assetId,
+          ext: soundData.dataFormat,
+
+          sampleCount: soundData.sampleCount,
+          sampleRate: soundData.rate,
         })
     )
   );
@@ -269,7 +274,7 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
   return blockWithNext;
 }
 
-export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAsset: getAsset }): Promise<Project> {
+export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAssetData: getAssetData }): Promise<Project> {
   function getVariables(target: sb3.Target): Variable[] {
     return Object.entries(target.variables).map(([id, [name, value, cloud = false]]) => {
       let monitor = json.monitors.find(monitor => monitor.id === id) as sb3.VariableMonitor;
@@ -349,9 +354,9 @@ export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAsset: ge
   return new Project({
     stage: new Stage({
       name: stage.name,
-      costumes: await extractCostumes(stage, options.getAsset),
+      costumes: await extractCostumes(stage, options.getAssetData),
       costumeNumber: stage.currentCostume,
-      sounds: await extractSounds(stage, options.getAsset),
+      sounds: await extractSounds(stage, options.getAssetData),
       scripts: Object.entries(stage.blocks)
         .filter(([id, block]) => block.topLevel)
         .map(
@@ -374,9 +379,9 @@ export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAsset: ge
           async (spriteData: sb3.Sprite) =>
             new Sprite({
               name: spriteData.name,
-              costumes: await extractCostumes(spriteData, options.getAsset),
+              costumes: await extractCostumes(spriteData, options.getAssetData),
               costumeNumber: spriteData.currentCostume,
-              sounds: await extractSounds(spriteData, options.getAsset),
+              sounds: await extractSounds(spriteData, options.getAssetData),
               scripts: Object.entries(spriteData.blocks)
                 .filter(([id, block]) => block.topLevel)
                 .filter(([id, block]) => !block.shadow)
@@ -415,8 +420,8 @@ export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAsset: ge
 export default async function fromSb3(fileData: Parameters<typeof JSZip.loadAsync>[0]): Promise<Project> {
   const inZip = await JSZip.loadAsync(fileData);
   const json = await inZip.file("project.json").async("text");
-  const getAsset = async ({ md5, ext }) => {
+  const getAssetData = async ({ md5, ext }) => {
     return await inZip.file(`${md5}.${ext}`).async("arraybuffer");
   };
-  return await fromSb3JSON(JSON.parse(json), { getAsset });
+  return await fromSb3JSON(JSON.parse(json), { getAssetData });
 }
