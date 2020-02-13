@@ -34,6 +34,14 @@ export default class Target {
   public setName(name: string): void {
     this.name = name;
   }
+
+  public getVariable(name: string): Variable {
+    return this.variables.find(variable => variable.name === name);
+  }
+
+  public getList(name: string): List {
+    return this.lists.find(list => list.name === name);
+  }
 }
 
 type TargetOptions = Partial<Target> & { name: string };
