@@ -34,6 +34,7 @@ export default class Project {
   public static fromSb3 = fromSb3;
   public static fromSb3JSON = fromSb3JSON;
 
+  public toSb3: typeof toSb3 = toSb3.bind(this);
   public toScratchJS: typeof toScratchJS = toScratchJS.bind(this);
   public toScratchblocks: typeof toScratchblocks = toScratchblocks.bind(this);
 
