@@ -29,8 +29,7 @@ export interface Costume {
 
   md5ext?: string;
 
-  // Note: These aren't required, but are "highly recommended" per their
-  // descriptions in scratch-parse.
+  bitmapResolution?: number;
   rotationCenterX?: number;
   rotationCenterY?: number;
 }
