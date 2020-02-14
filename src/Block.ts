@@ -3,6 +3,10 @@ import { OpCode } from "./OpCode";
 import { generateId } from "./util/id";
 
 export class BlockBase<MyOpCode extends OpCode, MyInputs extends { [key: string]: BlockInput.Any }> {
+  public static getExpectedInputType(opcode: keyof typeof KnownBlockInputMap, input: string): BlockInput.Any["type"] {
+    return KnownBlockInputMap[opcode][input];
+  }
+
   public id: string;
 
   public opcode: MyOpCode;
@@ -24,6 +28,13 @@ export class BlockBase<MyOpCode extends OpCode, MyInputs extends { [key: string]
 
     if (!this.id) {
       this.id = generateId();
+    }
+  }
+
+  // TODO: Can we reference MyInputs here?
+  public getExpectedInputType(input: string): BlockInput.Any["type"] {
+    if (this.opcode in KnownBlockInputMap) {
+      return KnownBlockInputMap[this.opcode][input];
     }
   }
 
@@ -243,6 +254,187 @@ export type KnownBlock =
   | BlockBase<OpCode.pen_changePenShadeBy, { SHADE: BlockInput.Number }>
   | BlockBase<OpCode.pen_setPenHueToNumber, { HUE: BlockInput.Number }>
   | BlockBase<OpCode.pen_changePenHueBy, { HUE: BlockInput.Number }>;
+
+// TODO: This is just a copy of the above data, formatted as a runtime constant
+// instead of as type information. Is it possible to construct a type from the
+// value of this mapping? I don't know enough ts-fu to risk doing so in some
+// way that seems to function as it's supposed to but actually isn't carrying
+// type information correctly.
+const KnownBlockInputMap: {
+  [key in OpCode]?: {
+    [inputName: string]: BlockInput.Any["type"]
+  }
+} = {
+  // Motion
+  [OpCode.motion_movesteps]: { STEPS: "number" },
+  [OpCode.motion_turnright]: { DEGREES: "number" },
+  [OpCode.motion_turnleft]: { DEGREES: "number" },
+  [OpCode.motion_goto]: { TO: "goToTarget" },
+  [OpCode.motion_gotoxy]: { X: "number", Y: "number" },
+  [OpCode.motion_glideto]: { SECS: "number", TO: "goToTarget" },
+  [OpCode.motion_glidesecstoxy]: { SECS: "number", X: "number", Y: "number" },
+  [OpCode.motion_pointindirection]: { DIRECTION: "angle" },
+  [OpCode.motion_pointtowards]: { TOWARDS: "pointTowardsTarget" },
+  [OpCode.motion_changexby]: { DX: "number" },
+  [OpCode.motion_setx]: { X: "number" },
+  [OpCode.motion_changeyby]: { DY: "number" },
+  [OpCode.motion_sety]: { Y: "number" },
+  [OpCode.motion_ifonedgebounce]: {},
+  [OpCode.motion_setrotationstyle]: { STYLE: "rotationStyle" },
+  [OpCode.motion_xposition]: {},
+  [OpCode.motion_yposition]: {},
+  [OpCode.motion_direction]: {},
+
+  // Looks
+  [OpCode.looks_sayforsecs]: { MESSAGE: "string", SECS: "number" },
+  [OpCode.looks_say]: { MESSAGE: "string" },
+  [OpCode.looks_thinkforsecs]: { MESSAGE: "string", SECS: "number" },
+  [OpCode.looks_think]: { MESSAGE: "string" },
+  [OpCode.looks_switchcostumeto]: { COSTUME: "costume" },
+  [OpCode.looks_nextcostume]: {},
+  [OpCode.looks_switchbackdropto]: { BACKDROP: "backdrop" },
+  [OpCode.looks_nextbackdrop]: {},
+  [OpCode.looks_changesizeby]: { CHANGE: "number" },
+  [OpCode.looks_setsizeto]: { SIZE: "number" },
+  [OpCode.looks_changeeffectby]: { EFFECT: "graphicEffect", CHANGE: "number" },
+  [OpCode.looks_seteffectto]: { EFFECT: "graphicEffect", VALUE: "number" },
+  [OpCode.looks_cleargraphiceffects]: {},
+  [OpCode.looks_show]: {},
+  [OpCode.looks_hide]: {},
+  [OpCode.looks_gotofrontback]: { FRONT_BACK: "frontBackMenu" },
+  [
+      OpCode.looks_goforwardbackwardlayers]:
+      { NUM: "number", FORWARD_BACKWARD: "forwardBackwardMenu" }
+    ,
+  [OpCode.looks_costumenumbername]: { NUMBER_NAME: "costumeNumberName" },
+  [OpCode.looks_backdropnumbername]: { NUMBER_NAME: "costumeNumberName" },
+  [OpCode.looks_size]: {},
+  [OpCode.looks_hideallsprites]: {},
+  [OpCode.looks_switchbackdroptoandwait]: { BACKDROP: "backdrop" },
+  [OpCode.looks_changestretchby]: { CHANGE: "number" },
+  [OpCode.looks_setstretchto]: { STRETCH: "number" },
+
+  // Sound
+  [OpCode.sound_playuntildone]: { SOUND_MENU: "sound" },
+  [OpCode.sound_play]: { SOUND_MENU: "sound" },
+  [OpCode.sound_stopallsounds]: {},
+  [OpCode.sound_changeeffectby]: { VALUE: "number", EFFECT: "soundEffect" },
+  [OpCode.sound_seteffectto]: { VALUE: "number", EFFECT: "soundEffect" },
+  [OpCode.sound_cleareffects]: {},
+  [OpCode.sound_changevolumeby]: { VOLUME: "number" },
+  [OpCode.sound_setvolumeto]: { VOLUME: "number" },
+  [OpCode.sound_volume]: {},
+
+  // Events
+  [OpCode.event_whenflagclicked]: {},
+  [OpCode.event_whenkeypressed]: { KEY_OPTION: "key" },
+  [OpCode.event_whenthisspriteclicked]: {},
+  [OpCode.event_whenstageclicked]: {},
+  [OpCode.event_whenbackdropswitchesto]: { BACKDROP: "backdrop" },
+  [OpCode.event_whengreaterthan]: { VALUE: "number", WHENGREATERTHANMENU: "greaterThanMenu" },
+  [OpCode.event_whenbroadcastreceived]: { BROADCAST_OPTION: "broadcast" },
+  [OpCode.event_broadcast]: { BROADCAST_INPUT: "broadcast" },
+  [OpCode.event_broadcastandwait]: { BROADCAST_INPUT: "broadcast" },
+
+  // Control
+  [OpCode.control_wait]: { DURATION: "number" },
+  [OpCode.control_repeat]: { TIMES: "number", SUBSTACK: "blocks" },
+  [OpCode.control_forever]: { SUBSTACK: "blocks" },
+  [OpCode.control_if]: { CONDITION: "boolean", SUBSTACK: "blocks" },
+  [OpCode.control_if_else]: { CONDITION: "boolean", SUBSTACK: "blocks", SUBSTACK2: "blocks" },
+  [OpCode.control_wait_until]: { CONDITION: "boolean" },
+  [OpCode.control_repeat_until]: { CONDITION: "boolean", SUBSTACK: "blocks" },
+  [OpCode.control_stop]: { STOP_OPTION: "stopMenu" },
+  [OpCode.control_start_as_clone]: {},
+  [OpCode.control_create_clone_of]: { CLONE_OPTION: "cloneTarget" },
+  [OpCode.control_delete_this_clone]: {},
+  [OpCode.control_all_at_once]: { SUBSTACK: "blocks" },
+  [OpCode.control_for_each]: { VARIABLE: "variable", VALUE: "number", SUBSTACK: "blocks" },
+  [OpCode.control_while]: { CONDITION: "boolean", SUBSTACK: "blocks" },
+
+  // Sensing
+  [OpCode.sensing_touchingobject]: { TOUCHINGOBJECTMENU: "touchingTarget" },
+  [OpCode.sensing_touchingcolor]: { COLOR: "color" },
+  [OpCode.sensing_coloristouchingcolor]: { COLOR: "color", COLOR2: "color" },
+  [OpCode.sensing_distanceto]: { DISTANCETOMENU: "distanceToMenu" },
+  [OpCode.sensing_askandwait]: { QUESTION: "string" },
+  [OpCode.sensing_answer]: {},
+  [OpCode.sensing_keypressed]: { KEY_OPTION: "key" },
+  [OpCode.sensing_mousedown]: {},
+  [OpCode.sensing_mousex]: {},
+  [OpCode.sensing_mousey]: {},
+  [OpCode.sensing_setdragmode]: { DRAG_MODE: "dragModeMenu" },
+  [OpCode.sensing_loudness]: {},
+  [OpCode.sensing_loud]: {},
+  [OpCode.sensing_timer]: {},
+  [OpCode.sensing_resettimer]: {},
+  [OpCode.sensing_of]: { OBJECT: "target", PROPERTY: "propertyOfMenu" },
+  [OpCode.sensing_current]: { CURRENTMENU: "currentMenu" },
+  [OpCode.sensing_dayssince2000]: {},
+  [OpCode.sensing_username]: {},
+  [OpCode.sensing_userid]: {},
+
+  // Operators
+  [OpCode.operator_add]: { NUM1: "number", NUM2: "number" },
+  [OpCode.operator_subtract]: { NUM1: "number", NUM2: "number" },
+  [OpCode.operator_multiply]: { NUM1: "number", NUM2: "number" },
+  [OpCode.operator_divide]: { NUM1: "number", NUM2: "number" },
+  [OpCode.operator_random]: { FROM: "number", TO: "number" },
+  [OpCode.operator_gt]: { OPERAND1: "number", OPERAND2: "number" },
+  [OpCode.operator_lt]: { OPERAND1: "number", OPERAND2: "number" },
+  [OpCode.operator_equals]: { OPERAND1: "number", OPERAND2: "number" },
+  [OpCode.operator_and]: { OPERAND1: "boolean", OPERAND2: "boolean" },
+  [OpCode.operator_or]: { OPERAND1: "boolean", OPERAND2: "boolean" },
+  [OpCode.operator_not]: { OPERAND: "boolean" },
+  [OpCode.operator_join]: { STRING1: "string", STRING2: "string" },
+  [OpCode.operator_letter_of]: { LETTER: "number", STRING: "string" },
+  [OpCode.operator_length]: { STRING: "string" },
+  [OpCode.operator_contains]: { STRING1: "string", STRING2: "string" },
+  [OpCode.operator_mod]: { NUM1: "number", NUM2: "number" },
+  [OpCode.operator_round]: { NUM: "number" },
+  [OpCode.operator_mathop]: { OPERATOR: "mathopMenu", NUM: "number" },
+
+  // Data
+  [OpCode.data_variable]: { VARIABLE: "variable" },
+  [OpCode.data_setvariableto]: { VARIABLE: "variable", VALUE: "string" },
+  [OpCode.data_changevariableby]: { VARIABLE: "variable", VALUE: "number" },
+  [OpCode.data_showvariable]: { VARIABLE: "variable" },
+  [OpCode.data_hidevariable]: { VARIABLE: "variable" },
+  [OpCode.data_listcontents]: { LIST: "list" },
+  [OpCode.data_addtolist]: { LIST: "list", ITEM: "string" },
+  [OpCode.data_deleteoflist]: { LIST: "list", INDEX: "number" },
+  [OpCode.data_deletealloflist]: { LIST: "list" },
+  [OpCode.data_insertatlist]: { LIST: "list", INDEX: "number", ITEM: "string" },
+  [OpCode.data_replaceitemoflist]:{ LIST: "list", INDEX: "number", ITEM: "string" },
+  [OpCode.data_itemoflist]: { LIST: "list", INDEX: "number" },
+  [OpCode.data_itemnumoflist]: { LIST: "list", ITEM: "string" },
+  [OpCode.data_lengthoflist]: { LIST: "list" },
+  [OpCode.data_listcontainsitem]: { LIST: "list", ITEM: "string" },
+  [OpCode.data_showlist]: { LIST: "list" },
+  [OpCode.data_hidelist]: { LIST: "list" },
+
+  // Custom Blocks
+  [OpCode.procedures_definition]:{ PROCCODE: "string", ARGUMENTS: "customBlockArguments", WARP: "boolean" },
+  [OpCode.procedures_call]: { PROCCODE: "string", INPUTS: "customBlockInputValues" },
+  [OpCode.argument_reporter_string_number]: { VALUE: "string" },
+  [OpCode.argument_reporter_boolean]: { VALUE: "string" },
+
+  // Extension: Pen
+  [OpCode.pen_clear]: {},
+  [OpCode.pen_stamp]: {},
+  [OpCode.pen_penDown]: {},
+  [OpCode.pen_penUp]: {},
+  [OpCode.pen_setPenColorToColor]: { COLOR: "color" },
+  [OpCode.pen_changePenColorParamBy]: { colorParam: "penColorParam", VALUE: "number" },
+  [OpCode.pen_setPenColorParamTo]: { colorParam: "penColorParam", VALUE: "number" },
+  [OpCode.pen_changePenSizeBy]: { SIZE: "number" },
+  [OpCode.pen_setPenSizeTo]: { SIZE: "number" },
+  // Deprecated:
+  [OpCode.pen_setPenShadeToNumber]: { SHADE: "number" },
+  [OpCode.pen_changePenShadeBy]: { SHADE: "number" },
+  [OpCode.pen_setPenHueToNumber]: { HUE: "number" },
+  [OpCode.pen_changePenHueBy]: { HUE: "number" }
+}
 
 export type UnknownBlock = BlockBase<Exclude<OpCode, KnownBlock["opcode"]>, { [key: string]: BlockInput.Any }>;
 
