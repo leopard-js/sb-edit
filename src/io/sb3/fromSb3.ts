@@ -154,7 +154,7 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
               };
             }
           } else {
-            if (inputName.includes("SUBSTACK") || inputScript.length > 1) {
+            if (BlockBase.getExpectedInputType(block.opcode, inputName) === "blocks" || inputScript.length > 1) {
               addInput(inputName, { type: "blocks", value: inputScript });
             } else {
               addInput(inputName, { type: "block", value: inputScript[0] });
