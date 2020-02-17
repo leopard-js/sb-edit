@@ -31,7 +31,7 @@ export default function toScratchblocks(
       return "";
     }
 
-    const escape = (value: string): string => (value || "").replace(/[()\[\]]|v$/g, m => "\\" + m);
+    const escape = (value: string): string => (value || "").toString().replace(/[()\[\]]|v$/g, m => "\\" + m);
 
     switch (inp.type) {
       case "number":
@@ -42,7 +42,7 @@ export default function toScratchblocks(
         }
 
       case "angle":
-        return `(${inp.value})`;
+        return `(${inp.value || ""})`;
 
       case "string":
         return `[${escape(inp.value)}]`;
@@ -55,7 +55,7 @@ export default function toScratchblocks(
           {
             PAN: "pan left/right",
             DAYOFWEEK: "day of week"
-          }[inp.value] || inp.value.toLowerCase();
+          }[inp.value] || (inp.value || "").toLowerCase();
         return `[${escape(value)} v]`;
 
       case "variable":
@@ -107,23 +107,35 @@ export default function toScratchblocks(
         }
 
       case "color":
-        const hex = (k: string): string => inp.value[k].toString(16).padStart(2, "0");
+        const hex = (k: string): string => (inp.value || { r: 0, g: 0, b: 0 })[k].toString(16).padStart(2, "0");
         return `[#${hex("r") + hex("g") + hex("b")}]`;
 
       case "block":
         if (flag) {
-          return "\n" + indent(blockToScratchblocks(inp.value, target)) + "\n";
-        } else {
-          const ret: string = blockToScratchblocks(inp.value, target);
-          if (ret[0] === "(" || ret[0] === "<") {
-            return ret;
+          if (inp.value) {
+            return "\n" + indent(blockToScratchblocks(inp.value, target)) + "\n";
           } else {
-            return "(" + ret + ")";
+            return "\n";
+          }
+        } else {
+          if (inp.value) {
+            const ret: string = blockToScratchblocks(inp.value, target);
+            if (ret[0] === "(" || ret[0] === "<") {
+              return ret;
+            } else {
+              return "(" + ret + ")";
+            }
+          } else {
+            return "()";
           }
         }
 
       case "blocks":
-        return "\n" + indent(blocksToScratchblocks(inp.value, target)) + "\n";
+        if (inp.value) {
+          return "\n" + indent(blocksToScratchblocks(inp.value, target)) + "\n";
+        } else {
+          return "\n";
+        }
 
       default:
         return `(unknown input type [${inp.type}])`;
