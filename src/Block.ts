@@ -2,9 +2,16 @@ import * as BlockInput from "./BlockInput";
 import { OpCode } from "./OpCode";
 import { generateId } from "./util/id";
 
+interface DefaultInput {
+  type: BlockInput.Any["type"];
+  initial: any; // TODO: How to make this correspond to "type" above?
+}
+
 export class BlockBase<MyOpCode extends OpCode, MyInputs extends { [key: string]: BlockInput.Any }> {
-  public static getExpectedInputType(opcode: keyof typeof KnownBlockInputMap, input: string): BlockInput.Any["type"] {
-    return KnownBlockInputMap[opcode][input];
+  public static getDefaultInput(opcode: keyof typeof KnownBlockInputMap, input: string): DefaultInput | void {
+    if (opcode in KnownBlockInputMap) {
+      return KnownBlockInputMap[opcode][input];
+    }
   }
 
   public id: string;
@@ -32,10 +39,8 @@ export class BlockBase<MyOpCode extends OpCode, MyInputs extends { [key: string]
   }
 
   // TODO: Can we reference MyInputs here?
-  public getExpectedInputType(input: string): BlockInput.Any["type"] {
-    if (this.opcode in KnownBlockInputMap) {
-      return KnownBlockInputMap[this.opcode][input];
-    }
+  public getDefaultInput(input: string): DefaultInput | void {
+    return BlockBase.getDefaultInput(this.opcode, input);
   }
 
   get blocks(): Block[] {
@@ -255,185 +260,463 @@ export type KnownBlock =
   | BlockBase<OpCode.pen_setPenHueToNumber, { HUE: BlockInput.Number }>
   | BlockBase<OpCode.pen_changePenHueBy, { HUE: BlockInput.Number }>;
 
-// TODO: This is just a copy of the above data, formatted as a runtime constant
-// instead of as type information. Is it possible to construct a type from the
-// value of this mapping? I don't know enough ts-fu to risk doing so in some
-// way that seems to function as it's supposed to but actually isn't carrying
-// type information correctly.
+// TODO: This is largely a copy of the above data, formatted as a runtime
+// constant instead of as type information. Is it possible to construct a type
+// from the value of this mapping? I don't know enough ts-fu to risk doing so
+// in some way that seems to function as it's supposed to but actually isn't
+// carrying type information correctly.
 const KnownBlockInputMap: {
   [key in OpCode]?: {
-    [inputName: string]: BlockInput.Any["type"]
+    [inputName: string]: DefaultInput
   }
 } = {
   // Motion
-  [OpCode.motion_movesteps]: { STEPS: "number" },
-  [OpCode.motion_turnright]: { DEGREES: "number" },
-  [OpCode.motion_turnleft]: { DEGREES: "number" },
-  [OpCode.motion_goto]: { TO: "goToTarget" },
-  [OpCode.motion_gotoxy]: { X: "number", Y: "number" },
-  [OpCode.motion_glideto]: { SECS: "number", TO: "goToTarget" },
-  [OpCode.motion_glidesecstoxy]: { SECS: "number", X: "number", Y: "number" },
-  [OpCode.motion_pointindirection]: { DIRECTION: "angle" },
-  [OpCode.motion_pointtowards]: { TOWARDS: "pointTowardsTarget" },
-  [OpCode.motion_changexby]: { DX: "number" },
-  [OpCode.motion_setx]: { X: "number" },
-  [OpCode.motion_changeyby]: { DY: "number" },
-  [OpCode.motion_sety]: { Y: "number" },
+  [OpCode.motion_movesteps]: {
+    STEPS: {type: "number", initial: 10}
+  },
+  [OpCode.motion_turnright]: {
+    DEGREES: {type: "number", initial: 15}
+  },
+  [OpCode.motion_turnleft]: {
+    DEGREES: {type: "number", initial: 15}
+  },
+  [OpCode.motion_goto]: {
+    TO: {type: "goToTarget", initial: "_random_"}
+  },
+  [OpCode.motion_gotoxy]: {
+    X: {type: "number", initial: 0},
+    Y: {type: "number", initial: 0}
+  },
+  [OpCode.motion_glideto]: {
+    SECS: {type: "number", initial: 1},
+    TO: {type: "goToTarget", initial: "_random_"}
+  },
+  [OpCode.motion_glidesecstoxy]: {
+    SECS: {type: "number", initial: 1},
+    X: {type: "number", initial: 0},
+    Y: {type: "number", initial: 0}
+  },
+  [OpCode.motion_pointindirection]: {
+    DIRECTION: {type: "angle", initial: 90}
+  },
+  [OpCode.motion_pointtowards]: {
+    TOWARDS: {type: "pointTowardsTarget", initial: "_mouse_"}
+  },
+  [OpCode.motion_changexby]: {
+    DX: {type: "number", initial: 10}
+  },
+  [OpCode.motion_setx]: {
+    X: {type: "number", initial: 0}
+  },
+  [OpCode.motion_changeyby]: {
+    DY: {type: "number", initial: 10}
+  },
+  [OpCode.motion_sety]: {
+    Y: {type: "number", initial: 0}
+  },
   [OpCode.motion_ifonedgebounce]: {},
-  [OpCode.motion_setrotationstyle]: { STYLE: "rotationStyle" },
+  [OpCode.motion_setrotationstyle]: {
+    STYLE: {type: "rotationStyle", initial: "leftRight"}
+  },
   [OpCode.motion_xposition]: {},
   [OpCode.motion_yposition]: {},
   [OpCode.motion_direction]: {},
 
   // Looks
-  [OpCode.looks_sayforsecs]: { MESSAGE: "string", SECS: "number" },
-  [OpCode.looks_say]: { MESSAGE: "string" },
-  [OpCode.looks_thinkforsecs]: { MESSAGE: "string", SECS: "number" },
-  [OpCode.looks_think]: { MESSAGE: "string" },
-  [OpCode.looks_switchcostumeto]: { COSTUME: "costume" },
+  [OpCode.looks_sayforsecs]: {
+    MESSAGE: {type: "string", initial: "Hello!"},
+    SECS: {type: "number", initial: 2}
+  },
+  [OpCode.looks_say]: {
+    MESSAGE: {type: "string", initial: "Hello!"}
+  },
+  [OpCode.looks_thinkforsecs]: {
+    MESSAGE: {type: "string", initial: "Hmm..."},
+    SECS: {type: "number", initial: 2}
+  },
+  [OpCode.looks_think]: {
+    MESSAGE: {type: "string", initial: "Hmmm..."}
+  },
+  [OpCode.looks_switchcostumeto]: {
+    COSTUME: {type: "costume", initial: "costume1"}
+  },
   [OpCode.looks_nextcostume]: {},
-  [OpCode.looks_switchbackdropto]: { BACKDROP: "backdrop" },
+  [OpCode.looks_switchbackdropto]: {
+    BACKDROP: {type: "backdrop", initial: "backdrop1"}
+  },
   [OpCode.looks_nextbackdrop]: {},
-  [OpCode.looks_changesizeby]: { CHANGE: "number" },
-  [OpCode.looks_setsizeto]: { SIZE: "number" },
-  [OpCode.looks_changeeffectby]: { EFFECT: "graphicEffect", CHANGE: "number" },
-  [OpCode.looks_seteffectto]: { EFFECT: "graphicEffect", VALUE: "number" },
+  [OpCode.looks_changesizeby]: {
+    CHANGE: {type: "number", initial: 10}
+  },
+  [OpCode.looks_setsizeto]: {
+    SIZE: {type: "number", initial: 100}
+  },
+  [OpCode.looks_changeeffectby]: {
+    EFFECT: {type: "graphicEffect", initial: "COLOR"},
+    CHANGE: {type: "number", initial: 25}
+  },
+  [OpCode.looks_seteffectto]: {
+    EFFECT: {type: "graphicEffect", initial: "COLOR"},
+    VALUE: {type: "number", initial: 0}
+  },
   [OpCode.looks_cleargraphiceffects]: {},
   [OpCode.looks_show]: {},
   [OpCode.looks_hide]: {},
-  [OpCode.looks_gotofrontback]: { FRONT_BACK: "frontBackMenu" },
-  [
-      OpCode.looks_goforwardbackwardlayers]:
-      { NUM: "number", FORWARD_BACKWARD: "forwardBackwardMenu" }
-    ,
-  [OpCode.looks_costumenumbername]: { NUMBER_NAME: "costumeNumberName" },
-  [OpCode.looks_backdropnumbername]: { NUMBER_NAME: "costumeNumberName" },
+  [OpCode.looks_gotofrontback]: {
+    FRONT_BACK: {type: "frontBackMenu", initial: "front"}
+  },
+  [OpCode.looks_goforwardbackwardlayers]: {
+    FORWARD_BACKWARD: {type: "forwardBackwardMenu", initial: "forward"},
+    NUM: {type: "number", initial: 1}
+  },
+  [OpCode.looks_costumenumbername]: {
+    NUMBER_NAME: {type: "costumeNumberName", initial: "number"}
+  },
+  [OpCode.looks_backdropnumbername]: {
+    NUMBER_NAME: {type: "costumeNumberName", initial: "number"}
+  },
   [OpCode.looks_size]: {},
   [OpCode.looks_hideallsprites]: {},
-  [OpCode.looks_switchbackdroptoandwait]: { BACKDROP: "backdrop" },
-  [OpCode.looks_changestretchby]: { CHANGE: "number" },
-  [OpCode.looks_setstretchto]: { STRETCH: "number" },
+  [OpCode.looks_switchbackdroptoandwait]: {
+    BACKDROP: {type: "backdrop", initial: "backdrop1"}
+  },
+  [OpCode.looks_changestretchby]: {
+    CHANGE: {type: "number", initial: 10}
+  },
+  [OpCode.looks_setstretchto]: {
+    STRETCH: {type: "number", initial: 0}
+  },
 
   // Sound
-  [OpCode.sound_playuntildone]: { SOUND_MENU: "sound" },
-  [OpCode.sound_play]: { SOUND_MENU: "sound" },
+  [OpCode.sound_playuntildone]: {
+    SOUND_MENU: {type: "sound", initial: "pop"}
+  },
+  [OpCode.sound_play]: {
+    SOUND_MENU: {type: "sound", initial: "sound"}
+  },
   [OpCode.sound_stopallsounds]: {},
-  [OpCode.sound_changeeffectby]: { VALUE: "number", EFFECT: "soundEffect" },
-  [OpCode.sound_seteffectto]: { VALUE: "number", EFFECT: "soundEffect" },
+  [OpCode.sound_changeeffectby]: {
+    EFFECT: {type: "soundEffect", initial: "PITCH"},
+    VALUE: {type: "number", initial: 10}
+  },
+  [OpCode.sound_seteffectto]: {
+    EFFECT: {type: "soundEffect", initial: "PITCH"},
+    VALUE: {type: "number", initial: 0}
+  },
   [OpCode.sound_cleareffects]: {},
-  [OpCode.sound_changevolumeby]: { VOLUME: "number" },
-  [OpCode.sound_setvolumeto]: { VOLUME: "number" },
+  [OpCode.sound_changevolumeby]: {
+    VOLUME: {type: "number", initial: -10}
+  },
+  [OpCode.sound_setvolumeto]: {
+    VOLUME: {type: "number", initial: 100}
+  },
   [OpCode.sound_volume]: {},
 
   // Events
   [OpCode.event_whenflagclicked]: {},
-  [OpCode.event_whenkeypressed]: { KEY_OPTION: "key" },
+  [OpCode.event_whenkeypressed]: {
+    KEY_OPTION: {type: "key", initial: "space"}
+  },
   [OpCode.event_whenthisspriteclicked]: {},
   [OpCode.event_whenstageclicked]: {},
-  [OpCode.event_whenbackdropswitchesto]: { BACKDROP: "backdrop" },
-  [OpCode.event_whengreaterthan]: { VALUE: "number", WHENGREATERTHANMENU: "greaterThanMenu" },
-  [OpCode.event_whenbroadcastreceived]: { BROADCAST_OPTION: "broadcast" },
-  [OpCode.event_broadcast]: { BROADCAST_INPUT: "broadcast" },
-  [OpCode.event_broadcastandwait]: { BROADCAST_INPUT: "broadcast" },
+  [OpCode.event_whenbackdropswitchesto]: {
+    BACKDROP: {type: "backdrop", initial: "backdrop1"}
+  },
+  [OpCode.event_whengreaterthan]: {
+    WHENGREATERTHANMENU: {type: "greaterThanMenu", initial: "LOUDNESS"},
+    VALUE: {type: "number", initial: 10}
+  },
+  [OpCode.event_whenbroadcastreceived]: {
+    BROADCAST_OPTION: {type: "broadcast", initial: "message1"}
+  },
+  [OpCode.event_broadcast]: {
+    BROADCAST_INPUT: {type: "broadcast", initial: "message1"}
+  },
+  [OpCode.event_broadcastandwait]: {
+    BROADCAST_INPUT: {type: "broadcast", initial: "message1"}
+  },
 
   // Control
-  [OpCode.control_wait]: { DURATION: "number" },
-  [OpCode.control_repeat]: { TIMES: "number", SUBSTACK: "blocks" },
-  [OpCode.control_forever]: { SUBSTACK: "blocks" },
-  [OpCode.control_if]: { CONDITION: "boolean", SUBSTACK: "blocks" },
-  [OpCode.control_if_else]: { CONDITION: "boolean", SUBSTACK: "blocks", SUBSTACK2: "blocks" },
-  [OpCode.control_wait_until]: { CONDITION: "boolean" },
-  [OpCode.control_repeat_until]: { CONDITION: "boolean", SUBSTACK: "blocks" },
-  [OpCode.control_stop]: { STOP_OPTION: "stopMenu" },
+  [OpCode.control_wait]: {
+    DURATION: {type: "number", initial: 1}
+  },
+  [OpCode.control_repeat]: {
+    TIMES: {type: "number", initial: 10},
+    SUBSTACK: {type: "blocks", initial: null}
+  },
+  [OpCode.control_forever]: {
+    SUBSTACK: {type: "blocks", initial: null}
+  },
+  [OpCode.control_if]: {
+    CONDITION: {type: "boolean", initial: false},
+    SUBSTACK: {type: "blocks", initial: null}
+  },
+  [OpCode.control_if_else]: {
+    CONDITION: {type: "boolean", initial: false},
+    SUBSTACK: {type: "blocks", initial: null},
+    SUBSTACK2: {type: "blocks", initial: null}
+  },
+  [OpCode.control_wait_until]: {
+    CONDITION: {type: "boolean", initial: false}
+  },
+  [OpCode.control_repeat_until]: {
+    CONDITION: {type: "boolean", initial: false},
+    SUBSTACK: {type: "blocks", initial: null}
+  },
+  [OpCode.control_stop]: {
+    STOP_OPTION: {type: "stopMenu", initial: "all"}
+  },
   [OpCode.control_start_as_clone]: {},
-  [OpCode.control_create_clone_of]: { CLONE_OPTION: "cloneTarget" },
+  [OpCode.control_create_clone_of]: {
+    CLONE_OPTION: {type: "cloneTarget", initial: "_myself_"}
+  },
   [OpCode.control_delete_this_clone]: {},
-  [OpCode.control_all_at_once]: { SUBSTACK: "blocks" },
-  [OpCode.control_for_each]: { VARIABLE: "variable", VALUE: "number", SUBSTACK: "blocks" },
-  [OpCode.control_while]: { CONDITION: "boolean", SUBSTACK: "blocks" },
+  [OpCode.control_all_at_once]: {
+    SUBSTACK: {type: "blocks", initial: null}
+  },
+  [OpCode.control_for_each]: {
+    VARIABLE: {type: "variable", initial: "i"},
+    VALUE: {type: "number", initial: 10},
+    SUBSTACK: {type: "blocks", initial: null}
+  },
+  [OpCode.control_while]: {
+    CONDITION: {type: "boolean", initial: "false"},
+    SUBSTACK: {type: "blocks", initial: null}
+  },
 
   // Sensing
-  [OpCode.sensing_touchingobject]: { TOUCHINGOBJECTMENU: "touchingTarget" },
-  [OpCode.sensing_touchingcolor]: { COLOR: "color" },
-  [OpCode.sensing_coloristouchingcolor]: { COLOR: "color", COLOR2: "color" },
-  [OpCode.sensing_distanceto]: { DISTANCETOMENU: "distanceToMenu" },
-  [OpCode.sensing_askandwait]: { QUESTION: "string" },
+  [OpCode.sensing_touchingobject]: {
+    TOUCHINGOBJECTMENU: {type: "touchingTarget", initial: "_mouse_"}
+  },
+  [OpCode.sensing_touchingcolor]: {
+    COLOR: {type: "color", initial: "#9966ff"}
+  },
+  [OpCode.sensing_coloristouchingcolor]: {
+    COLOR: {type: "color", initial: "#9966ff"},
+    COLOR2: {type: "color", initial: "#ffab19"}
+  },
+  [OpCode.sensing_distanceto]: {
+    DISTANCETOMENU: {type: "distanceToMenu", initial: "_mouse_"}
+  },
+  [OpCode.sensing_askandwait]: {
+    QUESTION: {type: "string", initial: "What's your name?"}
+  },
   [OpCode.sensing_answer]: {},
-  [OpCode.sensing_keypressed]: { KEY_OPTION: "key" },
+  [OpCode.sensing_keypressed]: {
+    KEY_OPTION: {type: "key", initial: "space"}
+  },
   [OpCode.sensing_mousedown]: {},
   [OpCode.sensing_mousex]: {},
   [OpCode.sensing_mousey]: {},
-  [OpCode.sensing_setdragmode]: { DRAG_MODE: "dragModeMenu" },
+  [OpCode.sensing_setdragmode]: {
+    DRAG_MODE: {type: "dragModeMenu", initial: false}
+  },
   [OpCode.sensing_loudness]: {},
   [OpCode.sensing_loud]: {},
   [OpCode.sensing_timer]: {},
   [OpCode.sensing_resettimer]: {},
-  [OpCode.sensing_of]: { OBJECT: "target", PROPERTY: "propertyOfMenu" },
-  [OpCode.sensing_current]: { CURRENTMENU: "currentMenu" },
+  [OpCode.sensing_of]: {
+    PROPERTY: {type: "propertyOfMenu", initial: "backdrop #"},
+    OBJECT: {type: "target", initial: "_stage_"}
+  },
+  [OpCode.sensing_current]: {
+    CURRENTMENU: {type: "currentMenu", initial: "YEAR"}
+  },
   [OpCode.sensing_dayssince2000]: {},
   [OpCode.sensing_username]: {},
   [OpCode.sensing_userid]: {},
 
   // Operators
-  [OpCode.operator_add]: { NUM1: "number", NUM2: "number" },
-  [OpCode.operator_subtract]: { NUM1: "number", NUM2: "number" },
-  [OpCode.operator_multiply]: { NUM1: "number", NUM2: "number" },
-  [OpCode.operator_divide]: { NUM1: "number", NUM2: "number" },
-  [OpCode.operator_random]: { FROM: "number", TO: "number" },
-  [OpCode.operator_gt]: { OPERAND1: "number", OPERAND2: "number" },
-  [OpCode.operator_lt]: { OPERAND1: "number", OPERAND2: "number" },
-  [OpCode.operator_equals]: { OPERAND1: "number", OPERAND2: "number" },
-  [OpCode.operator_and]: { OPERAND1: "boolean", OPERAND2: "boolean" },
-  [OpCode.operator_or]: { OPERAND1: "boolean", OPERAND2: "boolean" },
-  [OpCode.operator_not]: { OPERAND: "boolean" },
-  [OpCode.operator_join]: { STRING1: "string", STRING2: "string" },
-  [OpCode.operator_letter_of]: { LETTER: "number", STRING: "string" },
-  [OpCode.operator_length]: { STRING: "string" },
-  [OpCode.operator_contains]: { STRING1: "string", STRING2: "string" },
-  [OpCode.operator_mod]: { NUM1: "number", NUM2: "number" },
-  [OpCode.operator_round]: { NUM: "number" },
-  [OpCode.operator_mathop]: { OPERATOR: "mathopMenu", NUM: "number" },
+  [OpCode.operator_add]: {
+    NUM1: {type: "number", initial: ""},
+    NUM2: {type: "number", initial: ""}
+  },
+  [OpCode.operator_subtract]: {
+    NUM1: {type: "number", initial: ""},
+    NUM2: {type: "number", initial: ""}
+  },
+  [OpCode.operator_multiply]: {
+    NUM1: {type: "number", initial: ""},
+    NUM2: {type: "number", initial: ""}
+  },
+  [OpCode.operator_divide]: {
+    NUM1: {type: "number", initial: ""},
+    NUM2: {type: "number", initial: ""}
+  },
+  [OpCode.operator_random]: {
+    FROM: {type: "number", initial: 1},
+    TO: {type: "number", initial: 10}
+  },
+  [OpCode.operator_gt]: {
+    OPERAND1: {type: "number", initial: ""},
+    OPERAND2: {type: "number", initial: 50}
+  },
+  [OpCode.operator_lt]: {
+    OPERAND1: {type: "number", initial: ""},
+    OPERAND2: {type: "number", initial: 50}
+  },
+  [OpCode.operator_equals]: {
+    OPERAND1: {type: "number", initial: ""},
+    OPERAND2: {type: "number", initial: 50}
+  },
+  [OpCode.operator_and]: {
+    OPERAND1: {type: "boolean", initial: false},
+    OPERAND2: {type: "boolean", initial: false}
+  },
+  [OpCode.operator_or]: {
+    OPERAND1: {type: "boolean", initial: false},
+    OPERAND2: {type: "boolean", initial: false}
+  },
+  [OpCode.operator_not]: {
+    OPERAND: {type: "boolean", initial: false}
+  },
+  [OpCode.operator_join]: {
+    STRING1: {type: "string", initial: "apple "},
+    STRING2: {type: "string", initial: "banana"}
+  },
+  [OpCode.operator_letter_of]: {
+    LETTER: {type: "number", initial: 1},
+    STRING: {type: "string", initial: "apple"}
+  },
+  [OpCode.operator_length]: {
+    STRING: {type: "string", initial: "apple"}
+  },
+  [OpCode.operator_contains]: {
+    STRING1: {type: "string", initial: "apple"},
+    STRING2: {type: "string", initial: "a"}
+  },
+  [OpCode.operator_mod]: {
+    NUM1: {type: "number", initial: ""},
+    NUM2: {type: "number", initial: ""}
+  },
+  [OpCode.operator_round]: {
+    NUM: {type: "number", initial: ""}
+  },
+  [OpCode.operator_mathop]: {
+    OPERATOR: {type: "mathopMenu", initial: "abs"},
+    NUM: {type: "number", initial: ""}
+  },
 
   // Data
-  [OpCode.data_variable]: { VARIABLE: "variable" },
-  [OpCode.data_setvariableto]: { VARIABLE: "variable", VALUE: "string" },
-  [OpCode.data_changevariableby]: { VARIABLE: "variable", VALUE: "number" },
-  [OpCode.data_showvariable]: { VARIABLE: "variable" },
-  [OpCode.data_hidevariable]: { VARIABLE: "variable" },
-  [OpCode.data_listcontents]: { LIST: "list" },
-  [OpCode.data_addtolist]: { LIST: "list", ITEM: "string" },
-  [OpCode.data_deleteoflist]: { LIST: "list", INDEX: "number" },
-  [OpCode.data_deletealloflist]: { LIST: "list" },
-  [OpCode.data_insertatlist]: { LIST: "list", INDEX: "number", ITEM: "string" },
-  [OpCode.data_replaceitemoflist]:{ LIST: "list", INDEX: "number", ITEM: "string" },
-  [OpCode.data_itemoflist]: { LIST: "list", INDEX: "number" },
-  [OpCode.data_itemnumoflist]: { LIST: "list", ITEM: "string" },
-  [OpCode.data_lengthoflist]: { LIST: "list" },
-  [OpCode.data_listcontainsitem]: { LIST: "list", ITEM: "string" },
-  [OpCode.data_showlist]: { LIST: "list" },
-  [OpCode.data_hidelist]: { LIST: "list" },
+  [OpCode.data_variable]: {
+    VARIABLE: {type: "variable", initial: "my variable"}
+  },
+  [OpCode.data_setvariableto]: {
+    VARIABLE: {type: "variable", initial: "my variable"},
+    VALUE: {type: "string", initial: "0"}
+  },
+  [OpCode.data_changevariableby]: {
+    VARIABLE: {type: "variable", initial: "my variable"},
+    VALUE: {type: "number", initial: 1}
+  },
+  [OpCode.data_showvariable]: {
+    VARIABLE: {type: "variable", initial: "my variable"}
+  },
+  [OpCode.data_hidevariable]: {
+    VARIABLE: {type: "variable", initial: "my variable"}
+  },
+  [OpCode.data_listcontents]: {
+    LIST: {type: "list", initial: "my list"}
+  },
+  [OpCode.data_addtolist]: {
+    ITEM: {type: "string", initial: "thing"},
+    LIST: {type: "list", initial: "my list"}
+  },
+  [OpCode.data_deleteoflist]: {
+    INDEX: {type: "number", initial: 1},
+    LIST: {type: "list", initial: "my list"}
+  },
+  [OpCode.data_deletealloflist]: {
+    LIST: {type: "list", initial: "my list"}
+  },
+  [OpCode.data_insertatlist]: {
+    ITEM: {type: "string", initial: "thing"},
+    INDEX: {type: "number", initial: 1},
+    LIST: {type: "list", initial: "my list"}
+  },
+  [OpCode.data_replaceitemoflist]:{
+    INDEX: {type: "number", initial: 1},
+    LIST: {type: "list", initial: "my list"},
+    ITEM: {type: "string", initial: "thing"}
+  },
+  [OpCode.data_itemoflist]: {
+    INDEX: {type: "number", initial: 1},
+    LIST: {type: "list", initial: "my list"}
+  },
+  [OpCode.data_itemnumoflist]: {
+    ITEM: {type: "string", initial: "thing"},
+    LIST: {type: "list", initial: "my list"}
+  },
+  [OpCode.data_lengthoflist]: {
+    LIST: {type: "list", initial: "my list"}
+  },
+  [OpCode.data_listcontainsitem]: {
+    LIST: {type: "list", initial: "my list"},
+    ITEM: {type: "string", initial: "thing"}
+  },
+  [OpCode.data_showlist]: {
+    LIST: {type: "list", initial: "my list"}
+  },
+  [OpCode.data_hidelist]: {
+    LIST: {type: "list", initial: "my list"}
+  },
 
   // Custom Blocks
-  [OpCode.procedures_definition]:{ PROCCODE: "string", ARGUMENTS: "customBlockArguments", WARP: "boolean" },
-  [OpCode.procedures_call]: { PROCCODE: "string", INPUTS: "customBlockInputValues" },
-  [OpCode.argument_reporter_string_number]: { VALUE: "string" },
-  [OpCode.argument_reporter_boolean]: { VALUE: "string" },
+  [OpCode.procedures_definition]:{
+    PROCCODE: {type: "string", initial: "hello"},
+    ARGUMENTS: {type: "customBlockArguments", initial: [
+      {type: "label", name: "hello"},
+      {type: "numberOrString", name: "who"},
+      {type: "boolean", name: "casually"}
+    ]},
+    WARP: {type: "boolean", initial: false}
+  },
+  [OpCode.procedures_call]: {
+    PROCCODE: {type: "string", initial: "hello"},
+    INPUTS: {type: "customBlockInputValues", initial: ["world", true]}
+  },
+  [OpCode.argument_reporter_string_number]: {
+    VALUE: {type: "string", initial: "who"}
+  },
+  [OpCode.argument_reporter_boolean]: {
+    VALUE: {type: "string", initial: "casually"}
+  },
 
   // Extension: Pen
   [OpCode.pen_clear]: {},
   [OpCode.pen_stamp]: {},
   [OpCode.pen_penDown]: {},
   [OpCode.pen_penUp]: {},
-  [OpCode.pen_setPenColorToColor]: { COLOR: "color" },
-  [OpCode.pen_changePenColorParamBy]: { colorParam: "penColorParam", VALUE: "number" },
-  [OpCode.pen_setPenColorParamTo]: { colorParam: "penColorParam", VALUE: "number" },
-  [OpCode.pen_changePenSizeBy]: { SIZE: "number" },
-  [OpCode.pen_setPenSizeTo]: { SIZE: "number" },
+  [OpCode.pen_setPenColorToColor]: {
+    COLOR: {type: "color", initial: "#9966ff"}
+  },
+  [OpCode.pen_changePenColorParamBy]: {
+    colorParam: {type: "penColorParam", initial: "color"},
+    VALUE: {type: "number", initial: 10}
+  },
+  [OpCode.pen_setPenColorParamTo]: {
+    colorParam: {type: "penColorParam", initial: "color"},
+    VALUE: {type: "number", initial: 50}
+  },
+  [OpCode.pen_changePenSizeBy]: {
+    SIZE: {type: "number", initial: 1}
+  },
+  [OpCode.pen_setPenSizeTo]: {
+    SIZE: {type: "number", initial: 1}
+  },
   // Deprecated:
-  [OpCode.pen_setPenShadeToNumber]: { SHADE: "number" },
-  [OpCode.pen_changePenShadeBy]: { SHADE: "number" },
-  [OpCode.pen_setPenHueToNumber]: { HUE: "number" },
-  [OpCode.pen_changePenHueBy]: { HUE: "number" }
+  [OpCode.pen_setPenShadeToNumber]: {
+    SHADE: {type: "number", initial: 50}
+  },
+  [OpCode.pen_changePenShadeBy]: {
+    SHADE: {type: "number", initial: 10}
+  },
+  [OpCode.pen_setPenHueToNumber]: {
+    HUE: {type: "number", initial: 0}
+  },
+  [OpCode.pen_changePenHueBy]: {
+    HUE: {type: "number", initial: 10}
+  }
 }
 
 export type UnknownBlock = BlockBase<Exclude<OpCode, KnownBlock["opcode"]>, { [key: string]: BlockInput.Any }>;

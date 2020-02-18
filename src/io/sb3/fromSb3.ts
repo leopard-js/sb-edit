@@ -154,7 +154,8 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
               };
             }
           } else {
-            if (BlockBase.getExpectedInputType(block.opcode, inputName) === "blocks" || inputScript.length > 1) {
+            const {type} = BlockBase.getDefaultInput(block.opcode, inputName) || {};
+            if (type === "blocks" || inputScript.length > 1) {
               addInput(inputName, { type: "blocks", value: inputScript });
             } else {
               addInput(inputName, { type: "block", value: inputScript[0] });
