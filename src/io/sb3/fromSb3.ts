@@ -1,5 +1,5 @@
 import * as JSZip from "jszip";
-import * as sb3 from "../sb3";
+import * as sb3 from "./interfaces";
 
 import { OpCode } from "../../OpCode";
 
@@ -163,20 +163,25 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
         } else if (value === null) {
           addInput(inputName, { type: "string", value: null });
         } else {
+          const BIS = sb3.BlockInputStatus;
           switch (value[0]) {
-            case 4:
-            case 5:
-            case 6:
-            case 7:
-              addInput(inputName, {
-                type: "number",
-                value: isNaN(parseFloat(value[1])) ? (value[1] as string) : parseFloat(value[1])
-              });
+            case BIS.MATH_NUM_PRIMITIVE:
+            case BIS.POSITIVE_NUM_PRIMITIVE:
+            case BIS.WHOLE_NUM_PRIMITIVE:
+            case BIS.INTEGER_NUM_PRIMITIVE: {
+              let value;
+              if (isNaN(parseFloat(value[1] as string))) {
+                value = value[1];
+              } else {
+                value = parseFloat(value[1]);
+              }
+              addInput(inputName, {type: "number", value});
               break;
-            case 8:
-              addInput(inputName, { type: "angle", value: parseFloat(value[1]) });
+            }
+            case BIS.ANGLE_NUM_PRIMITIVE:
+              addInput(inputName, { type: "angle", value: parseFloat(value[1] as string) });
               break;
-            case 9:
+            case BIS.COLOR_PICKER_PRIMITIVE:
               addInput(inputName, {
                 type: "color",
                 value: {
@@ -186,13 +191,13 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
                 }
               });
               break;
-            case 10:
+            case BIS.TEXT_PRIMITIVE:
               addInput(inputName, { type: "string", value: value[1] });
               break;
-            case 11:
+            case BIS.BROADCAST_PRIMITIVE:
               addInput(inputName, { type: "broadcast", value: value[1] });
               break;
-            case 12:
+            case BIS.VAR_PRIMITIVE:
               // This is a variable input. Convert it to a variable block.
               addInput(inputName, {
                 type: "block",
@@ -203,7 +208,7 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
                 }) as Block
               });
               break;
-            case 13:
+            case BIS.LIST_PRIMITIVE:
               // This is a list input. Convert it to a list contents block.
               addInput(inputName, {
                 type: "block",
