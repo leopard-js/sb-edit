@@ -170,13 +170,11 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
             case BIS.POSITIVE_NUM_PRIMITIVE:
             case BIS.WHOLE_NUM_PRIMITIVE:
             case BIS.INTEGER_NUM_PRIMITIVE: {
-              let value;
-              if (isNaN(parseFloat(value[1] as string))) {
-                value = value[1];
-              } else {
-                value = parseFloat(value[1]);
+              let storedValue: string | number = value[1];
+              if (!isNaN(parseFloat(storedValue as string))) {
+                storedValue = parseFloat(storedValue as string);
               }
-              addInput(inputName, {type: "number", value});
+              addInput(inputName, {type: "number", value: storedValue});
               break;
             }
             case BIS.ANGLE_NUM_PRIMITIVE:
