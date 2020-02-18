@@ -72,8 +72,11 @@ export interface Block {
   };
 }
 
-enum BlockInputStatus {
-  MATH_NUM_PRIMITIVE = 4,
+export enum BlockInputStatus {
+  INPUT_SAME_BLOCK_SHADOW = 1,
+  INPUT_BLOCK_NO_SHADOW,
+  INPUT_DIFF_BLOCK_SHADOW,
+  MATH_NUM_PRIMITIVE,
   POSITIVE_NUM_PRIMITIVE,
   WHOLE_NUM_PRIMITIVE,
   INTEGER_NUM_PRIMITIVE,
@@ -85,20 +88,25 @@ enum BlockInputStatus {
   LIST_PRIMITIVE
 }
 
-export type BlockInput = [1, BlockInputValue] | [2, BlockInputValue] | [3, BlockInputValue, any];
+export import BIS = BlockInputStatus;
+
+export type BlockInput =
+  | [BIS.INPUT_SAME_BLOCK_SHADOW, BlockInputValue]
+  | [BIS.INPUT_BLOCK_NO_SHADOW, BlockInputValue]
+  | [BIS.INPUT_DIFF_BLOCK_SHADOW, BlockInputValue, any];
 
 export type BlockInputValue =
   | string // Block ID
-  | [BlockInputStatus.MATH_NUM_PRIMITIVE, string]
-  | [BlockInputStatus.POSITIVE_NUM_PRIMITIVE, string]
-  | [BlockInputStatus.WHOLE_NUM_PRIMITIVE, string]
-  | [BlockInputStatus.INTEGER_NUM_PRIMITIVE, string]
-  | [BlockInputStatus.ANGLE_NUM_PRIMITIVE, string]
-  | [BlockInputStatus.COLOR_PICKER_PRIMITIVE, string]
-  | [BlockInputStatus.TEXT_PRIMITIVE, string]
-  | [BlockInputStatus.BROADCAST_PRIMITIVE, string, string]
-  | [BlockInputStatus.VAR_PRIMITIVE, string, string]
-  | [BlockInputStatus.LIST_PRIMITIVE, string, string];
+  | [BIS.MATH_NUM_PRIMITIVE, number | string]
+  | [BIS.POSITIVE_NUM_PRIMITIVE, number | string]
+  | [BIS.WHOLE_NUM_PRIMITIVE, number | string]
+  | [BIS.INTEGER_NUM_PRIMITIVE, number | string]
+  | [BIS.ANGLE_NUM_PRIMITIVE, number | string]
+  | [BIS.COLOR_PICKER_PRIMITIVE, string]
+  | [BIS.TEXT_PRIMITIVE, string]
+  | [BIS.BROADCAST_PRIMITIVE, string, string]
+  | [BIS.VAR_PRIMITIVE, string, string]
+  | [BIS.LIST_PRIMITIVE, string, string];
 
 export type BlockField = string[];
 

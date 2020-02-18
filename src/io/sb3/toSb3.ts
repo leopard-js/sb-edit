@@ -5,7 +5,7 @@ import Script from "../../Script";
 import Sound from "../../Sound";
 import Target, { Sprite, Stage } from "../../Target";
 import * as BlockInput from "../../BlockInput";
-import * as sb3 from "../sb3";
+import * as sb3 from "./interfaces";
 import { OpCode } from "../../OpCode";
 import { generateId } from "../../util/id";
 
