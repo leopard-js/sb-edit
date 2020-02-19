@@ -154,8 +154,15 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
               };
             }
           } else {
-            const {type} = BlockBase.getDefaultInput(block.opcode, inputName) || {};
-            if (type === "blocks" || inputScript.length > 1) {
+            let isBlocks;
+            if (BlockBase.isKnownBlock(block.opcode)) {
+              const {type} = BlockBase.getDefaultInput(block.opcode, inputName) || {};
+              if (type === "blocks") {
+                isBlocks = true;
+              }
+            }
+            isBlocks = isBlocks || inputScript.length > 1;
+            if (isBlocks) {
               addInput(inputName, { type: "blocks", value: inputScript });
             } else {
               addInput(inputName, { type: "block", value: inputScript[0] });

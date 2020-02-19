@@ -1,4 +1,5 @@
 import { OpCode } from "../../OpCode";
+import { KnownBlock } from "../../Block";
 import { TextToSpeechLanguage } from "../../Project";
 import * as BlockInput from "../../BlockInput";
 
@@ -71,42 +72,6 @@ export interface Block {
     warp: "true" | "false";
   };
 }
-
-export enum BlockInputStatus {
-  INPUT_SAME_BLOCK_SHADOW = 1,
-  INPUT_BLOCK_NO_SHADOW,
-  INPUT_DIFF_BLOCK_SHADOW,
-  MATH_NUM_PRIMITIVE,
-  POSITIVE_NUM_PRIMITIVE,
-  WHOLE_NUM_PRIMITIVE,
-  INTEGER_NUM_PRIMITIVE,
-  ANGLE_NUM_PRIMITIVE,
-  COLOR_PICKER_PRIMITIVE,
-  TEXT_PRIMITIVE,
-  BROADCAST_PRIMITIVE,
-  VAR_PRIMITIVE,
-  LIST_PRIMITIVE
-}
-
-export import BIS = BlockInputStatus;
-
-export type BlockInput =
-  | [BIS.INPUT_SAME_BLOCK_SHADOW, BlockInputValue]
-  | [BIS.INPUT_BLOCK_NO_SHADOW, BlockInputValue]
-  | [BIS.INPUT_DIFF_BLOCK_SHADOW, BlockInputValue, any];
-
-export type BlockInputValue =
-  | string // Block ID
-  | [BIS.MATH_NUM_PRIMITIVE, number | string]
-  | [BIS.POSITIVE_NUM_PRIMITIVE, number | string]
-  | [BIS.WHOLE_NUM_PRIMITIVE, number | string]
-  | [BIS.INTEGER_NUM_PRIMITIVE, number | string]
-  | [BIS.ANGLE_NUM_PRIMITIVE, number | string]
-  | [BIS.COLOR_PICKER_PRIMITIVE, string]
-  | [BIS.TEXT_PRIMITIVE, string]
-  | [BIS.BROADCAST_PRIMITIVE, string, string]
-  | [BIS.VAR_PRIMITIVE, string, string]
-  | [BIS.LIST_PRIMITIVE, string, string];
 
 export type BlockField = string[];
 
@@ -280,4 +245,218 @@ export const fieldTypeMap: {
   [OpCode.wedo2_menu_MOTOR_DIRECTION]: { MOTOR_DIRECTION: "wedo2MotorDirection" },
   [OpCode.wedo2_menu_TILT_DIRECTION]: { TILT_DIRECTION: "wedo2TiltDirection" },
   [OpCode.wedo2_menu_TILT_DIRECTION_ANY]: { TILT_DIRECTION_ANY: "wedo2TiltDirectionAny" }
+};
+
+export enum BlockInputStatus {
+  INPUT_SAME_BLOCK_SHADOW = 1,
+  INPUT_BLOCK_NO_SHADOW,
+  INPUT_DIFF_BLOCK_SHADOW,
+  MATH_NUM_PRIMITIVE,
+  POSITIVE_NUM_PRIMITIVE,
+  WHOLE_NUM_PRIMITIVE,
+  INTEGER_NUM_PRIMITIVE,
+  ANGLE_NUM_PRIMITIVE,
+  COLOR_PICKER_PRIMITIVE,
+  TEXT_PRIMITIVE,
+  BROADCAST_PRIMITIVE,
+  VAR_PRIMITIVE,
+  LIST_PRIMITIVE
+}
+
+export import BIS = BlockInputStatus;
+
+export const BooleanOrSubstackInputStatus = BIS.INPUT_BLOCK_NO_SHADOW;
+
+export type BlockInput =
+  | [BIS.INPUT_SAME_BLOCK_SHADOW, BlockInputValue]
+  | [BIS.INPUT_BLOCK_NO_SHADOW, BlockInputValue]
+  | [BIS.INPUT_DIFF_BLOCK_SHADOW, BlockInputValue, any];
+
+export type BlockInputValue =
+  | string // Block ID
+  | [BIS.MATH_NUM_PRIMITIVE, number | string]
+  | [BIS.POSITIVE_NUM_PRIMITIVE, number | string]
+  | [BIS.WHOLE_NUM_PRIMITIVE, number | string]
+  | [BIS.INTEGER_NUM_PRIMITIVE, number | string]
+  | [BIS.ANGLE_NUM_PRIMITIVE, number | string]
+  | [BIS.COLOR_PICKER_PRIMITIVE, string]
+  | [BIS.TEXT_PRIMITIVE, string]
+  | [BIS.BROADCAST_PRIMITIVE, string, string]
+  | [BIS.VAR_PRIMITIVE, string, string]
+  | [BIS.LIST_PRIMITIVE, string, string];
+
+// Most values in this mapping are taken from scratch-gui/src/lib/make-
+// toolbox-xml.js. They're used so that the primitive/opcode values of
+// outputted shadow blocks are correct.
+//
+// Many of the entries here may seem to be missing inputs. That's becuase it
+// only maps Scratch 3.0 inputs - not fields. sb-edit doesn't distinguish
+// between fields and inputs, but it's critical that projects that export to
+// sb3 do.
+//
+// Note: Boolean and substack inputs are weird. They alone are stored using
+// the INPUT_BLOCK_NO_SHADOW (2) input status; when empty, they may be either
+// stored as [2, null] or simply not stored at all.
+//
+// The BooleanOrSubstackInputStatus constant is exported for use in finding
+// these values, rather than directly accessing BIS.INPUT_BLOCK_NO_SHADOW
+// (which could imply special handling for the other INPUT_BLOCK_* values,
+// when none such is required and whose values are never specified in this
+// mapping).
+export const inputPrimitiveOrShadowMap: {
+  [opcode in KnownBlock["opcode"]]: {
+    [fieldName: string]: number | OpCode;
+  }
+} = {
+  [OpCode.motion_movesteps]: {STEPS: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.motion_turnright]: {DEGREES: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.motion_turnleft]: {DEGREES: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.motion_pointindirection]: {DIRECTION: BIS.ANGLE_NUM_PRIMITIVE},
+  [OpCode.motion_pointtowards]: {TOWARDS: OpCode.motion_pointtowards_menu},
+  [OpCode.motion_gotoxy]: {X: BIS.MATH_NUM_PRIMITIVE, Y: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.motion_goto]: {TO: OpCode.motion_goto_menu},
+  [OpCode.motion_glidesecstoxy]: {SECS: BIS.MATH_NUM_PRIMITIVE, X: BIS.MATH_NUM_PRIMITIVE, Y: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.motion_glideto]: {SECS: BIS.MATH_NUM_PRIMITIVE, TO: OpCode.motion_glideto_menu},
+  [OpCode.motion_changexby]: {DX: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.motion_setx]: {X: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.motion_changeyby]: {Y: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.motion_sety]: {Y: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.motion_ifonedgebounce]: {},
+  [OpCode.motion_setrotationstyle]: {},
+  [OpCode.motion_xposition]: {},
+  [OpCode.motion_yposition]: {},
+  [OpCode.motion_direction]: {},
+  [OpCode.looks_sayforsecs]: {MESSAGE: BIS.TEXT_PRIMITIVE, SECS: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.looks_say]: {MESSAGE: BIS.TEXT_PRIMITIVE},
+  [OpCode.looks_thinkforsecs]: {MESSAGE: BIS.TEXT_PRIMITIVE, SECS: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.looks_think]: {MESSAGE: BIS.TEXT_PRIMITIVE},
+  [OpCode.looks_show]: {},
+  [OpCode.looks_hide]: {},
+  [OpCode.looks_switchcostumeto]: {COSTUME: OpCode.looks_costume},
+  [OpCode.looks_nextcostume]: {},
+  [OpCode.looks_nextbackdrop]: {},
+  [OpCode.looks_switchbackdropto]: {BACKDROP: OpCode.looks_backdrops},
+  [OpCode.looks_switchbackdroptoandwait]: {BACKDROP: OpCode.looks_backdrops},
+  [OpCode.looks_changeeffectby]: {CHANGE: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.looks_seteffectto]: {VALUE: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.looks_changesizeby]: {CHANGE: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.looks_setsizeto]: {SIZE: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.looks_changeeffectby]: {CHANGE: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.looks_seteffectto]: {VALUE: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.looks_cleargraphiceffects]: {},
+  [OpCode.looks_gotofrontback]: {},
+  [OpCode.looks_goforwardbackwardlayers]: {NUM: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.looks_costumenumbername]: {},
+  [OpCode.looks_backdropnumbername]: {},
+  [OpCode.looks_size]: {},
+  [OpCode.looks_hideallsprites]: {},
+  [OpCode.looks_changestretchby]: {CHANGE: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.looks_setstretchto]: {STRETCH: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.sound_play]: {SOUND_MENU: OpCode.sound_sounds_menu},
+  [OpCode.sound_playuntildone]: {SOUND_MENU: OpCode.sound_sounds_menu},
+  [OpCode.sound_stopallsounds]: {},
+  [OpCode.sound_changeeffectby]: {VALUE: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.sound_seteffectto]: {VALUE: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.sound_cleareffects]: {},
+  [OpCode.sound_changevolumeby]: {VOLUME: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.sound_setvolumeto]: {VOLUME: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.sound_volume]: {},
+  [OpCode.event_whenflagclicked]: {},
+  [OpCode.event_whenkeypressed]: {},
+  [OpCode.event_whenstageclicked]: {},
+  [OpCode.event_whenthisspriteclicked]: {},
+  [OpCode.event_whenbackdropswitchesto]: {},
+  [OpCode.event_whengreaterthan]: {VALUE: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.event_whenbroadcastreceived]: {},
+  [OpCode.event_broadcast]: {BROADCAST_INPUT: OpCode.event_broadcast_menu},
+  [OpCode.event_broadcastandwait]: {BROADCAST_INPUT: OpCode.event_broadcast_menu},
+  [OpCode.control_wait]: {DURATION: BIS.POSITIVE_NUM_PRIMITIVE},
+  [OpCode.control_repeat]: {TIMES: BIS.WHOLE_NUM_PRIMITIVE},
+  [OpCode.control_forever]: {SUBSTACK: BooleanOrSubstackInputStatus},
+  [OpCode.control_if]: {CONDITION: BooleanOrSubstackInputStatus, SUBSTACK: BooleanOrSubstackInputStatus},
+  [OpCode.control_if_else]: {CONDITION: BooleanOrSubstackInputStatus, SUBSTACK: BooleanOrSubstackInputStatus, SUBSTACK2: BooleanOrSubstackInputStatus},
+  [OpCode.control_wait_until]: {CONDITION: BooleanOrSubstackInputStatus},
+  [OpCode.control_repeat_until]: {CONDITION: BooleanOrSubstackInputStatus, SUBSTACK: BooleanOrSubstackInputStatus},
+  [OpCode.control_while]: {CONDITION: BooleanOrSubstackInputStatus, SUBSTACK: BooleanOrSubstackInputStatus},
+  [OpCode.control_for_each]: {VALUE: BIS.MATH_NUM_PRIMITIVE, SUBSTACK: BooleanOrSubstackInputStatus},
+  [OpCode.control_all_at_once]: {SUBSTACK: BooleanOrSubstackInputStatus},
+  [OpCode.control_stop]: {},
+  [OpCode.control_start_as_clone]: {},
+  [OpCode.control_create_clone_of]: {CLONE_OPTION: OpCode.control_create_clone_of_menu},
+  [OpCode.control_delete_this_clone]: {},
+  [OpCode.sensing_touchingobject]: {TOUCHINGOBJECTMENU: OpCode.sensing_touchingobjectmenu},
+  [OpCode.sensing_touchingcolor]: {COLOR: BIS.COLOR_PICKER_PRIMITIVE},
+  [OpCode.sensing_coloristouchingcolor]: {COLOR: BIS.COLOR_PICKER_PRIMITIVE, COLOR2: BIS.COLOR_PICKER_PRIMITIVE},
+  [OpCode.sensing_distanceto]: {DISTANCETOMENU: OpCode.sensing_distancetomenu},
+  [OpCode.sensing_askandwait]: {QUESTION: BIS.TEXT_PRIMITIVE},
+  [OpCode.sensing_answer]: {},
+  [OpCode.sensing_keypressed]: {KEY_OPTION: OpCode.sensing_keyoptions},
+  [OpCode.sensing_mousedown]: {},
+  [OpCode.sensing_mousex]: {},
+  [OpCode.sensing_mousey]: {},
+  [OpCode.sensing_setdragmode]: {},
+  [OpCode.sensing_loudness]: {},
+  [OpCode.sensing_timer]: {},
+  [OpCode.sensing_resettimer]: {},
+  [OpCode.sensing_of]: {OBJECT: OpCode.sensing_of_object_menu},
+  [OpCode.sensing_current]: {},
+  [OpCode.sensing_dayssince2000]: {},
+  [OpCode.sensing_username]: {},
+  [OpCode.sensing_userid]: {},
+  [OpCode.sensing_loud]: {},
+  [OpCode.operator_add]: {NUM1: BIS.MATH_NUM_PRIMITIVE, NUM2: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.operator_subtract]: {NUM1: BIS.MATH_NUM_PRIMITIVE, NUM2: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.operator_multiply]: {NUM1: BIS.MATH_NUM_PRIMITIVE, NUM2: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.operator_divide]: {NUM1: BIS.MATH_NUM_PRIMITIVE, NUM2: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.operator_random]: {FROM: BIS.MATH_NUM_PRIMITIVE, TO: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.operator_lt]: {OPERAND1: BIS.TEXT_PRIMITIVE, OPERAND2: BIS.TEXT_PRIMITIVE},
+  [OpCode.operator_equals]: {OPERAND1: BIS.TEXT_PRIMITIVE, OPERAND2: BIS.TEXT_PRIMITIVE},
+  [OpCode.operator_gt]: {OPERAND1: BIS.TEXT_PRIMITIVE, OPERAND2: BIS.TEXT_PRIMITIVE},
+  [OpCode.operator_and]: {OPERAND1: BooleanOrSubstackInputStatus, OPERAND2: BooleanOrSubstackInputStatus},
+  [OpCode.operator_or]: {OPERAND1: BooleanOrSubstackInputStatus, OPERAND2: BooleanOrSubstackInputStatus},
+  [OpCode.operator_not]: {OPERAND: BooleanOrSubstackInputStatus},
+  [OpCode.operator_join]: {STRING1: BIS.TEXT_PRIMITIVE, STRING2: BIS.TEXT_PRIMITIVE},
+  [OpCode.operator_letter_of]: {LETTER: BIS.WHOLE_NUM_PRIMITIVE, STRING: BIS.TEXT_PRIMITIVE},
+  [OpCode.operator_length]: {STRING: BIS.TEXT_PRIMITIVE},
+  [OpCode.operator_contains]: {STRING1: BIS.TEXT_PRIMITIVE, STRING2: BIS.TEXT_PRIMITIVE},
+  [OpCode.operator_mod]: {NUM1: BIS.MATH_NUM_PRIMITIVE, NUM2: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.operator_round]: {NUM: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.operator_mathop]: {NUM: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.pen_clear]: {},
+  [OpCode.pen_stamp]: {},
+  [OpCode.pen_penDown]: {},
+  [OpCode.pen_penUp]: {},
+  [OpCode.pen_setPenColorToColor]: {COLOR: BIS.COLOR_PICKER_PRIMITIVE},
+  [OpCode.pen_changePenColorParamBy]: {COLOR_PARAM: OpCode.pen_menu_colorParam, VALUE: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.pen_setPenColorParamTo]: {COLOR_PARAM: OpCode.pen_menu_colorParam, VALUE: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.pen_changePenSizeBy]: {SIZE: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.pen_setPenSizeTo]: {SIZE: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.pen_setPenShadeToNumber]: {SHADE: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.pen_changePenShadeBy]: {SHADE: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.pen_setPenHueToNumber]: {HUE: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.pen_changePenHueBy]: {HUE: BIS.MATH_NUM_PRIMITIVE},
+  // Data category values from scratch-blocks/core/data_category.js
+  [OpCode.data_variable]: {},
+  [OpCode.data_setvariableto]: {VALUE: BIS.TEXT_PRIMITIVE},
+  [OpCode.data_changevariableby]: {NUM: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.data_showvariable]: {},
+  [OpCode.data_hidevariable]: {},
+  [OpCode.data_listcontents]: {},
+  [OpCode.data_addtolist]: {ITEM: BIS.TEXT_PRIMITIVE},
+  [OpCode.data_deleteoflist]: {INDEX: BIS.INTEGER_NUM_PRIMITIVE},
+  [OpCode.data_deletealloflist]: {},
+  [OpCode.data_insertatlist]: {INDEX: BIS.INTEGER_NUM_PRIMITIVE, ITEM: BIS.TEXT_PRIMITIVE},
+  [OpCode.data_replaceitemoflist]: {INDEX: BIS.INTEGER_NUM_PRIMITIVE, ITEM: BIS.TEXT_PRIMITIVE},
+  [OpCode.data_itemoflist]: {INDEX: BIS.INTEGER_NUM_PRIMITIVE},
+  [OpCode.data_itemnumoflist]: {TEXT: BIS.TEXT_PRIMITIVE},
+  [OpCode.data_lengthoflist]: {},
+  [OpCode.data_listcontainsitem]: {ITEM: BIS.TEXT_PRIMITIVE},
+  [OpCode.data_showlist]: {},
+  [OpCode.data_hidelist]: {},
+  // Custom blocks store most of their data in the mutation field, not in
+  // inputs (or fields).
+  [OpCode.procedures_definition]: {custom_block: OpCode.procedures_prototype},
+  [OpCode.procedures_call]: {},
+  [OpCode.argument_reporter_boolean]: {},
+  [OpCode.argument_reporter_string_number]: {}
 };
