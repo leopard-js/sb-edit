@@ -216,6 +216,8 @@ export enum OpCode {
 
   sound_sounds_menu = "sound_sounds_menu",
 
+  event_broadcast_menu = "broadcast_menu",
+
   control_create_clone_of_menu = "control_create_clone_of_menu",
 
   sensing_touchingobjectmenu = "sensing_touchingobjectmenu",

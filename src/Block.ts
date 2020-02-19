@@ -8,10 +8,12 @@ interface DefaultInput {
 }
 
 export class BlockBase<MyOpCode extends OpCode, MyInputs extends { [key: string]: BlockInput.Any }> {
-  public static getDefaultInput(opcode: keyof typeof KnownBlockInputMap, input: string): DefaultInput | void {
-    if (opcode in KnownBlockInputMap) {
-      return KnownBlockInputMap[opcode][input];
-    }
+  public static getDefaultInput(opcode: KnownBlock["opcode"], input: string): DefaultInput | void {
+    return KnownBlockInputMap[opcode][input];
+  }
+
+  public static isKnownBlock(opcode: OpCode): opcode is KnownBlock["opcode"] {
+    return opcode in KnownBlockInputMap;
   }
 
   public id: string;
@@ -40,7 +42,13 @@ export class BlockBase<MyOpCode extends OpCode, MyInputs extends { [key: string]
 
   // TODO: Can we reference MyInputs here?
   public getDefaultInput(input: string): DefaultInput | void {
-    return BlockBase.getDefaultInput(this.opcode, input);
+    if (this.isKnownBlock()) {
+      return BlockBase.getDefaultInput(this.opcode, input);
+    }
+  }
+
+  public isKnownBlock(): this is KnownBlock {
+    return BlockBase.isKnownBlock(this.opcode);
   }
 
   get blocks(): Block[] {
@@ -266,7 +274,7 @@ export type KnownBlock =
 // in some way that seems to function as it's supposed to but actually isn't
 // carrying type information correctly.
 const KnownBlockInputMap: {
-  [key in OpCode]?: {
+  [key in KnownBlock["opcode"]]: {
     [inputName: string]: DefaultInput
   }
 } = {

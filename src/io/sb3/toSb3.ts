@@ -1,6 +1,6 @@
-import Block from "../../Block";
+import Block, { BlockBase, KnownBlock } from "../../Block";
 import Costume from "../../Costume";
-import Project, { TextToSpeechLanguage} from "../../Project";
+import Project, { TextToSpeechLanguage } from "../../Project";
 import Script from "../../Script";
 import Sound from "../../Sound";
 import Target, { Sprite, Stage } from "../../Target";
@@ -39,42 +39,22 @@ export default function toSb3(
     };
   }
 
-  function serializeInputs(block: Block, options: {stage: Stage, target: Target}): {
-    inputs: {
-      [key: string]: sb3.BlockInput
-    },
-    fields: {
-      [key: string]: any
-    },
-    blockData: BlockData
+  function serializeInputsToFields(inputs: {[key: string]: BlockInput.Any}, options: {
+    blockOpCode: OpCode,
+    stage: Stage,
+    target: Target
+  }): {
+    fields: {[key: string]: any}
   } {
-    const inputs: {[key: string]: sb3.BlockInput} = {};
-    const fields: {[key: string]: any} = {};
-    const blockData = newBlockData();
+    const {blockOpCode, stage, target} = options;
 
-    const {stage, target} = options;
-
-    const fieldEntries = sb3.fieldTypeMap[block.opcode];
-
-    const makeShadowBlock = (opcode: OpCode, fields: {[key: string]: any}): string => {
-      const id = generateId();
-
-      blockData.blocks[id] = {
-        opcode,
-        next: null,
-        parent: block.id,
-
-        fields,
-        inputs: {},
-
-        shadow: true,
-        topLevel: false
-      };
-
-      return id;
+    const result = {
+      fields: {}
     };
 
-    for (const [key, input] of Object.entries(block.inputs)) {
+    const fieldEntries = sb3.fieldTypeMap[options.blockOpCode];
+
+    for (const [key, input] of Object.entries(inputs)) {
       // Fields are stored as a plain [value, id?] pair.
       if (fieldEntries && key in fieldEntries) {
         let id: string;
@@ -85,13 +65,96 @@ export default function toSb3(
             id = variable && variable.id;
             break;
           }
+          case "list": {
+            let list = target.getList(input.value);
+            list = list || stage.getList(input.value);
+            id = list && list.id;
+            break;
+          }
           default:
             id = null;
         }
-        fields[key] = [input.value, id];
+        result.fields[key] = [input.value, id];
         continue;
       }
+    }
 
+    return result;
+  }
+
+  function serializeInputShadow(value: any, options: {
+    primitiveOrOpCode: number | OpCode,
+    parentId: string
+  }): {
+    shadowValue: sb3.BlockInputValue,
+    blockData: BlockData
+  } {
+    const {primitiveOrOpCode, parentId} = options;
+
+    const blockData = newBlockData();
+    let shadowValue = null;
+
+    if (typeof primitiveOrOpCode === "number") {
+      // Primitive shadow, can be stored in compressed form.
+      shadowValue = [primitiveOrOpCode, value];
+    } else {
+      // Note: Only 1-field shadow blocks are supported.
+      const shadowOpCode = primitiveOrOpCode;
+      const fieldEntries = sb3.fieldTypeMap[shadowOpCode];
+      if (fieldEntries) {
+        const fieldKey = Object.keys(fieldEntries)[0];
+        const fields = {[fieldKey]: value as any};
+
+        const id = generateId();
+
+        blockData.blocks[id] = {
+          opcode: shadowOpCode,
+          next: null,
+
+          parent: parentId,
+          fields,
+          inputs: {},
+
+          shadow: true,
+          topLevel: false
+        };
+
+        shadowValue = id;
+      }
+    }
+
+    return {shadowValue, blockData};
+  }
+
+  function serializeInputsToInputs(inputs: {[key: string]: BlockInput.Any}, options: {
+    block: Block,
+    stage: Stage,
+    target: Target
+  }): {
+    inputs: {[key: string]: sb3.BlockInput},
+    blockData: BlockData
+  } {
+    const {block, stage, target} = options;
+
+    const blockData = newBlockData();
+
+    const result: {
+      inputs: {[key: string]: sb3.BlockInput},
+      blockData: BlockData
+    } = {
+      inputs: {},
+      blockData
+    };
+
+    if (!block.isKnownBlock()) {
+      return result;
+    }
+
+    const BIS = sb3.BlockInputStatus;
+    const inputEntries = sb3.inputPrimitiveOrShadowMap[block.opcode];
+
+    for (const [key, entry] of Object.entries(inputEntries)) {
+      const input = inputs[key];
       // Inputs are stored as one of two different types of value:
       // - A reference to a block (either a reporter or, in the case of C-shape
       //   inputs, a stack block), or
@@ -99,34 +162,58 @@ export default function toSb3(
       //   as such; they use a compressed form which is expanded into actual
       //   shadow blocks. See compressInputTree in scratch-vm's sb3
       //   serialization code.
-      switch (input.type) {
-        case "blocks":
-          if (input.value.length) {
-            inputs[key] = [2, input.value[0].id];
-            applyBlockData(blockData, serializeBlock(input.value[0], {parent: block, siblingBlocks: input.value, stage, target}));
-          }
-          break;
-        case "block":
-          input[key] = [3, input.value.id, [4, "0"]];
+      if (entry === sb3.BooleanOrSubstackInputStatus) {
+        if (input && input.type === "blocks" && input.value.length) {
+          result.inputs[key] = [BIS.INPUT_BLOCK_NO_SHADOW, input.value[0].id];
+          applyBlockData(blockData, serializeBlock(input.value[0], {parent: block, siblingBlocks: input.value, stage, target}));
+        } else if (input && input.type === "block") {
+          result.inputs[key] = [BIS.INPUT_BLOCK_NO_SHADOW, input.value.id];
           applyBlockData(blockData, serializeBlock(input.value, {parent: block, stage, target}));
-          break;
-        default: {
-          let value: sb3.BlockInputValue;
-          switch (input.type) {
-            case "costume":
-              value = makeShadowBlock(OpCode.looks_costume, {COSTUME: [input.value]});
-              break;
-            case "sound":
-              value = makeShadowBlock(OpCode.sound_sounds_menu, {SOUND_MENU: [input.value]});
-              break;
-            case "number":
-              value = [4, input.value.toString()];
-              break;
-          }
-          inputs[key] = [1, value];
+        } else {
+          // Empty, don't store anything.
+          // (Storing [INPUT_BLOCK_NO_SHADOW, null] would also be valid.)
         }
+      } else if (input.type === "block") {
+        const {initial} = BlockBase.getDefaultInput((block as KnownBlock).opcode, key) || {};
+        const {shadowValue, blockData: inputBlockData} = serializeInputShadow(initial, {
+          primitiveOrOpCode: entry as number | OpCode,
+          parentId: block.id
+        });
+        result.inputs[key] = [BIS.INPUT_DIFF_BLOCK_SHADOW, input.value.id, shadowValue];
+        applyBlockData(blockData, inputBlockData);
+        applyBlockData(blockData, serializeBlock(input.value, {parent: block, stage, target}));
+      } else {
+        const {shadowValue, blockData: inputBlockData} = serializeInputShadow(input.value, {
+          primitiveOrOpCode: entry as number | OpCode,
+          parentId: block.id
+        });
+        result.inputs[key] = [BIS.INPUT_SAME_BLOCK_SHADOW, shadowValue];
+        applyBlockData(blockData, inputBlockData);
       }
     }
+
+    return result;
+  }
+
+  function serializeInputs(block: Block, options: {stage: Stage, target: Target}): {
+    inputs: {
+      [key: string]: sb3.BlockInput
+    },
+    fields: {
+      [key: string]: any
+    },
+    blockData: BlockData
+  } {
+    const {stage, target} = options;
+
+    const {fields} = serializeInputsToFields(block.inputs, {
+      blockOpCode: block.opcode,
+      stage, target
+    });
+
+    const {inputs, blockData} = serializeInputsToInputs(block.inputs, {
+      block, stage, target
+    });
 
     return {inputs, fields, blockData};
   }
