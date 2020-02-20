@@ -54,29 +54,32 @@ export default function toSb3(
 
     const fieldEntries = sb3.fieldTypeMap[options.blockOpCode];
 
-    for (const [key, input] of Object.entries(inputs)) {
+    if (!fieldEntries) {
+      return result;
+    }
+
+    for (const [key, input] of Object.entries(fieldEntries)) {
+      const input = inputs[key];
       // Fields are stored as a plain [value, id?] pair.
-      if (fieldEntries && key in fieldEntries) {
-        let id: string;
-        switch (input.type) {
-          case "variable": {
-            let variable = target.getVariable(input.value);
-            variable = variable || stage.getVariable(input.value);
-            id = variable && variable.id;
-            break;
-          }
-          case "list": {
-            let list = target.getList(input.value);
-            list = list || stage.getList(input.value);
-            id = list && list.id;
-            break;
-          }
-          default:
-            id = null;
+      let id: string;
+      switch (input.type) {
+        case "variable": {
+          let variable = target.getVariable(input.value);
+          variable = variable || stage.getVariable(input.value);
+          id = variable && variable.id;
+          break;
         }
-        result.fields[key] = [input.value, id];
-        continue;
+        case "list": {
+          let list = target.getList(input.value);
+          list = list || stage.getList(input.value);
+          id = list && list.id;
+          break;
+        }
+        default:
+          id = null;
       }
+      result.fields[key] = [input.value, id];
+      continue;
     }
 
     return result;
