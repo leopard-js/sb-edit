@@ -82,8 +82,7 @@ export class BlockBase<MyOpCode extends OpCode, MyInputs extends { [key: string]
   }
 }
 
-export type KnownBlock =
-  // Motion
+export type MotionBlock =
   | BlockBase<OpCode.motion_movesteps, { STEPS: BlockInput.Number }>
   | BlockBase<OpCode.motion_turnright, { DEGREES: BlockInput.Number }>
   | BlockBase<OpCode.motion_turnleft, { DEGREES: BlockInput.Number }>
@@ -101,9 +100,9 @@ export type KnownBlock =
   | BlockBase<OpCode.motion_setrotationstyle, { STYLE: BlockInput.RotationStyle }>
   | BlockBase<OpCode.motion_xposition, {}>
   | BlockBase<OpCode.motion_yposition, {}>
-  | BlockBase<OpCode.motion_direction, {}>
+  | BlockBase<OpCode.motion_direction, {}>;
 
-  // Looks
+export type LooksBlock =
   | BlockBase<OpCode.looks_sayforsecs, { MESSAGE: BlockInput.String; SECS: BlockInput.Number }>
   | BlockBase<OpCode.looks_say, { MESSAGE: BlockInput.String }>
   | BlockBase<OpCode.looks_thinkforsecs, { MESSAGE: BlockInput.String; SECS: BlockInput.Number }>
@@ -130,9 +129,9 @@ export type KnownBlock =
   | BlockBase<OpCode.looks_hideallsprites, {}>
   | BlockBase<OpCode.looks_switchbackdroptoandwait, { BACKDROP: BlockInput.Backdrop }>
   | BlockBase<OpCode.looks_changestretchby, { CHANGE: BlockInput.Number }>
-  | BlockBase<OpCode.looks_setstretchto, { STRETCH: BlockInput.Number }>
+  | BlockBase<OpCode.looks_setstretchto, { STRETCH: BlockInput.Number }>;
 
-  // Sound
+export type SoundBlock =
   | BlockBase<OpCode.sound_playuntildone, { SOUND_MENU: BlockInput.Sound }>
   | BlockBase<OpCode.sound_play, { SOUND_MENU: BlockInput.Sound }>
   | BlockBase<OpCode.sound_stopallsounds, {}>
@@ -141,9 +140,9 @@ export type KnownBlock =
   | BlockBase<OpCode.sound_cleareffects, {}>
   | BlockBase<OpCode.sound_changevolumeby, { VOLUME: BlockInput.Number }>
   | BlockBase<OpCode.sound_setvolumeto, { VOLUME: BlockInput.Number }>
-  | BlockBase<OpCode.sound_volume, {}>
+  | BlockBase<OpCode.sound_volume, {}>;
 
-  // Events
+export type EventBlock =
   | BlockBase<OpCode.event_whenflagclicked, {}>
   | BlockBase<OpCode.event_whenkeypressed, { KEY_OPTION: BlockInput.Key }>
   | BlockBase<OpCode.event_whenthisspriteclicked, {}>
@@ -157,7 +156,7 @@ export type KnownBlock =
   | BlockBase<OpCode.event_broadcast, { BROADCAST_INPUT: BlockInput.Broadcast }>
   | BlockBase<OpCode.event_broadcastandwait, { BROADCAST_INPUT: BlockInput.Broadcast }>
 
-  // Control
+export type ControlBlock =
   | BlockBase<OpCode.control_wait, { DURATION: BlockInput.Number }>
   | BlockBase<OpCode.control_repeat, { TIMES: BlockInput.Number; SUBSTACK: BlockInput.Blocks }>
   | BlockBase<OpCode.control_forever, { SUBSTACK: BlockInput.Blocks }>
@@ -179,7 +178,7 @@ export type KnownBlock =
     >
   | BlockBase<OpCode.control_while, { CONDITION: BlockInput.Boolean; SUBSTACK: BlockInput.Blocks }>
 
-  // Sensing
+export type SensingBlock =
   | BlockBase<OpCode.sensing_touchingobject, { TOUCHINGOBJECTMENU: BlockInput.TouchingTarget }>
   | BlockBase<OpCode.sensing_touchingcolor, { COLOR: BlockInput.Color }>
   | BlockBase<OpCode.sensing_coloristouchingcolor, { COLOR: BlockInput.Color; COLOR2: BlockInput.Color }>
@@ -201,7 +200,7 @@ export type KnownBlock =
   | BlockBase<OpCode.sensing_username, {}>
   | BlockBase<OpCode.sensing_userid, {}>
 
-  // Operators
+export type OperatorBlock =
   | BlockBase<OpCode.operator_add, { NUM1: BlockInput.Number; NUM2: BlockInput.Number }>
   | BlockBase<OpCode.operator_subtract, { NUM1: BlockInput.Number; NUM2: BlockInput.Number }>
   | BlockBase<OpCode.operator_multiply, { NUM1: BlockInput.Number; NUM2: BlockInput.Number }>
@@ -221,7 +220,7 @@ export type KnownBlock =
   | BlockBase<OpCode.operator_round, { NUM: BlockInput.Number }>
   | BlockBase<OpCode.operator_mathop, { OPERATOR: BlockInput.MathopMenu; NUM: BlockInput.Number }>
 
-  // Data
+export type DataBlock =
   | BlockBase<OpCode.data_variable, { VARIABLE: BlockInput.Variable }>
   | BlockBase<OpCode.data_setvariableto, { VARIABLE: BlockInput.Variable; VALUE: BlockInput.String }>
   | BlockBase<OpCode.data_changevariableby, { VARIABLE: BlockInput.Variable; VALUE: BlockInput.Number }>
@@ -241,18 +240,18 @@ export type KnownBlock =
   | BlockBase<OpCode.data_lengthoflist, { LIST: BlockInput.List }>
   | BlockBase<OpCode.data_listcontainsitem, { LIST: BlockInput.List; ITEM: BlockInput.String }>
   | BlockBase<OpCode.data_showlist, { LIST: BlockInput.List }>
-  | BlockBase<OpCode.data_hidelist, { LIST: BlockInput.List }>
+  | BlockBase<OpCode.data_hidelist, { LIST: BlockInput.List }>;
 
-  // Custom Blocks
+export type CustomBlock =
   | BlockBase<
       OpCode.procedures_definition,
       { PROCCODE: BlockInput.String; ARGUMENTS: BlockInput.CustomBlockArguments; WARP: BlockInput.Boolean }
     >
   | BlockBase<OpCode.procedures_call, { PROCCODE: BlockInput.String; INPUTS: BlockInput.CustomBlockInputValues }>
   | BlockBase<OpCode.argument_reporter_string_number, { VALUE: BlockInput.String }>
-  | BlockBase<OpCode.argument_reporter_boolean, { VALUE: BlockInput.String }>
+  | BlockBase<OpCode.argument_reporter_boolean, { VALUE: BlockInput.String }>;
 
-  // Extension: Pen
+export type PenBlock =
   | BlockBase<OpCode.pen_clear, {}>
   | BlockBase<OpCode.pen_stamp, {}>
   | BlockBase<OpCode.pen_penDown, {}>
@@ -267,6 +266,21 @@ export type KnownBlock =
   | BlockBase<OpCode.pen_changePenShadeBy, { SHADE: BlockInput.Number }>
   | BlockBase<OpCode.pen_setPenHueToNumber, { HUE: BlockInput.Number }>
   | BlockBase<OpCode.pen_changePenHueBy, { HUE: BlockInput.Number }>;
+
+export type ExtensionBlock =
+  | PenBlock
+
+export type KnownBlock =
+  | MotionBlock
+  | LooksBlock
+  | SoundBlock
+  | EventBlock
+  | ControlBlock
+  | SensingBlock
+  | OperatorBlock
+  | DataBlock
+  | CustomBlock
+  | ExtensionBlock;
 
 // TODO: This is largely a copy of the above data, formatted as a runtime
 // constant instead of as type information. Is it possible to construct a type
