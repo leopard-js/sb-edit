@@ -134,7 +134,7 @@ export default function toSb3(
     stage: Stage,
     target: Target
   }): {
-    inputs: {[key: string]: sb3.BlockInput},
+    inputs: sb3.Block["inputs"],
     blockData: BlockData
   } {
     const {block, stage, target} = options;
@@ -142,7 +142,7 @@ export default function toSb3(
     const blockData = newBlockData();
 
     const result: {
-      inputs: {[key: string]: sb3.BlockInput},
+      inputs: sb3.Block["inputs"],
       blockData: BlockData
     } = {
       inputs: {},
@@ -199,12 +199,8 @@ export default function toSb3(
   }
 
   function serializeInputs(block: Block, options: {stage: Stage, target: Target}): {
-    inputs: {
-      [key: string]: sb3.BlockInput
-    },
-    fields: {
-      [key: string]: any
-    },
+    inputs: sb3.Block["inputs"],
+    fields: sb3.Block["fields"],
     blockData: BlockData
   } {
     const {stage, target} = options;
