@@ -1,4 +1,4 @@
-import Block, { BlockBase, KnownBlock } from "../../Block";
+import Block, { BlockBase, KnownBlock, CustomBlock } from "../../Block";
 import Costume from "../../Costume";
 import Project, { TextToSpeechLanguage } from "../../Project";
 import Script from "../../Script";
@@ -8,6 +8,7 @@ import * as BlockInput from "../../BlockInput";
 import * as sb3 from "./interfaces";
 import { OpCode } from "../../OpCode";
 import { generateId } from "../../util/id";
+import { prop } from "../../util/ts-util";
 
 interface ToSb3Options {}
 
@@ -130,7 +131,7 @@ export default function toSb3(
   }
 
   function serializeInputsToInputs(inputs: {[key: string]: BlockInput.Any}, options: {
-    block: Block,
+    block: Exclude<KnownBlock, CustomBlock>,
     stage: Stage,
     target: Target
   }): {
@@ -154,7 +155,7 @@ export default function toSb3(
     }
 
     const BIS = sb3.BlockInputStatus;
-    const inputEntries = sb3.inputPrimitiveOrShadowMap[block.opcode];
+    const inputEntries = prop(sb3.inputPrimitiveOrShadowMap, block.opcode);
 
     for (const [key, entry] of Object.entries(inputEntries)) {
       const input = inputs[key];
@@ -201,6 +202,7 @@ export default function toSb3(
   function serializeInputs(block: Block, options: {stage: Stage, target: Target}): {
     inputs: sb3.Block["inputs"],
     fields: sb3.Block["fields"],
+    mutation?: sb3.Block["mutation"],
     blockData: BlockData
   } {
     const {stage, target} = options;
@@ -210,9 +212,30 @@ export default function toSb3(
       stage, target
     });
 
-    const {inputs, blockData} = serializeInputsToInputs(block.inputs, {
-      block, stage, target
-    });
+    const blockData = newBlockData();
+    let inputs = {};
+    let mutations;
+
+    if (block.isKnownBlock()) {
+      switch (block.opcode) {
+        case OpCode.procedures_definition:
+          break;
+        case OpCode.procedures_call:
+          break;
+        case OpCode.argument_reporter_string_number:
+          break;
+        case OpCode.argument_reporter_boolean:
+          break;
+        default: {
+          const result = serializeInputsToInputs(block.inputs, {
+            block, stage, target
+          });
+
+          inputs = result.inputs;
+          applyBlockData(blockData, result.blockData);
+        }
+      }
+    }
 
     return {inputs, fields, blockData};
   }
