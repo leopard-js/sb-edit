@@ -137,12 +137,14 @@ export default function toSb3(
     stage: Stage,
     target: Target,
 
+    customBlockData: CustomBlockData,
+
     block: Exclude<KnownBlock, ProcedureBlock>
   }): {
     inputs: sb3.Block["inputs"],
     blockData: BlockData
   } {
-    const {block, stage, target} = options;
+    const {block, customBlockData, stage, target} = options;
 
     const blockData = newBlockData();
 
@@ -172,10 +174,10 @@ export default function toSb3(
       if (entry === sb3.BooleanOrSubstackInputStatus) {
         if (input && input.type === "blocks" && input.value.length) {
           result.inputs[key] = [BIS.INPUT_BLOCK_NO_SHADOW, input.value[0].id];
-          applyBlockData(blockData, serializeBlock(input.value[0], {parent: block, siblingBlocks: input.value, stage, target}));
+          applyBlockData(blockData, serializeBlock(input.value[0], {customBlockData, parent: block, siblingBlocks: input.value, stage, target}));
         } else if (input && input.type === "block") {
           result.inputs[key] = [BIS.INPUT_BLOCK_NO_SHADOW, input.value.id];
-          applyBlockData(blockData, serializeBlock(input.value, {parent: block, stage, target}));
+          applyBlockData(blockData, serializeBlock(input.value, {customBlockData, parent: block, stage, target}));
         } else {
           // Empty, don't store anything.
           // (Storing [INPUT_BLOCK_NO_SHADOW, null] would also be valid.)
@@ -188,7 +190,7 @@ export default function toSb3(
         });
         result.inputs[key] = [BIS.INPUT_DIFF_BLOCK_SHADOW, input.value.id, shadowValue];
         applyBlockData(blockData, inputBlockData);
-        applyBlockData(blockData, serializeBlock(input.value, {parent: block, stage, target}));
+        applyBlockData(blockData, serializeBlock(input.value, {customBlockData, parent: block, stage, target}));
       } else {
         const {shadowValue, blockData: inputBlockData} = serializeInputShadow(input.value, {
           primitiveOrOpCode: entry as number | OpCode,
@@ -204,7 +206,9 @@ export default function toSb3(
 
   function serializeInputs(block: Block, options: {
     stage: Stage,
-    target: Target
+    target: Target,
+
+    customBlockData: CustomBlockData
   }): {
     inputs: sb3.Block["inputs"],
     fields: sb3.Block["fields"],
@@ -229,7 +233,7 @@ export default function toSb3(
         case OpCode.procedures_call:
           break;
         default: {
-          const result = serializeInputsToInputs(block.inputs, {block, stage, target});
+          const result = serializeInputsToInputs(block.inputs, {block, customBlockData, stage, target});
 
           inputs = result.inputs;
           applyBlockData(blockData, result.blockData);
@@ -244,6 +248,8 @@ export default function toSb3(
     stage: Stage,
     target: Target,
 
+    customBlockData: CustomBlockData,
+
     parent?: Block,
     siblingBlocks?: Block[],
     x?: number,
@@ -251,7 +257,7 @@ export default function toSb3(
   }): BlockData {
     const result = newBlockData();
 
-    const {parent, siblingBlocks, stage, target} = options;
+    const {customBlockData, parent, siblingBlocks, stage, target} = options;
 
     let nextBlock;
     if (siblingBlocks) {
@@ -260,10 +266,21 @@ export default function toSb3(
     }
 
     if (nextBlock) {
-      applyBlockData(result, serializeBlock(nextBlock, {parent: block, siblingBlocks, stage, target}));
+      applyBlockData(result, serializeBlock(nextBlock, {
+        stage, target,
+        customBlockData,
+        parent: block,
+        siblingBlocks
+      }));
     }
 
-    const { inputs, fields, blockData: inputBlockData } = serializeInputs(block, {stage, target});
+    const { inputs, fields, blockData: inputBlockData } = serializeInputs(block, {
+      stage,
+      target,
+
+      customBlockData
+    });
+
     applyBlockData(result, inputBlockData);
 
     const obj: sb3.Block = {
@@ -289,6 +306,57 @@ export default function toSb3(
     return result;
   }
 
+  interface CustomBlockData {
+    [proccode: string]: {
+      args: Array<{
+        default: string,
+        id: string,
+        name: string,
+        type: "boolean" | "numberOrString"
+      }>
+    }
+  }
+
+  function collectCustomBlockData(target: Target): CustomBlockData {
+    const result = {};
+
+    for (const script of target.scripts) {
+      const block = script.blocks[0];
+      if (block.opcode !== OpCode.procedures_definition) {
+        continue;
+      }
+
+      const args: Array<{
+        default: string,
+        id: string
+        name: string,
+        type: "boolean" | "numberOrString"
+      }> = [];
+
+      for (const {name, type} of block.inputs.ARGUMENTS.value) {
+        if (type === "label") {
+          continue;
+        }
+
+        const id = generateId();
+
+        args.push({
+          id,
+          name,
+          type,
+          default: prop({
+            boolean: "false",
+            numberOrString: ""
+          }, type)
+        });
+      }
+
+      result[block.inputs.PROCCODE.value] = {args};
+    }
+
+    return result;
+  }
+
   function serializeTarget(target: Target, options: {stage: Stage}): sb3.Target {
     const mapToIdObject = (
       values: Array<{id: string, [propName: string]: any}>,
@@ -305,9 +373,12 @@ export default function toSb3(
 
     const blockData = newBlockData();
 
+    const customBlockData = collectCustomBlockData(target);
+
     for (const script of target.scripts) {
       applyBlockData(blockData, serializeBlock(script.blocks[0], {
         stage, target,
+        customBlockData,
         siblingBlocks: script.blocks,
         x: script.x,
         y: script.y
