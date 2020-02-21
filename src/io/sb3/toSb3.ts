@@ -1,4 +1,4 @@
-import Block, { BlockBase, KnownBlock, CustomBlock } from "../../Block";
+import Block, { BlockBase, KnownBlock, ProcedureBlock } from "../../Block";
 import Costume from "../../Costume";
 import Project, { TextToSpeechLanguage } from "../../Project";
 import Script from "../../Script";
@@ -131,7 +131,7 @@ export default function toSb3(
   }
 
   function serializeInputsToInputs(inputs: {[key: string]: BlockInput.Any}, options: {
-    block: Exclude<KnownBlock, CustomBlock>,
+    block: Exclude<KnownBlock, ProcedureBlock>,
     stage: Stage,
     target: Target
   }): {
@@ -221,10 +221,6 @@ export default function toSb3(
         case OpCode.procedures_definition:
           break;
         case OpCode.procedures_call:
-          break;
-        case OpCode.argument_reporter_string_number:
-          break;
-        case OpCode.argument_reporter_boolean:
           break;
         default: {
           const result = serializeInputsToInputs(block.inputs, {

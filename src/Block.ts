@@ -242,14 +242,20 @@ export type DataBlock =
   | BlockBase<OpCode.data_showlist, { LIST: BlockInput.List }>
   | BlockBase<OpCode.data_hidelist, { LIST: BlockInput.List }>;
 
-export type CustomBlock =
+export type ProcedureBlock =
   | BlockBase<
       OpCode.procedures_definition,
       { PROCCODE: BlockInput.String; ARGUMENTS: BlockInput.CustomBlockArguments; WARP: BlockInput.Boolean }
     >
-  | BlockBase<OpCode.procedures_call, { PROCCODE: BlockInput.String; INPUTS: BlockInput.CustomBlockInputValues }>
+  | BlockBase<OpCode.procedures_call, { PROCCODE: BlockInput.String; INPUTS: BlockInput.CustomBlockInputValues }>;
+
+export type ArgumentBlock =
   | BlockBase<OpCode.argument_reporter_string_number, { VALUE: BlockInput.String }>
   | BlockBase<OpCode.argument_reporter_boolean, { VALUE: BlockInput.String }>;
+
+export type CustomBlock =
+  | ProcedureBlock
+  | ArgumentBlock;
 
 export type PenBlock =
   | BlockBase<OpCode.pen_clear, {}>
