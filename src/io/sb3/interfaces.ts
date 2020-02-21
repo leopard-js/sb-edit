@@ -50,18 +50,23 @@ export interface Sound {
 
 export interface Block {
   opcode: OpCode;
+
   next: string;
   parent: string;
+
   inputs: {
     [key: string]: BlockInput;
   };
   fields: {
     [key: string]: BlockField;
   };
+
   shadow: boolean;
   topLevel: boolean;
+
   x?: number;
   y?: number;
+
   mutation?: {
     tagName: string;
     children: any[]; // TODO: What is this?
