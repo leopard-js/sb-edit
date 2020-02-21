@@ -1,5 +1,5 @@
 import { OpCode } from "../../OpCode";
-import { KnownBlock, CustomBlock } from "../../Block";
+import { KnownBlock, ProcedureBlock } from "../../Block";
 import { TextToSpeechLanguage } from "../../Project";
 import * as BlockInput from "../../BlockInput";
 
@@ -304,10 +304,10 @@ export type BlockInputValue =
 // when none such is required and whose values are never specified in this
 // mapping).
 export const inputPrimitiveOrShadowMap: {
-  // Custom procedures & argument blocks should be serialized separately
-  // from how normal blocks are, since most of their data is stored on a
-  // "mutation" field not accounted for here.
-  [opcode in Exclude<KnownBlock["opcode"], CustomBlock["opcode"]>]: {
+  // Custom procedure blocks should be serialized separately from how normal
+  // blocks are, since most of their data is stored on a "mutation" field not
+  // accounted for here.
+  [opcode in Exclude<KnownBlock["opcode"], ProcedureBlock["opcode"]>]: {
     [fieldName: string]: number | OpCode;
   }
 } = {
@@ -456,4 +456,6 @@ export const inputPrimitiveOrShadowMap: {
   [OpCode.data_listcontainsitem]: {ITEM: BIS.TEXT_PRIMITIVE},
   [OpCode.data_showlist]: {},
   [OpCode.data_hidelist]: {},
+  [OpCode.argument_reporter_boolean]: {},
+  [OpCode.argument_reporter_string_number]: {}
 };
