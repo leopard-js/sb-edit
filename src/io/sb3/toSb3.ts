@@ -10,6 +10,8 @@ import { OpCode } from "../../OpCode";
 import { generateId } from "../../util/id";
 import { prop } from "../../util/ts-util";
 
+const BIS = sb3.BlockInputStatus;
+
 interface ToSb3Options {}
 
 interface ToSb3Output {
@@ -113,9 +115,10 @@ export default function toSb3(
 
         blockData.blocks[id] = {
           opcode: shadowOpCode,
-          next: null,
 
+          next: null,
           parent: parentId,
+
           fields,
           inputs: {},
 
@@ -131,9 +134,10 @@ export default function toSb3(
   }
 
   function serializeInputsToInputs(inputs: {[key: string]: BlockInput.Any}, options: {
-    block: Exclude<KnownBlock, ProcedureBlock>,
     stage: Stage,
-    target: Target
+    target: Target,
+
+    block: Exclude<KnownBlock, ProcedureBlock>
   }): {
     inputs: sb3.Block["inputs"],
     blockData: BlockData
@@ -154,7 +158,6 @@ export default function toSb3(
       return result;
     }
 
-    const BIS = sb3.BlockInputStatus;
     const inputEntries = prop(sb3.inputPrimitiveOrShadowMap, block.opcode);
 
     for (const [key, entry] of Object.entries(inputEntries)) {
@@ -199,13 +202,16 @@ export default function toSb3(
     return result;
   }
 
-  function serializeInputs(block: Block, options: {stage: Stage, target: Target}): {
+  function serializeInputs(block: Block, options: {
+    stage: Stage,
+    target: Target
+  }): {
     inputs: sb3.Block["inputs"],
     fields: sb3.Block["fields"],
     mutation?: sb3.Block["mutation"],
     blockData: BlockData
   } {
-    const {stage, target} = options;
+    const {stage, target, customBlockData} = options;
 
     const {fields} = serializeInputsToFields(block.inputs, {
       blockOpCode: block.opcode,
@@ -213,8 +219,8 @@ export default function toSb3(
     });
 
     const blockData = newBlockData();
-    let inputs = {};
-    let mutations;
+    let inputs: sb3.Block["inputs"] = {};
+    let mutation: sb3.Block["mutation"];
 
     if (block.isKnownBlock()) {
       switch (block.opcode) {
@@ -223,9 +229,7 @@ export default function toSb3(
         case OpCode.procedures_call:
           break;
         default: {
-          const result = serializeInputsToInputs(block.inputs, {
-            block, stage, target
-          });
+          const result = serializeInputsToInputs(block.inputs, {block, stage, target});
 
           inputs = result.inputs;
           applyBlockData(blockData, result.blockData);
