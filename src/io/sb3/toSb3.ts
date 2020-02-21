@@ -228,8 +228,63 @@ export default function toSb3(
 
     if (block.isKnownBlock()) {
       switch (block.opcode) {
-        case OpCode.procedures_definition:
+        case OpCode.procedures_definition: {
+          const prototypeId = generateId();
+
+          const {args} = customBlockData[block.inputs.PROCCODE.value];
+
+          const prototypeInputs: sb3.Block["inputs"] = {};
+          for (const arg of args) {
+            const shadowId = generateId();
+            blockData.blocks[shadowId] = {
+              opcode: prop({
+                boolean: OpCode.argument_reporter_boolean,
+                numberOrString: OpCode.argument_reporter_string_number
+              }, arg.type),
+
+              next: null,
+              parent: prototypeId,
+
+              inputs: {},
+              fields: {
+                VALUE: [arg.name]
+              },
+
+              shadow: true,
+              topLevel: false
+            };
+
+            prototypeInputs[arg.id] = [BIS.INPUT_SAME_BLOCK_SHADOW, shadowId];
+          }
+
+          blockData.blocks[prototypeId] = {
+            opcode: OpCode.procedures_prototype,
+
+            next: null,
+            parent: block.id,
+
+            inputs: prototypeInputs,
+            fields: {},
+
+            shadow: true,
+            topLevel: false,
+
+            mutation: {
+              tagName: "mutation",
+              children: [],
+              proccode: block.inputs.PROCCODE.value,
+              argumentids: JSON.stringify(args.map(arg => arg.id)),
+              argumentnames: JSON.stringify(args.map(arg => arg.name)),
+              argumentdefaults: JSON.stringify(args.map(arg => arg.default)),
+              warp: JSON.stringify(block.inputs.WARP.value) as "true" | "false"
+            }
+          };
+
+          inputs.custom_block = [BIS.INPUT_SAME_BLOCK_SHADOW, prototypeId];
+
           break;
+        }
+
         case OpCode.procedures_call:
           break;
         default: {
