@@ -482,7 +482,7 @@ export default function toSb3(
         }
       }),
 
-      lists: mapToIdObject(target.lists, ({ name, value }) => [name, ...value])
+      lists: mapToIdObject(target.lists, ({ name, value }) => [name, value])
     };
   }
 
