@@ -283,8 +283,50 @@ export default function toSb3(
           break;
         }
 
-        case OpCode.procedures_call:
+        case OpCode.procedures_call: {
+          const {args, warp} = customBlockData[block.inputs.PROCCODE.value];
+
+          mutation = {
+            tagName: "mutation",
+            children: [],
+            proccode: block.inputs.PROCCODE.value,
+            argumentids: JSON.stringify(args.map(arg => arg.id)),
+            warp: JSON.stringify(warp) as "true" | "false"
+          }
+
+          const inputEntries = {};
+          const constructedInputs = {};
+          const initialValues = {};
+          let i = 0;
+          for (const arg of args) {
+            inputEntries[arg.id] = prop({
+              "boolean": sb3.BooleanOrSubstackInputStatus,
+              "numberOrString": BIS.TEXT_PRIMITIVE
+            }, arg.type)
+            initialValues[arg.id] = prop({
+              "boolean": false,
+              "numberOrString": ""
+            }, arg.type);
+            constructedInputs[arg.id] = block.inputs.INPUTS.value[i++];
+          }
+
+          const result = serializeInputsToInputs(constructedInputs, {
+            stage,
+            target,
+
+            customBlockData,
+
+            block,
+            initialValues,
+            inputEntries
+          });
+
+          inputs = result.inputs;
+          applyBlockData(blockData, result.blockData);
+
           break;
+        }
+
         default: {
           const inputEntries = prop(sb3.inputPrimitiveOrShadowMap, block.opcode);
 

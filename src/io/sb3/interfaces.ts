@@ -72,8 +72,8 @@ export interface Block {
     children: any[]; // TODO: What is this?
     proccode: string;
     argumentids: string;
-    argumentnames: string;
-    argumentdefaults: string;
+    argumentnames?: string;
+    argumentdefaults?: string;
     warp: "true" | "false";
   };
 }
