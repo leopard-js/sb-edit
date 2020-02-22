@@ -229,7 +229,7 @@ export default function toSb3(
         case OpCode.procedures_definition: {
           const prototypeId = generateId();
 
-          const {args} = customBlockData[block.inputs.PROCCODE.value];
+          const {args, warp} = customBlockData[block.inputs.PROCCODE.value];
 
           const prototypeInputs: sb3.Block["inputs"] = {};
           for (const arg of args) {
@@ -274,7 +274,7 @@ export default function toSb3(
               argumentids: JSON.stringify(args.map(arg => arg.id)),
               argumentnames: JSON.stringify(args.map(arg => arg.name)),
               argumentdefaults: JSON.stringify(args.map(arg => arg.default)),
-              warp: JSON.stringify(block.inputs.WARP.value) as "true" | "false"
+              warp: JSON.stringify(warp) as "true" | "false"
             }
           };
 
@@ -382,18 +382,22 @@ export default function toSb3(
         id: string,
         name: string,
         type: "boolean" | "numberOrString"
-      }>
+      }>,
+      warp: boolean
     }
   }
 
   function collectCustomBlockData(target: Target): CustomBlockData {
-    const result = {};
+    const result: CustomBlockData = {};
 
     for (const script of target.scripts) {
       const block = script.blocks[0];
       if (block.opcode !== OpCode.procedures_definition) {
         continue;
       }
+
+      const proccode = block.inputs.PROCCODE.value;
+      const warp = block.inputs.WARP.value;
 
       const args: Array<{
         default: string,
@@ -420,7 +424,7 @@ export default function toSb3(
         });
       }
 
-      result[block.inputs.PROCCODE.value] = {args};
+      result[proccode] = {args, warp};
     }
 
     return result;
