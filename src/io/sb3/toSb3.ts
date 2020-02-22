@@ -310,7 +310,7 @@ export default function toSb3(
       }
     }
 
-    return {inputs, fields, blockData};
+    return {inputs, fields, mutation, blockData};
   }
 
   function serializeBlock(block: Block, options: {
@@ -343,7 +343,7 @@ export default function toSb3(
       }));
     }
 
-    const { inputs, fields, blockData: inputBlockData } = serializeInputs(block, {
+    const { inputs, fields, mutation, blockData: inputBlockData } = serializeInputs(block, {
       stage,
       target,
 
@@ -361,6 +361,7 @@ export default function toSb3(
 
       inputs,
       fields,
+      mutation,
 
       shadow: false
     };
