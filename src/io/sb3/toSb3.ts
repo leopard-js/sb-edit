@@ -133,18 +133,21 @@ export default function toSb3(
     return {shadowValue, blockData};
   }
 
-  function serializeInputsToInputs(inputs: {[key: string]: BlockInput.Any}, options: {
+  function serializeInputsToInputs<PassedInputs extends {[key: string]: BlockInput.Any}>(inputs: PassedInputs, options: {
     stage: Stage,
     target: Target,
 
     customBlockData: CustomBlockData,
 
-    block: Exclude<KnownBlock, ProcedureBlock>
+    block: Exclude<KnownBlock, ProcedureBlock>,
+    initialValues: {
+      [key in keyof PassedInputs]: any
+    }
   }): {
     inputs: sb3.Block["inputs"],
     blockData: BlockData
   } {
-    const {block, customBlockData, stage, target} = options;
+    const {block, customBlockData, initialValues, stage, target} = options;
 
     const blockData = newBlockData();
 
@@ -183,7 +186,7 @@ export default function toSb3(
           // (Storing [INPUT_BLOCK_NO_SHADOW, null] would also be valid.)
         }
       } else if (input.type === "block") {
-        const {initial} = BlockBase.getDefaultInput((block as KnownBlock).opcode, key) || {};
+        const initial = initialValues[key];
         const {shadowValue, blockData: inputBlockData} = serializeInputShadow(initial, {
           primitiveOrOpCode: entry as number | OpCode,
           parentId: block.id
@@ -288,7 +291,21 @@ export default function toSb3(
         case OpCode.procedures_call:
           break;
         default: {
-          const result = serializeInputsToInputs(block.inputs, {block, customBlockData, stage, target});
+
+          const initialValues = {};
+          for (const key of Object.keys(inputEntries)) {
+            initialValues[key] = (BlockBase.getDefaultInput(block.opcode, key) || {}).initial;
+          }
+
+          const result = serializeInputsToInputs(block.inputs, {
+            stage,
+            target,
+
+            customBlockData,
+
+            block,
+            initialValues
+          });
 
           inputs = result.inputs;
           applyBlockData(blockData, result.blockData);
