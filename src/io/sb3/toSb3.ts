@@ -137,7 +137,7 @@ export default function toSb3(
     stage: Stage,
     target: Target,
 
-    customBlockData: CustomBlockData,
+    getCustomBlockData: GetCustomBlockData,
 
     block: Block,
     initialValues: {
@@ -148,7 +148,7 @@ export default function toSb3(
     inputs: sb3.Block["inputs"],
     blockData: BlockData
   } {
-    const {block, customBlockData, initialValues, inputEntries, stage, target} = options;
+    const {block, getCustomBlockData, initialValues, inputEntries, stage, target} = options;
 
     const blockData = newBlockData();
 
@@ -172,10 +172,10 @@ export default function toSb3(
       if (entry === sb3.BooleanOrSubstackInputStatus) {
         if (input && input.type === "blocks" && input.value.length) {
           result.inputs[key] = [BIS.INPUT_BLOCK_NO_SHADOW, input.value[0].id];
-          applyBlockData(blockData, serializeBlock(input.value[0], {customBlockData, parent: block, siblingBlocks: input.value, stage, target}));
+          applyBlockData(blockData, serializeBlock(input.value[0], {getCustomBlockData, parent: block, siblingBlocks: input.value, stage, target}));
         } else if (input && input.type === "block") {
           result.inputs[key] = [BIS.INPUT_BLOCK_NO_SHADOW, input.value.id];
-          applyBlockData(blockData, serializeBlock(input.value, {customBlockData, parent: block, stage, target}));
+          applyBlockData(blockData, serializeBlock(input.value, {getCustomBlockData, parent: block, stage, target}));
         } else {
           // Empty, don't store anything.
           // (Storing [INPUT_BLOCK_NO_SHADOW, null] would also be valid.)
@@ -188,7 +188,7 @@ export default function toSb3(
         });
         result.inputs[key] = [BIS.INPUT_DIFF_BLOCK_SHADOW, input.value.id, shadowValue];
         applyBlockData(blockData, inputBlockData);
-        applyBlockData(blockData, serializeBlock(input.value, {customBlockData, parent: block, stage, target}));
+        applyBlockData(blockData, serializeBlock(input.value, {getCustomBlockData, parent: block, stage, target}));
       } else {
         const {shadowValue, blockData: inputBlockData} = serializeInputShadow(input.value, {
           primitiveOrOpCode: entry as number | OpCode,
@@ -206,14 +206,14 @@ export default function toSb3(
     stage: Stage,
     target: Target,
 
-    customBlockData: CustomBlockData
+    getCustomBlockData: GetCustomBlockData
   }): {
     inputs: sb3.Block["inputs"],
     fields: sb3.Block["fields"],
     mutation?: sb3.Block["mutation"],
     blockData: BlockData
   } {
-    const {stage, target, customBlockData} = options;
+    const {stage, target, getCustomBlockData} = options;
 
     const {fields} = serializeInputsToFields(block.inputs, {
       blockOpCode: block.opcode,
@@ -229,7 +229,7 @@ export default function toSb3(
         case OpCode.procedures_definition: {
           const prototypeId = generateId();
 
-          const {args, warp} = customBlockData[block.inputs.PROCCODE.value];
+          const {args, warp} = getCustomBlockData(block.inputs.PROCCODE.value);
 
           const prototypeInputs: sb3.Block["inputs"] = {};
           for (const arg of args) {
@@ -284,7 +284,7 @@ export default function toSb3(
         }
 
         case OpCode.procedures_call: {
-          const {args, warp} = customBlockData[block.inputs.PROCCODE.value];
+          const {args, warp} = getCustomBlockData(block.inputs.PROCCODE.value);
 
           mutation = {
             tagName: "mutation",
@@ -314,7 +314,7 @@ export default function toSb3(
             stage,
             target,
 
-            customBlockData,
+            getCustomBlockData,
 
             block,
             initialValues,
@@ -339,7 +339,7 @@ export default function toSb3(
             stage,
             target,
 
-            customBlockData,
+            getCustomBlockData,
 
             block,
             initialValues,
@@ -359,7 +359,7 @@ export default function toSb3(
     stage: Stage,
     target: Target,
 
-    customBlockData: CustomBlockData,
+    getCustomBlockData: GetCustomBlockData,
 
     parent?: Block,
     siblingBlocks?: Block[],
@@ -368,7 +368,7 @@ export default function toSb3(
   }): BlockData {
     const result = newBlockData();
 
-    const {customBlockData, parent, siblingBlocks, stage, target} = options;
+    const {getCustomBlockData, parent, siblingBlocks, stage, target} = options;
 
     let nextBlock;
     if (siblingBlocks) {
@@ -379,7 +379,7 @@ export default function toSb3(
     if (nextBlock) {
       applyBlockData(result, serializeBlock(nextBlock, {
         stage, target,
-        customBlockData,
+        getCustomBlockData,
         parent: block,
         siblingBlocks
       }));
@@ -389,7 +389,7 @@ export default function toSb3(
       stage,
       target,
 
-      customBlockData
+      getCustomBlockData
     });
 
     applyBlockData(result, inputBlockData);
@@ -419,19 +419,19 @@ export default function toSb3(
   }
 
   interface CustomBlockData {
-    [proccode: string]: {
-      args: Array<{
-        default: string,
-        id: string,
-        name: string,
-        type: "boolean" | "numberOrString"
-      }>,
-      warp: boolean
-    }
+    args: Array<{
+      default: string,
+      id: string,
+      name: string,
+      type: "boolean" | "numberOrString"
+    }>,
+    warp: boolean
   }
 
-  function collectCustomBlockData(target: Target): CustomBlockData {
-    const result: CustomBlockData = {};
+  type GetCustomBlockData = (proccode: string) => CustomBlockData;
+
+  function collectCustomBlockData(target: Target): GetCustomBlockData {
+    const data: {[proccode: string]: CustomBlockData} = {};
 
     for (const script of target.scripts) {
       const block = script.blocks[0];
@@ -467,10 +467,12 @@ export default function toSb3(
         });
       }
 
-      result[proccode] = {args, warp};
+      data[proccode] = {args, warp};
     }
 
-    return result;
+    return (proccode: string): CustomBlockData => {
+      return data[proccode];
+    };
   }
 
   function serializeTarget(target: Target, options: {stage: Stage}): sb3.Target {
@@ -489,12 +491,12 @@ export default function toSb3(
 
     const blockData = newBlockData();
 
-    const customBlockData = collectCustomBlockData(target);
+    const getCustomBlockData = collectCustomBlockData(target);
 
     for (const script of target.scripts) {
       applyBlockData(blockData, serializeBlock(script.blocks[0], {
         stage, target,
-        customBlockData,
+        getCustomBlockData,
         siblingBlocks: script.blocks,
         x: script.x,
         y: script.y
