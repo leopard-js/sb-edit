@@ -139,15 +139,16 @@ export default function toSb3(
 
     customBlockData: CustomBlockData,
 
-    block: Exclude<KnownBlock, ProcedureBlock>,
+    block: Block,
     initialValues: {
       [key in keyof PassedInputs]: any
-    }
+    },
+    inputEntries
   }): {
     inputs: sb3.Block["inputs"],
     blockData: BlockData
   } {
-    const {block, customBlockData, initialValues, stage, target} = options;
+    const {block, customBlockData, initialValues, inputEntries, stage, target} = options;
 
     const blockData = newBlockData();
 
@@ -158,12 +159,6 @@ export default function toSb3(
       inputs: {},
       blockData
     };
-
-    if (!block.isKnownBlock()) {
-      return result;
-    }
-
-    const inputEntries = prop(sb3.inputPrimitiveOrShadowMap, block.opcode);
 
     for (const [key, entry] of Object.entries(inputEntries)) {
       const input = inputs[key];
@@ -291,6 +286,7 @@ export default function toSb3(
         case OpCode.procedures_call:
           break;
         default: {
+          const inputEntries = prop(sb3.inputPrimitiveOrShadowMap, block.opcode);
 
           const initialValues = {};
           for (const key of Object.keys(inputEntries)) {
@@ -304,7 +300,8 @@ export default function toSb3(
             customBlockData,
 
             block,
-            initialValues
+            initialValues,
+            inputEntries
           });
 
           inputs = result.inputs;
