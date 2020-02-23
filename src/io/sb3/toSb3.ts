@@ -31,21 +31,18 @@ export default function toSb3(
   }
 
   interface BlockData {
-    blocks: {[key: string]: sb3.Block},
-    broadcasts: {[key: string]: string}
+    blocks: {[key: string]: sb3.Block}
   }
 
   function applyBlockData(a: BlockData, b?: BlockData) {
     if (b) {
       Object.assign(a.blocks, b.blocks);
-      Object.assign(b.broadcasts, b.broadcasts);
     }
   }
 
   function newBlockData(): BlockData {
     return {
-      blocks: {},
-      broadcasts: {}
+      blocks: {}
     };
   }
 
@@ -96,13 +93,15 @@ export default function toSb3(
   }
 
   function serializeInputShadow(value: any, options: {
-    primitiveOrOpCode: number | OpCode,
-    parentId: string
+    getBroadcastId: GetBroadcastId,
+
+    parentId: string,
+    primitiveOrOpCode: number | OpCode
   }): {
     shadowValue: sb3.BlockInputValue,
     blockData: BlockData
   } {
-    const {primitiveOrOpCode, parentId} = options;
+    const {getBroadcastId, parentId, primitiveOrOpCode} = options;
 
     const blockData = newBlockData();
     let shadowValue = null;
@@ -110,6 +109,8 @@ export default function toSb3(
     if (typeof primitiveOrOpCode === "number") {
       // Primitive shadow, can be stored in compressed form.
       shadowValue = [primitiveOrOpCode, value];
+    } else if (primitiveOrOpCode === OpCode.event_broadcast_menu) {
+      shadowValue = [BIS.BROADCAST_PRIMITIVE, value, getBroadcastId(value)];
     } else {
       // Note: Only 1-field shadow blocks are supported.
       const shadowOpCode = primitiveOrOpCode;
@@ -144,6 +145,7 @@ export default function toSb3(
     stage: Stage,
     target: Target,
 
+    getBroadcastId: GetBroadcastId,
     getCustomBlockData: GetCustomBlockData,
 
     block: Block,
@@ -155,7 +157,7 @@ export default function toSb3(
     inputs: sb3.Block["inputs"],
     blockData: BlockData
   } {
-    const {block, getCustomBlockData, initialValues, inputEntries, stage, target} = options;
+    const {block, getBroadcastId, getCustomBlockData, initialValues, inputEntries, stage, target} = options;
 
     const blockData = newBlockData();
 
@@ -188,10 +190,10 @@ export default function toSb3(
       if (entry === sb3.BooleanOrSubstackInputStatus) {
         if (input && input.type === "blocks" && input.value.length) {
           result.inputs[key] = [BIS.INPUT_BLOCK_NO_SHADOW, input.value[0].id];
-          applyBlockData(blockData, serializeBlock(input.value[0], {getCustomBlockData, parent: block, siblingBlocks: input.value, stage, target}));
+          applyBlockData(blockData, serializeBlock(input.value[0], {getBroadcastId, getCustomBlockData, parent: block, siblingBlocks: input.value, stage, target}));
         } else if (input && input.type === "block") {
           result.inputs[key] = [BIS.INPUT_BLOCK_NO_SHADOW, input.value.id];
-          applyBlockData(blockData, serializeBlock(input.value, {getCustomBlockData, parent: block, stage, target}));
+          applyBlockData(blockData, serializeBlock(input.value, {getBroadcastId, getCustomBlockData, parent: block, stage, target}));
         } else {
           // Empty, don't store anything.
           // (Storing [INPUT_BLOCK_NO_SHADOW, null] would also be valid.)
@@ -199,16 +201,18 @@ export default function toSb3(
       } else if (input.type === "block") {
         const initial = initialValues[key];
         const {shadowValue, blockData: inputBlockData} = serializeInputShadow(initial, {
-          primitiveOrOpCode: entry as number | OpCode,
-          parentId: block.id
+          getBroadcastId,
+          parentId: block.id,
+          primitiveOrOpCode: entry as number | OpCode
         });
         result.inputs[key] = [BIS.INPUT_DIFF_BLOCK_SHADOW, input.value.id, shadowValue];
         applyBlockData(blockData, inputBlockData);
-        applyBlockData(blockData, serializeBlock(input.value, {getCustomBlockData, parent: block, stage, target}));
+        applyBlockData(blockData, serializeBlock(input.value, {getBroadcastId, getCustomBlockData, parent: block, stage, target}));
       } else {
         const {shadowValue, blockData: inputBlockData} = serializeInputShadow(input.value, {
-          primitiveOrOpCode: entry as number | OpCode,
-          parentId: block.id
+          getBroadcastId,
+          parentId: block.id,
+          primitiveOrOpCode: entry as number | OpCode
         });
         result.inputs[key] = [BIS.INPUT_SAME_BLOCK_SHADOW, shadowValue];
         applyBlockData(blockData, inputBlockData);
@@ -222,6 +226,7 @@ export default function toSb3(
     stage: Stage,
     target: Target,
 
+    getBroadcastId: GetBroadcastId,
     getCustomBlockData: GetCustomBlockData
   }): {
     inputs: sb3.Block["inputs"],
@@ -229,7 +234,7 @@ export default function toSb3(
     mutation?: sb3.Block["mutation"],
     blockData: BlockData
   } {
-    const {stage, target, getCustomBlockData} = options;
+    const {stage, target, getBroadcastId, getCustomBlockData} = options;
 
     const {fields} = serializeInputsToFields(block.inputs, {
       blockOpCode: block.opcode,
@@ -330,6 +335,7 @@ export default function toSb3(
             stage,
             target,
 
+            getBroadcastId,
             getCustomBlockData,
 
             block,
@@ -355,6 +361,7 @@ export default function toSb3(
             stage,
             target,
 
+            getBroadcastId,
             getCustomBlockData,
 
             block,
@@ -375,6 +382,7 @@ export default function toSb3(
     stage: Stage,
     target: Target,
 
+    getBroadcastId: GetBroadcastId,
     getCustomBlockData: GetCustomBlockData,
 
     parent?: Block,
@@ -384,7 +392,7 @@ export default function toSb3(
   }): BlockData {
     const result = newBlockData();
 
-    const {getCustomBlockData, parent, siblingBlocks, stage, target} = options;
+    const {getBroadcastId, getCustomBlockData, parent, siblingBlocks, stage, target} = options;
 
     let nextBlock;
     if (siblingBlocks) {
@@ -395,6 +403,7 @@ export default function toSb3(
     if (nextBlock) {
       applyBlockData(result, serializeBlock(nextBlock, {
         stage, target,
+        getBroadcastId,
         getCustomBlockData,
         parent: block,
         siblingBlocks
@@ -405,6 +414,7 @@ export default function toSb3(
       stage,
       target,
 
+      getBroadcastId,
       getCustomBlockData
     });
 
@@ -445,6 +455,8 @@ export default function toSb3(
   }
 
   type GetCustomBlockData = (proccode: string) => CustomBlockData;
+
+  type GetBroadcastId = (name: string) => string;
 
   function collectCustomBlockData(target: Target): GetCustomBlockData {
     const data: {[proccode: string]: CustomBlockData} = {};
@@ -491,7 +503,13 @@ export default function toSb3(
     };
   }
 
-  function serializeTarget(target: Target, options: {stage: Stage}): sb3.Target {
+  function serializeTarget(target: Target, options: {
+    stage: Stage,
+
+    getBroadcastId: GetBroadcastId,
+
+    broadcasts: sb3.Sprite["broadcasts"]
+  }): sb3.Target {
     const mapToIdObject = (
       values: Array<{id: string, [propName: string]: any}>,
       fn: (x: any) => any
@@ -503,7 +521,7 @@ export default function toSb3(
       return ret;
     }
 
-    const {stage} = options;
+    const {broadcasts, getBroadcastId, stage} = options;
 
     const blockData = newBlockData();
 
@@ -512,6 +530,7 @@ export default function toSb3(
     for (const script of target.scripts) {
       applyBlockData(blockData, serializeBlock(script.blocks[0], {
         stage, target,
+        getBroadcastId,
         getCustomBlockData,
         siblingBlocks: script.blocks,
         x: script.x,
@@ -519,7 +538,7 @@ export default function toSb3(
       }));
     }
 
-    const {blocks, broadcasts} = blockData;
+    const {blocks} = blockData;
 
     return {
       name: target.name,
@@ -571,10 +590,21 @@ export default function toSb3(
     "none": "don't rotate"
   };
 
-  function serializeSprite(sprite: Sprite, options: {stage: Stage}): sb3.Sprite {
-    const {stage} = options;
+  function serializeSprite(sprite: Sprite, options: {
+    stage: Stage,
+
+    getBroadcastId: GetBroadcastId
+  }): sb3.Sprite {
+    const {getBroadcastId, stage} = options;
     return {
-      ...serializeTarget(sprite, {stage}),
+      ...serializeTarget(sprite, {
+        stage,
+
+        getBroadcastId,
+
+        // Broadcasts are stored on the stage, not on any sprite.
+        broadcasts: {}
+      }),
       isStage: false,
       x: sprite.x,
       y: sprite.y,
@@ -587,6 +617,9 @@ export default function toSb3(
   }
 
   interface SerializeStageOptions {
+    getBroadcastId: GetBroadcastId;
+
+    broadcasts: sb3.Target["broadcasts"];
     tempo: number;
     textToSpeechLanguage: TextToSpeechLanguage;
     videoState: "on" | "off";
@@ -594,8 +627,9 @@ export default function toSb3(
   }
 
   function serializeStage(stage: Stage, options: SerializeStageOptions): sb3.Stage {
+    const {broadcasts, getBroadcastId} = options;
     return {
-      ...serializeTarget(stage, {stage}),
+      ...serializeTarget(stage, {broadcasts, getBroadcastId, stage}),
       isStage: true,
       tempo: options.tempo,
       textToSpeechLanguage: options.textToSpeechLanguage,
@@ -605,15 +639,33 @@ export default function toSb3(
   }
 
   function serializeProject(project: Project): sb3.ProjectJSON {
+    const broadcastNameToId: {[name: string]: string} = {};
+    const broadcastIdToName: {[id: string]: string} = {};
+    const getBroadcastId = (name: string): string => {
+      if (!(name in broadcastNameToId)) {
+        const id = generateId();
+        broadcastNameToId[name] = id;
+        broadcastIdToName[id] = name;
+      }
+      return broadcastNameToId[name];
+    };
+
     return {
       targets: [
         serializeStage(project.stage, {
+          getBroadcastId,
+
+          broadcasts: broadcastIdToName,
           tempo: project.tempo,
           textToSpeechLanguage: project.textToSpeechLanguage,
           videoState: project.videoOn ? "on" : "off",
-          videoTransparency: project.videoAlpha
+          videoTransparency: project.videoAlpha,
         }),
-        ...project.sprites.map(sprite => serializeSprite(sprite, {stage: project.stage}))
+        ...project.sprites.map(sprite => serializeSprite(sprite, {
+          stage: project.stage,
+
+          getBroadcastId
+        }))
       ],
       meta: {
         semver: "3.0.0"

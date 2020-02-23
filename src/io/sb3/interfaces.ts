@@ -210,6 +210,7 @@ export const fieldTypeMap: {
   [OpCode.event_whenbackdropswitchesto]: { BACKDROP: "backdrop" },
   [OpCode.event_whengreaterthan]: { WHENGREATERTHANMENU: "greaterThanMenu" },
   [OpCode.event_whenbroadcastreceived]: { BROADCAST_OPTION: "broadcast" },
+  [OpCode.event_broadcast_menu]: { BROADCAST_OPTION: "broadcast" },
   [OpCode.control_stop]: { STOP_OPTION: "stopMenu" },
   [OpCode.control_create_clone_of_menu]: { CLONE_OPTION: "cloneTarget" },
   [OpCode.control_for_each]: { VARIABLE: "variable" },
