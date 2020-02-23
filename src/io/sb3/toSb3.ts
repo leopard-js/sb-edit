@@ -117,7 +117,7 @@ export default function toSb3(
       const fieldEntries = sb3.fieldTypeMap[shadowOpCode];
       if (fieldEntries) {
         const fieldKey = Object.keys(fieldEntries)[0];
-        const fields = {[fieldKey]: value as any};
+        const fields = {[fieldKey]: [value]};
 
         const id = generateId();
 
