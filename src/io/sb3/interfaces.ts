@@ -244,6 +244,7 @@ export const fieldTypeMap: {
   [OpCode.pen_menu_colorParam]: { colorParam: "penColorParam" },
   [OpCode.music_menu_DRUM]: { DRUM: "musicDrum" },
   [OpCode.music_menu_INSTRUMENT]: { INSTRUMENT: "musicInstrument" },
+  [OpCode.note]: { NOTE: "number" },
   [OpCode.videoSensing_menu_ATTRIBUTE]: { ATTRIBUTE: "videoSensingAttribute" },
   [OpCode.videoSensing_menu_SUBJECT]: { SUBJECT: "videoSensingSubject" },
   [OpCode.videoSensing_menu_VIDEO_STATE]: { VIDEO_STATE: "videoSensingVideoState" },

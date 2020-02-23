@@ -230,6 +230,8 @@ export enum OpCode {
   music_menu_DRUM = "music_menu_DRUM",
   music_menu_INSTRUMENT = "music_menu_INSTRUMENT",
 
+  note = "note",
+
   videoSensing_menu_ATTRIBUTE = "videoSensing_menu_ATTRIBUTE",
   videoSensing_menu_SUBJECT = "videoSensing_menu_SUBJECT",
   videoSensing_menu_VIDEO_STATE = "videoSensing_menu_VIDEO_STATE",
