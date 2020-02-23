@@ -12,7 +12,9 @@ import { prop } from "../../util/ts-util";
 
 const BIS = sb3.BlockInputStatus;
 
-interface ToSb3Options {}
+interface ToSb3Options {
+  warn: (message: string) => void
+}
 
 interface ToSb3Output {
   json: string
@@ -22,6 +24,11 @@ export default function toSb3(
   options: Partial<ToSb3Options> = {}
 ): ToSb3Output {
   const project: Project = this;
+
+  let warn = (message: string) => undefined;
+  if (options.warn) {
+    warn = options.warn;
+  }
 
   interface BlockData {
     blocks: {[key: string]: sb3.Block},
@@ -159,6 +166,15 @@ export default function toSb3(
       inputs: {},
       blockData
     };
+
+    // Just for debugging!
+    const entryKeys = Object.keys(inputEntries);
+    const fieldEntryKeys = Object.keys(sb3.fieldTypeMap[block.opcode] || {});
+    const missingEntries = Object.keys(inputs).filter(
+      inp => !(entryKeys.includes(inp) || fieldEntryKeys.includes(inp)));
+    for (const key of missingEntries) {
+      warn(`Missing entry for input ${key} on ${block.opcode} (${block.id})`);
+    }
 
     for (const [key, entry] of Object.entries(inputEntries)) {
       const input = inputs[key];
