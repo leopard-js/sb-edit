@@ -454,6 +454,10 @@ export const inputPrimitiveOrShadowMap: {
   [OpCode.pen_changePenShadeBy]: {SHADE: BIS.MATH_NUM_PRIMITIVE},
   [OpCode.pen_setPenHueToNumber]: {HUE: BIS.MATH_NUM_PRIMITIVE},
   [OpCode.pen_changePenHueBy]: {HUE: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.videoSensing_whenMotionGreaterThan]: {REFERENCE: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.videoSensing_videoOn]: {ATTRIBUTE: OpCode.videoSensing_menu_ATTRIBUTE, SUBJECT: OpCode.videoSensing_menu_SUBJECT},
+  [OpCode.videoSensing_videoToggle]: {VIDEO_STATE: OpCode.videoSensing_menu_VIDEO_STATE},
+  [OpCode.videoSensing_setVideoTransparency]: {TRANSPARENCY: BIS.MATH_NUM_PRIMITIVE},
   // Data category values from scratch-blocks/core/data_category.js
   [OpCode.data_variable]: {},
   [OpCode.data_setvariableto]: {VALUE: BIS.TEXT_PRIMITIVE},
