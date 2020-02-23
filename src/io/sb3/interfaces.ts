@@ -379,7 +379,7 @@ export const inputPrimitiveOrShadowMap: {
   [OpCode.event_broadcast]: {BROADCAST_INPUT: OpCode.event_broadcast_menu},
   [OpCode.event_broadcastandwait]: {BROADCAST_INPUT: OpCode.event_broadcast_menu},
   [OpCode.control_wait]: {DURATION: BIS.POSITIVE_NUM_PRIMITIVE},
-  [OpCode.control_repeat]: {TIMES: BIS.WHOLE_NUM_PRIMITIVE},
+  [OpCode.control_repeat]: {TIMES: BIS.WHOLE_NUM_PRIMITIVE, SUBSTACK: BooleanOrSubstackInputStatus},
   [OpCode.control_forever]: {SUBSTACK: BooleanOrSubstackInputStatus},
   [OpCode.control_if]: {CONDITION: BooleanOrSubstackInputStatus, SUBSTACK: BooleanOrSubstackInputStatus},
   [OpCode.control_if_else]: {CONDITION: BooleanOrSubstackInputStatus, SUBSTACK: BooleanOrSubstackInputStatus, SUBSTACK2: BooleanOrSubstackInputStatus},
