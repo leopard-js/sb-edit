@@ -237,7 +237,8 @@ export enum OpCode {
   videoSensing_menu_VIDEO_STATE = "videoSensing_menu_VIDEO_STATE",
 
   wedo2_menu_MOTOR_ID = "wedo2_menu_MOTOR_ID",
-  wedo2_menu_MOTOR_DIRECTION = "wedo2_MOTOR_DIRECTION",
-  wedo2_menu_TILT_DIRECTION = "wedo2_TILT_DIRECTION",
-  wedo2_menu_TILT_DIRECTION_ANY = "wedo2_TILT_DIRECTION_ANY"
+  wedo2_menu_MOTOR_DIRECTION = "wedo2_menu_MOTOR_DIRECTION",
+  wedo2_menu_TILT_DIRECTION = "wedo2_menu_TILT_DIRECTION",
+  wedo2_menu_TILT_DIRECTION_ANY = "wedo2_menu_TILT_DIRECTION_ANY",
+  wedo2_menu_OP = "wedo2_menu_OP"
 }

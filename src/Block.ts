@@ -291,10 +291,26 @@ export type VideoSensingBlock =
   | BlockBase<OpCode.videoSensing_videoToggle, { VIDEO_STATE: BlockInput.VideoSensingVideoState }>
   | BlockBase<OpCode.videoSensing_setVideoTransparency, { TRANSPARENCY: BlockInput.Number }>;
 
+export type WeDo2Block =
+  | BlockBase<OpCode.wedo2_motorOnFor, { MOTOR_ID: BlockInput.WeDo2MotorId, DURATION: BlockInput.Number }>
+  | BlockBase<OpCode.wedo2_motorOn, { MOTOR_ID: BlockInput.WeDo2MotorId }>
+  | BlockBase<OpCode.wedo2_motorOff, { MOTOR_ID: BlockInput.WeDo2MotorId }>
+  | BlockBase<OpCode.wedo2_startMotorPower, { MOTOR_ID: BlockInput.WeDo2MotorId, POWER: BlockInput.Number }>
+  | BlockBase<OpCode.wedo2_setMotorDirection, { MOTOR_ID: BlockInput.WeDo2MotorId, MOTOR_DIRECTION: BlockInput.WeDo2MotorDirection }>
+  | BlockBase<OpCode.wedo2_setLightHue, { HUE: BlockInput.Number }>
+  | BlockBase<OpCode.wedo2_whenDistance, { OP: BlockInput.WeDo2Op, REFERENCE: BlockInput.Number }>
+  | BlockBase<OpCode.wedo2_whenTilted, { TILT_DIRECTION_ANY: BlockInput.WeDo2TiltDirectionAny }>
+  | BlockBase<OpCode.wedo2_getDistance, {}>
+  | BlockBase<OpCode.wedo2_isTilted, { TILT_DIRECTION_ANY: BlockInput.WeDo2TiltDirectionAny }>
+  | BlockBase<OpCode.wedo2_getTiltAngle, { TILT_DIRECTION: BlockInput.WeDo2TiltDirection }>
+  // Deprecated:
+  | BlockBase<OpCode.wedo2_playNoteFor, { NOTE: BlockInput.Number, Duration: BlockInput.Number }>;
+
 export type ExtensionBlock =
   | MusicBlock
   | PenBlock
-  | VideoSensingBlock;
+  | VideoSensingBlock
+  | WeDo2Block;
 
 export type KnownBlock =
   | MotionBlock
@@ -795,6 +811,48 @@ const KnownBlockInputMap: {
   },
   [OpCode.pen_changePenHueBy]: {
     HUE: {type: "number", initial: 10}
+  },
+
+  // Extension: WeDo 2.0
+  [OpCode.wedo2_motorOnFor]: {
+    MOTOR_ID: {type: "wedo2MotorId", initial: "motor"},
+    DURATION: {type: "number", initial: 1}
+  },
+  [OpCode.wedo2_motorOn]: {
+    MOTOR_ID: {type: "wedo2MotorId", initial: "motor"}
+  },
+  [OpCode.wedo2_motorOff]: {
+    MOTOR_ID: {type: "wedo2MotorId", initial: "motor"}
+  },
+  [OpCode.wedo2_startMotorPower]: {
+    MOTOR_ID: {type: "wedo2MotorId", initial: "motor"},
+    POWER: {type: "number", initial: 100}
+  },
+  [OpCode.wedo2_setMotorDirection]: {
+    MOTOR_ID: {type: "wedo2MotorId", initial: "motor"},
+    MOTOR_DIRECTION: {type: "wedo2MotorDirection", initial: "this way"}
+  },
+  [OpCode.wedo2_setLightHue]: {
+    HUE: {type: "number", initial: 50}
+  },
+  [OpCode.wedo2_whenDistance]: {
+    OP: {type: "wedo2Op", initial: "<"},
+    REFERENCE: {type: "number", initial: 50}
+  },
+  [OpCode.wedo2_whenTilted]: {
+    TILT_DIRECTION_ANY: {type: "wedo2TiltDirectionAny", initial: "any"}
+  },
+  [OpCode.wedo2_getDistance]: {},
+  [OpCode.wedo2_isTilted]: {
+    TILT_DIRECTION_ANY: {type: "wedo2TiltDirectionAny", initial: "any"}
+  },
+  [OpCode.wedo2_getTiltAngle]: {
+    TILT_DIRECTION: {type: "wedo2TiltDirection", initial: "up"}
+  },
+  // Deprecated:
+  [OpCode.wedo2_playNoteFor]: {
+    NOTE: {type: "number", initial: 60},
+    DURATION: {type: "number", initial: 0.5}
   },
 
   // Extension: Video Sensing

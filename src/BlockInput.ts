@@ -156,6 +156,11 @@ export interface WeDo2TiltDirectionAny extends Base {
   value: "up" | "down" | "left" | "right" | "any";
 }
 
+export interface WeDo2Op extends Base {
+  type: "wedo2Op";
+  value: "<" | ">";
+}
+
 export interface Key extends Base {
   type: "key";
   value:
@@ -317,6 +322,7 @@ export type FieldAny =
   | WeDo2MotorDirection
   | WeDo2TiltDirection
   | WeDo2TiltDirectionAny
+  | WeDo2Op
   | Key
   | GreaterThanMenu
   | StopMenu
