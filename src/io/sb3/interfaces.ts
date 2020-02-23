@@ -251,7 +251,8 @@ export const fieldTypeMap: {
   [OpCode.wedo2_menu_MOTOR_ID]: { MOTOR_ID: "wedo2MotorId" },
   [OpCode.wedo2_menu_MOTOR_DIRECTION]: { MOTOR_DIRECTION: "wedo2MotorDirection" },
   [OpCode.wedo2_menu_TILT_DIRECTION]: { TILT_DIRECTION: "wedo2TiltDirection" },
-  [OpCode.wedo2_menu_TILT_DIRECTION_ANY]: { TILT_DIRECTION_ANY: "wedo2TiltDirectionAny" }
+  [OpCode.wedo2_menu_TILT_DIRECTION_ANY]: { TILT_DIRECTION_ANY: "wedo2TiltDirectionAny" },
+  [OpCode.wedo2_menu_OP]: { OP: "wedo2Op" }
 };
 
 export enum BlockInputStatus {
@@ -458,6 +459,18 @@ export const inputPrimitiveOrShadowMap: {
   [OpCode.videoSensing_videoOn]: {ATTRIBUTE: OpCode.videoSensing_menu_ATTRIBUTE, SUBJECT: OpCode.videoSensing_menu_SUBJECT},
   [OpCode.videoSensing_videoToggle]: {VIDEO_STATE: OpCode.videoSensing_menu_VIDEO_STATE},
   [OpCode.videoSensing_setVideoTransparency]: {TRANSPARENCY: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.wedo2_motorOnFor]: {MOTOR_ID: OpCode.wedo2_menu_MOTOR_ID, DURATION: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.wedo2_motorOn]: {MOTOR_ID: OpCode.wedo2_menu_MOTOR_ID},
+  [OpCode.wedo2_motorOff]: {MOTOR_ID: OpCode.wedo2_menu_MOTOR_ID},
+  [OpCode.wedo2_startMotorPower]: {MOTOR_ID: OpCode.wedo2_menu_MOTOR_ID, POWER: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.wedo2_setMotorDirection]: {MOTOR_ID: OpCode.wedo2_menu_MOTOR_ID, MOTOR_DIRECTION: OpCode.wedo2_menu_MOTOR_DIRECTION},
+  [OpCode.wedo2_setLightHue]: {HUE: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.wedo2_whenDistance]: {OP: OpCode.wedo2_menu_OP, REFERENCE: BIS.MATH_NUM_PRIMITIVE},
+  [OpCode.wedo2_whenTilted]: {TILT_DIRECTION_ANY: OpCode.wedo2_menu_TILT_DIRECTION_ANY},
+  [OpCode.wedo2_getDistance]: {},
+  [OpCode.wedo2_isTilted]: {TILT_DIRECTION_ANY: OpCode.wedo2_menu_TILT_DIRECTION_ANY},
+  [OpCode.wedo2_getTiltAngle]: {TILT_DIRECTION: OpCode.wedo2_menu_TILT_DIRECTION},
+  [OpCode.wedo2_playNoteFor]: {NOTE: BIS.MATH_NUM_PRIMITIVE, DURATION: BIS.MATH_NUM_PRIMITIVE},
   // Data category values from scratch-blocks/core/data_category.js
   [OpCode.data_variable]: {},
   [OpCode.data_setvariableto]: {VALUE: BIS.TEXT_PRIMITIVE},
