@@ -285,9 +285,16 @@ export type PenBlock =
   | BlockBase<OpCode.pen_setPenHueToNumber, { HUE: BlockInput.Number }>
   | BlockBase<OpCode.pen_changePenHueBy, { HUE: BlockInput.Number }>;
 
+export type VideoSensingBlock =
+  | BlockBase<OpCode.videoSensing_whenMotionGreaterThan, { REFERENCE: BlockInput.Number }>
+  | BlockBase<OpCode.videoSensing_videoOn, { ATTRIBUTE: BlockInput.VideoSensingAttribute, SUBJECT: BlockInput.VideoSensingSubject }>
+  | BlockBase<OpCode.videoSensing_videoToggle, { VIDEO_STATE: BlockInput.VideoSensingVideoState }>
+  | BlockBase<OpCode.videoSensing_setVideoTransparency, { TRANSPARENCY: BlockInput.Number }>;
+
 export type ExtensionBlock =
   | MusicBlock
   | PenBlock
+  | VideoSensingBlock;
 
 export type KnownBlock =
   | MotionBlock
@@ -788,6 +795,21 @@ const KnownBlockInputMap: {
   },
   [OpCode.pen_changePenHueBy]: {
     HUE: {type: "number", initial: 10}
+  },
+
+  // Extension: Video Sensing
+  [OpCode.videoSensing_whenMotionGreaterThan]: {
+    REFERENCE: {type: "number", initial: 10}
+  },
+  [OpCode.videoSensing_videoOn]: {
+    ATTRIBUTE: {type: "videoSensingAttribute", initial: "motion"},
+    SUBJECT: {type: "videoSensingSubject", initial: "this sprite"}
+  },
+  [OpCode.videoSensing_videoToggle]: {
+    VIDEO_STATE: {type: "videoSensingVideoState", initial: "on"}
+  },
+  [OpCode.videoSensing_setVideoTransparency]: {
+    TRANSPARENCY: {type: "number", initial: 50}
   }
 }
 
