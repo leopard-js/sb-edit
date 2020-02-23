@@ -257,6 +257,18 @@ export type CustomBlock =
   | ProcedureBlock
   | ArgumentBlock;
 
+export type MusicBlock =
+  | BlockBase<OpCode.music_playDrumForBeats, { DRUM: BlockInput.MusicDrum, BEATS: BlockInput.Number }>
+  | BlockBase<OpCode.music_restForBeats, { BEATS: BlockInput.Number }>
+  | BlockBase<OpCode.music_playNoteForBeats, { NOTE: BlockInput.MusicInstrument, BEATS: BlockInput.Number }>
+  | BlockBase<OpCode.music_setInstrument, { INSTRUMENT: BlockInput.Number }>
+  | BlockBase<OpCode.music_setTempo, { TEMPO: BlockInput.Number }>
+  | BlockBase<OpCode.music_changeTempo, { TEMPO: BlockInput.Number }>
+  | BlockBase<OpCode.music_getTempo, {}>
+  // Deprecated:
+  | BlockBase<OpCode.music_midiPlayDrumForBeats, { DRUM: BlockInput.Number, BEATS: BlockInput.Number }>
+  | BlockBase<OpCode.music_midiSetInstrument, { INSTRUMENT: BlockInput.Number }>
+
 export type PenBlock =
   | BlockBase<OpCode.pen_clear, {}>
   | BlockBase<OpCode.pen_stamp, {}>
@@ -274,6 +286,7 @@ export type PenBlock =
   | BlockBase<OpCode.pen_changePenHueBy, { HUE: BlockInput.Number }>;
 
 export type ExtensionBlock =
+  | MusicBlock
   | PenBlock
 
 export type KnownBlock =
@@ -708,6 +721,37 @@ const KnownBlockInputMap: {
   },
   [OpCode.argument_reporter_boolean]: {
     VALUE: {type: "string", initial: "casually"}
+  },
+
+  // Extension: Music
+  [OpCode.music_playDrumForBeats]: {
+    DRUM: {type: "musicDrum", initial: 1},
+    BEATS: {type: "number", initial: 0.25}
+  },
+  [OpCode.music_restForBeats]: {
+    BEATS: {type: "number", initial: 0.25}
+  },
+  [OpCode.music_playNoteForBeats]: {
+    NOTE: {type: "number", initial: 60},
+    BEATS: {type: "number", initial: 0.25}
+  },
+  [OpCode.music_setInstrument]: {
+    INSTRUMENT: {type: "musicInstrument", initial: 1}
+  },
+  [OpCode.music_setTempo]: {
+    TEMPO: {type: "number", initial: 60}
+  },
+  [OpCode.music_changeTempo]: {
+    TEMPO: {type: "number", initial: 20}
+  },
+  [OpCode.music_getTempo]: {},
+  // Deprecated:
+  [OpCode.music_midiPlayDrumForBeats]: {
+    DRUM: {type: "number", initial: 1},
+    BEATS: {type: "number", initial: 0.25}
+  },
+  [OpCode.music_midiSetInstrument]: {
+    INSTRUMENT: {type: "number", initial: 1}
   },
 
   // Extension: Pen
