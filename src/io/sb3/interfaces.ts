@@ -51,8 +51,8 @@ export interface Sound {
 export interface Block {
   opcode: OpCode;
 
-  next: string;
-  parent: string;
+  next: string | null;
+  parent: string | null;
 
   inputs: {
     [key: string]: BlockInput;
