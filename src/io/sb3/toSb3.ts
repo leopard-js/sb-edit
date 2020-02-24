@@ -175,7 +175,7 @@ export default function toSb3(
     const missingEntries = Object.keys(inputs).filter(
       inp => !(entryKeys.includes(inp) || fieldEntryKeys.includes(inp)));
     for (const key of missingEntries) {
-      warn(`Missing entry for input ${key} on ${block.opcode} (${block.id})`);
+      warn(`Missing entry for input ${key} on ${block.opcode} (${block.id} in ${target.name})`);
     }
 
     for (const [key, entry] of Object.entries(inputEntries)) {
@@ -188,34 +188,49 @@ export default function toSb3(
       //   shadow blocks. See compressInputTree in scratch-vm's sb3
       //   serialization code.
       if (entry === sb3.BooleanOrSubstackInputStatus) {
-        if (input && input.type === "blocks" && input.value.length) {
-          result.inputs[key] = [BIS.INPUT_BLOCK_NO_SHADOW, input.value[0].id];
-          applyBlockData(blockData, serializeBlock(input.value[0], {getBroadcastId, getCustomBlockData, parent: block, siblingBlocks: input.value, stage, target}));
+        let firstBlock: Block;
+        let siblingBlocks: Block[];
+
+        if (input && input.type === "blocks") {
+          firstBlock = input.value[0];
+          siblingBlocks = input.value;
         } else if (input && input.type === "block") {
-          result.inputs[key] = [BIS.INPUT_BLOCK_NO_SHADOW, input.value.id];
-          applyBlockData(blockData, serializeBlock(input.value, {getBroadcastId, getCustomBlockData, parent: block, stage, target}));
-        } else {
-          // Empty, don't store anything.
-          // (Storing [INPUT_BLOCK_NO_SHADOW, null] would also be valid.)
+          firstBlock = input.value;
         }
-      } else if (input.type === "block") {
-        const initial = initialValues[key];
-        const {shadowValue, blockData: inputBlockData} = serializeInputShadow(initial, {
-          getBroadcastId,
-          parentId: block.id,
-          primitiveOrOpCode: entry as number | OpCode
-        });
-        result.inputs[key] = [BIS.INPUT_DIFF_BLOCK_SHADOW, input.value.id, shadowValue];
-        applyBlockData(blockData, inputBlockData);
-        applyBlockData(blockData, serializeBlock(input.value, {getBroadcastId, getCustomBlockData, parent: block, stage, target}));
+
+        if (firstBlock) {
+          const {blockData: inputBlockData, blockId} = serializeBlock(firstBlock, {getBroadcastId, getCustomBlockData, parent: block, siblingBlocks, stage, target});
+          applyBlockData(blockData, inputBlockData);
+
+          if (blockId) {
+            result.inputs[key] = [BIS.INPUT_BLOCK_NO_SHADOW, blockId];
+          }
+        }
       } else {
-        const {shadowValue, blockData: inputBlockData} = serializeInputShadow(input.value, {
+        let valueForShadow;
+        if (input.type === "block") {
+          valueForShadow = initialValues[key];
+        } else {
+          valueForShadow = input.value;
+        }
+
+        const {shadowValue, blockData: shadowBlockData} = serializeInputShadow(valueForShadow, {
           getBroadcastId,
           parentId: block.id,
           primitiveOrOpCode: entry as number | OpCode
         });
+        applyBlockData(blockData, shadowBlockData);
+
+        if (input.type === "block") {
+          const {blockData: inputBlockData, blockId} = serializeBlock(input.value, {getBroadcastId, getCustomBlockData, parent: block, stage, target});
+          applyBlockData(blockData, inputBlockData);
+          if (blockId) {
+            result.inputs[key] = [BIS.INPUT_DIFF_BLOCK_SHADOW, input.value.id, shadowValue];
+            continue;
+          }
+        }
+
         result.inputs[key] = [BIS.INPUT_SAME_BLOCK_SHADOW, shadowValue];
-        applyBlockData(blockData, inputBlockData);
       }
     }
 
@@ -305,7 +320,14 @@ export default function toSb3(
         }
 
         case OpCode.procedures_call: {
-          const {args, warp} = getCustomBlockData(block.inputs.PROCCODE.value);
+          const proccode = block.inputs.PROCCODE.value;
+          const customBlockData = getCustomBlockData(proccode);
+          if (!customBlockData) {
+            warn(`Missing custom block prototype for proccode ${proccode} (${block.id} in ${target.name}); skipping this block`);
+            return null;
+          }
+
+          const {args, warp} = customBlockData;
 
           mutation = {
             tagName: "mutation",
@@ -389,28 +411,35 @@ export default function toSb3(
     siblingBlocks?: Block[],
     x?: number,
     y?: number
-  }): BlockData {
-    const result = newBlockData();
+  }): {
+    blockData: BlockData,
+    blockId: string | null
+  } {
+    const blockData = newBlockData();
 
     const {getBroadcastId, getCustomBlockData, parent, siblingBlocks, stage, target} = options;
 
-    let nextBlock;
+    let nextBlock: Block;
+    let nextBlockId: sb3.Block["next"];
     if (siblingBlocks) {
       const thisIndex = siblingBlocks.indexOf(block) + 1;
       nextBlock = siblingBlocks.find((x, index) => index === thisIndex);
     }
 
     if (nextBlock) {
-      applyBlockData(result, serializeBlock(nextBlock, {
+      const {blockData: nextBlockData, blockId} = serializeBlock(nextBlock, {
         stage, target,
         getBroadcastId,
         getCustomBlockData,
         parent: block,
         siblingBlocks
-      }));
+      });
+
+      applyBlockData(blockData, nextBlockData);
+      nextBlockId = blockId;
     }
 
-    const { inputs, fields, mutation, blockData: inputBlockData } = serializeInputs(block, {
+    const serializeInputsResult = serializeInputs(block, {
       stage,
       target,
 
@@ -418,13 +447,19 @@ export default function toSb3(
       getCustomBlockData
     });
 
-    applyBlockData(result, inputBlockData);
+    if (!serializeInputsResult) {
+      return {blockData, blockId: nextBlockId};
+    }
+
+    const { inputs, fields, mutation, blockData: inputBlockData } = serializeInputsResult;
+
+    applyBlockData(blockData, inputBlockData);
 
     const obj: sb3.Block = {
       opcode: block.opcode,
 
       parent: parent ? parent.id : null,
-      next: nextBlock ? nextBlock.id : null,
+      next: nextBlockId,
       topLevel: !parent,
 
       inputs,
@@ -439,9 +474,11 @@ export default function toSb3(
       obj.y = options.y;
     }
 
-    result.blocks[block.id] = obj;
+    const blockId = block.id;
 
-    return result;
+    blockData.blocks[blockId] = obj;
+
+    return {blockData, blockId};
   }
 
   interface CustomBlockData {
@@ -535,7 +572,7 @@ export default function toSb3(
         siblingBlocks: script.blocks,
         x: script.x,
         y: script.y
-      }));
+      }).blockData);
     }
 
     const {blocks} = blockData;
