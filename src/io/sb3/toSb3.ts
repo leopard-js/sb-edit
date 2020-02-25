@@ -210,6 +210,18 @@ export default function toSb3(
         let valueForShadow;
         if (input.type === "block") {
           valueForShadow = initialValues[key];
+          // Special-case some input opcodes for more realistic initial values.
+          if (entry === OpCode.looks_costume) {
+            if (target.costumes[0]) {
+              valueForShadow = target.costumes[0].name;
+            }
+          } else if (entry === OpCode.sound_sounds_menu) {
+            if (target.sounds[0]) {
+              valueForShadow = target.sounds[0].name;
+            }
+          } else if (entry === OpCode.event_broadcast_menu) {
+            valueForShadow = getBroadcastId.initialBroadcastName;
+          }
         } else {
           valueForShadow = input.value;
         }
@@ -493,7 +505,10 @@ export default function toSb3(
 
   type GetCustomBlockData = (proccode: string) => CustomBlockData;
 
-  type GetBroadcastId = (name: string) => string;
+  type BaseGetBroadcastId = (name: string) => string;
+  interface GetBroadcastId extends BaseGetBroadcastId {
+    initialBroadcastName: string;
+  }
 
   function collectCustomBlockData(target: Target): GetCustomBlockData {
     const data: {[proccode: string]: CustomBlockData} = {};
@@ -676,8 +691,8 @@ export default function toSb3(
   }
 
   function serializeProject(project: Project): sb3.ProjectJSON {
-    const broadcastNameToId: {[name: string]: string} = {};
-    const broadcastIdToName: {[id: string]: string} = {};
+    let broadcastNameToId: {[name: string]: string} = {};
+    let broadcastIdToName: {[id: string]: string} = {};
     const getBroadcastId = (name: string): string => {
       if (!(name in broadcastNameToId)) {
         const id = generateId();
@@ -686,6 +701,34 @@ export default function toSb3(
       }
       return broadcastNameToId[name];
     };
+
+    // Preemptively parse through all the broadcast inputs in the project and
+    // generate a broadcast ID for each of them.
+    for (const target of [project.stage, ...project.sprites]) {
+      for (const block of target.blocks) {
+        if (block.opcode === OpCode.event_whenbroadcastreceived) {
+          if (block.inputs.BROADCAST_OPTION.type === "broadcast") {
+            getBroadcastId(block.inputs.BROADCAST_OPTION.value);
+          }
+        } else if (block.opcode === OpCode.event_broadcast || block.opcode === OpCode.event_broadcastandwait) {
+          if (block.inputs.BROADCAST_INPUT.type === "broadcast") {
+            getBroadcastId(block.inputs.BROADCAST_INPUT.value);
+          }
+        }
+      }
+    }
+
+    // Sort broadcasts by name.
+    broadcastNameToId = Object.assign({}, ...Object.entries(broadcastNameToId)
+      .sort(([name1], [name2]) => name1 < name2 ? -1 : 1)
+      .map(([name, id]) => ({[name]: id})));
+    broadcastIdToName = Object.assign({}, ...Object.entries(broadcastIdToName)
+      .sort(([, name1], [, name2]) => name1 < name2 ? -1 : 1)
+      .map(([id, name]) => ({[id]: name})));
+
+    // Set the broadcast name used in obscured broadcast inputs to the first
+    // sorted-alphabetically broadcast's name.
+    getBroadcastId.initialBroadcastName = Object.keys(broadcastNameToId)[0] || 'message1';
 
     return {
       targets: [
