@@ -17,23 +17,21 @@ export default class Variable {
   public sliderMax = 100;
   public isDiscrete = true;
 
-  constructor(
-    options: {
-      name: string;
-      id?: string;
+  constructor(options: {
+    name: string;
+    id?: string;
 
-      value: ScalarValue;
-      cloud?: boolean;
+    value: ScalarValue;
+    cloud?: boolean;
 
-      visible?: boolean;
-      mode?: "default" | "slider" | "large";
-      x?: number;
-      y?: number;
-      sliderMin?: number;
-      sliderMax?: number;
-      isDiscrete?: boolean;
-    }
-  ) {
+    visible?: boolean;
+    mode?: "default" | "slider" | "large";
+    x?: number;
+    y?: number;
+    sliderMin?: number;
+    sliderMax?: number;
+    isDiscrete?: boolean;
+  }) {
     Object.assign(this, options);
 
     if (!this.id) {

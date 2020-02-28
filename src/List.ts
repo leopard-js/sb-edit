@@ -14,20 +14,18 @@ export default class List {
 
   public id: string;
 
-  constructor(
-    options: {
-      name: string;
-      value: ScalarValue[];
+  constructor(options: {
+    name: string;
+    value: ScalarValue[];
 
-      visible?: boolean;
-      x?: number;
-      y?: number;
-      width?: number;
-      height?: number;
+    visible?: boolean;
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
 
-      id?: string;
-    }
-  ) {
+    id?: string;
+  }) {
     Object.assign(this, options);
 
     if (!this.id) {

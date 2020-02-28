@@ -66,7 +66,7 @@ async function extractSounds(target: sb3.Target, getAssetData: getAssetData): Pr
           ext: soundData.dataFormat,
 
           sampleCount: soundData.sampleCount,
-          sampleRate: soundData.rate,
+          sampleRate: soundData.rate
         })
     )
   );
@@ -156,7 +156,7 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
           } else {
             let isBlocks;
             if (BlockBase.isKnownBlock(block.opcode)) {
-              const {type} = BlockBase.getDefaultInput(block.opcode, inputName) || {};
+              const { type } = BlockBase.getDefaultInput(block.opcode, inputName) || {};
               if (type === "blocks") {
                 isBlocks = true;
               }
@@ -181,7 +181,7 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
               if (!isNaN(parseFloat(storedValue as string))) {
                 storedValue = parseFloat(storedValue as string);
               }
-              addInput(inputName, {type: "number", value: storedValue});
+              addInput(inputName, { type: "number", value: storedValue });
               break;
             }
             case BIS.ANGLE_NUM_PRIMITIVE:
@@ -308,21 +308,19 @@ export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAssetData
           isDiscrete: true
         };
       }
-      return new Variable(
-        {
-          name,
-          id,
-          value,
-          cloud,
-          visible: monitor.visible,
-          mode: monitor.mode,
-          x: monitor.x,
-          y: monitor.y,
-          sliderMin: monitor.sliderMin,
-          sliderMax: monitor.sliderMax,
-          isDiscrete: monitor.isDiscrete
-        }
-      );
+      return new Variable({
+        name,
+        id,
+        value,
+        cloud,
+        visible: monitor.visible,
+        mode: monitor.mode,
+        x: monitor.x,
+        y: monitor.y,
+        sliderMin: monitor.sliderMin,
+        sliderMax: monitor.sliderMax,
+        isDiscrete: monitor.isDiscrete
+      });
     });
   }
 
@@ -345,18 +343,16 @@ export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAssetData
           visible: false
         };
       }
-      return new List(
-        {
-          name,
-          id,
-          value,
-          visible: monitor.visible,
-          x: monitor.x,
-          y: monitor.y,
-          width: monitor.width === 0 ? null : monitor.width,
-          height: monitor.height === 0 ? null : monitor.height
-        }
-      );
+      return new List({
+        name,
+        id,
+        value,
+        visible: monitor.visible,
+        x: monitor.x,
+        y: monitor.y,
+        width: monitor.width === 0 ? null : monitor.width,
+        height: monitor.height === 0 ? null : monitor.height
+      });
     });
   }
 
