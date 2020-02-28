@@ -1,10 +1,9 @@
 import Block from "./Block";
 import Costume from "./Costume";
-import List from "./List";
 import Project from "./Project";
 import Script from "./Script";
 import Sound from "./Sound";
-import Variable from "./Variable";
+import { List, Variable } from "./Data";
 
 export default class Target {
   public name: string;

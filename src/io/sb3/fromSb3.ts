@@ -6,11 +6,10 @@ import { OpCode } from "../../OpCode";
 import Block, { BlockBase } from "../../Block";
 import * as BlockInput from "../../BlockInput";
 import Costume from "../../Costume";
-import List from "../../List";
 import Project from "../../Project";
 import Sound from "../../Sound";
 import { Sprite, Stage } from "../../Target";
-import Variable from "../../Variable";
+import { List, Variable } from "../../Data";
 import Script from "../../Script";
 
 type getAssetData = (info: {
