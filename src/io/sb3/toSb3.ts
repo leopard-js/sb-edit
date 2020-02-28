@@ -13,16 +13,14 @@ import { prop } from "../../util/ts-util";
 const BIS = sb3.BlockInputStatus;
 
 interface ToSb3Options {
-  warn: (message: string) => void
+  warn: (message: string) => void;
 }
 
 interface ToSb3Output {
-  json: string
+  json: string;
 }
 
-export default function toSb3(
-  options: Partial<ToSb3Options> = {}
-): ToSb3Output {
+export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output {
   // Serialize a project. Returns an object containing the text to be stored
   // in the caller's project.json output file.
 
@@ -70,8 +68,11 @@ export default function toSb3(
     fieldEntries;
   }
 
-  function serializeInputsToFields(inputs: {[key: string]: BlockInput.Any}, options: SerializeInputsToFields): {
-    fields: {[key: string]: any}
+  function serializeInputsToFields(
+    inputs: { [key: string]: BlockInput.Any },
+    options: SerializeInputsToFields
+  ): {
+    fields: { [key: string]: any };
   } {
     // Serialize provided inputs into a "fields" mapping that can be stored
     // on a serialized block.
@@ -100,7 +101,7 @@ export default function toSb3(
     // they refer to slots that don't accept blocks: non-droppable menus,
     // primarily, but the value in a (non-compressed) shadow input too.
 
-    const {fieldEntries, stage, target} = options;
+    const { fieldEntries, stage, target } = options;
 
     const result = {
       fields: {}
@@ -136,9 +137,12 @@ export default function toSb3(
     primitiveOrOpCode: number | OpCode;
   }
 
-  function serializeInputShadow(value: any, options: SerializeInputShadowOptions): {
-    shadowValue: sb3.BlockInputValue,
-    blockData: BlockData
+  function serializeInputShadow(
+    value: any,
+    options: SerializeInputShadowOptions
+  ): {
+    shadowValue: sb3.BlockInputValue;
+    blockData: BlockData;
   } {
     // Serialize the shadow block representing a provided value and type.
     //
@@ -187,7 +191,7 @@ export default function toSb3(
     // form. If it's a string, it is a (shadow) block opcode, and should be
     // serialized in the expanded form.
 
-    const {getBroadcastId, parentId, primitiveOrOpCode} = options;
+    const { getBroadcastId, parentId, primitiveOrOpCode } = options;
 
     const blockData = newBlockData();
     let shadowValue = null;
@@ -198,7 +202,7 @@ export default function toSb3(
       shadowValue = [BIS.BROADCAST_PRIMITIVE, value, getBroadcastId(value)];
     } else if (primitiveOrOpCode === BIS.COLOR_PICKER_PRIMITIVE) {
       // Color primitive. Convert the {r, g, b} object into hex form.
-      const hex = (k: string): string => (value || { r: 0, g: 0, b: 0})[k].toString(16).padStart(2, "0");
+      const hex = (k: string): string => (value || { r: 0, g: 0, b: 0 })[k].toString(16).padStart(2, "0");
       shadowValue = [BIS.COLOR_PICKER_PRIMITIVE, "#" + hex("r") + hex("g") + hex("b")];
     } else if (typeof primitiveOrOpCode === "number") {
       // Primitive shadow, can be stored in compressed form.
@@ -209,7 +213,7 @@ export default function toSb3(
       const fieldEntries = sb3.fieldTypeMap[shadowOpCode];
       if (fieldEntries) {
         const fieldKey = Object.keys(fieldEntries)[0];
-        const fields = {[fieldKey]: [value]};
+        const fields = { [fieldKey]: [value] };
 
         const id = generateId();
 
@@ -230,10 +234,10 @@ export default function toSb3(
       }
     }
 
-    return {shadowValue, blockData};
+    return { shadowValue, blockData };
   }
 
-  interface SerializeInputsToInputsOptions<PassedInputs extends {[key: string]: BlockInput.Any}> {
+  interface SerializeInputsToInputsOptions<PassedInputs extends { [key: string]: BlockInput.Any }> {
     stage: Stage;
     target: Target;
 
@@ -244,13 +248,16 @@ export default function toSb3(
     inputEntries;
 
     initialValues: {
-      [key in keyof PassedInputs]: any
+      [key in keyof PassedInputs]: any;
     };
   }
 
-  function serializeInputsToInputs<PassedInputs extends {[key: string]: BlockInput.Any}>(inputs: PassedInputs, options: SerializeInputsToInputsOptions<PassedInputs>): {
-    inputs: sb3.Block["inputs"],
-    blockData: BlockData
+  function serializeInputsToInputs<PassedInputs extends { [key: string]: BlockInput.Any }>(
+    inputs: PassedInputs,
+    options: SerializeInputsToInputsOptions<PassedInputs>
+  ): {
+    inputs: sb3.Block["inputs"];
+    blockData: BlockData;
   } {
     // Serialize provided inputs into an "inputs" mapping that can be stored
     // on a serialized block.
@@ -339,13 +346,13 @@ export default function toSb3(
     // ...where someId is the ID of the variable, and [4, 0] is the obscured
     // shadow block, as usual.
 
-    const {block, getBroadcastId, getCustomBlockData, initialValues, inputEntries, stage, target} = options;
+    const { block, getBroadcastId, getCustomBlockData, initialValues, inputEntries, stage, target } = options;
 
     const blockData = newBlockData();
 
     const result: {
-      inputs: sb3.Block["inputs"],
-      blockData: BlockData
+      inputs: sb3.Block["inputs"];
+      blockData: BlockData;
     } = {
       inputs: {},
       blockData
@@ -355,7 +362,8 @@ export default function toSb3(
     const entryKeys = Object.keys(inputEntries);
     const fieldEntryKeys = Object.keys(sb3.fieldTypeMap[block.opcode] || {});
     const missingEntries = Object.keys(inputs).filter(
-      inp => !(entryKeys.includes(inp) || fieldEntryKeys.includes(inp)));
+      inp => !(entryKeys.includes(inp) || fieldEntryKeys.includes(inp))
+    );
     for (const key of missingEntries) {
       warn(`Missing entry for input ${key} on ${block.opcode} (${block.id} in ${target.name})`);
     }
@@ -374,7 +382,14 @@ export default function toSb3(
         }
 
         if (firstBlock) {
-          const {blockData: inputBlockData, blockId} = serializeBlock(firstBlock, {getBroadcastId, getCustomBlockData, parent: block, siblingBlocks, stage, target});
+          const { blockData: inputBlockData, blockId } = serializeBlock(firstBlock, {
+            getBroadcastId,
+            getCustomBlockData,
+            parent: block,
+            siblingBlocks,
+            stage,
+            target
+          });
           applyBlockData(blockData, inputBlockData);
 
           if (blockId) {
@@ -401,7 +416,7 @@ export default function toSb3(
           valueForShadow = input.value;
         }
 
-        const {shadowValue, blockData: shadowBlockData} = serializeInputShadow(valueForShadow, {
+        const { shadowValue, blockData: shadowBlockData } = serializeInputShadow(valueForShadow, {
           getBroadcastId,
           parentId: block.id,
           primitiveOrOpCode: entry as number | OpCode
@@ -420,7 +435,13 @@ export default function toSb3(
             const listId = getListId(listName, target, stage);
             obscuringBlockValue = [BIS.LIST_PRIMITIVE, listName, listId];
           } else {
-            const {blockData: inputBlockData, blockId} = serializeBlock(input.value, {getBroadcastId, getCustomBlockData, parent: block, stage, target});
+            const { blockData: inputBlockData, blockId } = serializeBlock(input.value, {
+              getBroadcastId,
+              getCustomBlockData,
+              parent: block,
+              stage,
+              target
+            });
             applyBlockData(blockData, inputBlockData);
             obscuringBlockValue = blockId;
           }
@@ -445,11 +466,14 @@ export default function toSb3(
     getCustomBlockData: GetCustomBlockData;
   }
 
-  function serializeInputs(block: Block, options: SerializeInputsOptions): {
-    inputs: sb3.Block["inputs"],
-    fields: sb3.Block["fields"],
-    mutation?: sb3.Block["mutation"],
-    blockData: BlockData
+  function serializeInputs(
+    block: Block,
+    options: SerializeInputsOptions
+  ): {
+    inputs: sb3.Block["inputs"];
+    fields: sb3.Block["fields"];
+    mutation?: sb3.Block["mutation"];
+    blockData: BlockData;
   } {
     // Serialize a block's inputs, returning the data which should be stored on
     // the serialized block, as well as any associated blockData.
@@ -481,11 +505,12 @@ export default function toSb3(
     // that wouldn't fit on the block's input and field mappings. Specific
     // details may vary greatly based on the opcode.
 
-    const {stage, target, getBroadcastId, getCustomBlockData} = options;
+    const { stage, target, getBroadcastId, getCustomBlockData } = options;
 
-    const {fields} = serializeInputsToFields(block.inputs, {
+    const { fields } = serializeInputsToFields(block.inputs, {
       fieldEntries: sb3.fieldTypeMap[block.opcode],
-      stage, target
+      stage,
+      target
     });
 
     const blockData = newBlockData();
@@ -497,16 +522,19 @@ export default function toSb3(
         case OpCode.procedures_definition: {
           const prototypeId = generateId();
 
-          const {args, warp} = getCustomBlockData(block.inputs.PROCCODE.value);
+          const { args, warp } = getCustomBlockData(block.inputs.PROCCODE.value);
 
           const prototypeInputs: sb3.Block["inputs"] = {};
           for (const arg of args) {
             const shadowId = generateId();
             blockData[shadowId] = {
-              opcode: prop({
-                boolean: OpCode.argument_reporter_boolean,
-                numberOrString: OpCode.argument_reporter_string_number
-              }, arg.type),
+              opcode: prop(
+                {
+                  boolean: OpCode.argument_reporter_boolean,
+                  numberOrString: OpCode.argument_reporter_string_number
+                },
+                arg.type
+              ),
 
               next: null,
               parent: prototypeId,
@@ -555,11 +583,13 @@ export default function toSb3(
           const proccode = block.inputs.PROCCODE.value;
           const customBlockData = getCustomBlockData(proccode);
           if (!customBlockData) {
-            warn(`Missing custom block prototype for proccode ${proccode} (${block.id} in ${target.name}); skipping this block`);
+            warn(
+              `Missing custom block prototype for proccode ${proccode} (${block.id} in ${target.name}); skipping this block`
+            );
             return null;
           }
 
-          const {args, warp} = customBlockData;
+          const { args, warp } = customBlockData;
 
           mutation = {
             tagName: "mutation",
@@ -567,21 +597,27 @@ export default function toSb3(
             proccode: block.inputs.PROCCODE.value,
             argumentids: JSON.stringify(args.map(arg => arg.id)),
             warp: JSON.stringify(warp) as "true" | "false"
-          }
+          };
 
           const inputEntries = {};
           const constructedInputs = {};
           const initialValues = {};
           let i = 0;
           for (const arg of args) {
-            inputEntries[arg.id] = prop({
-              "boolean": sb3.BooleanOrSubstackInputStatus,
-              "numberOrString": BIS.TEXT_PRIMITIVE
-            }, arg.type)
-            initialValues[arg.id] = prop({
-              "boolean": false,
-              "numberOrString": ""
-            }, arg.type);
+            inputEntries[arg.id] = prop(
+              {
+                boolean: sb3.BooleanOrSubstackInputStatus,
+                numberOrString: BIS.TEXT_PRIMITIVE
+              },
+              arg.type
+            );
+            initialValues[arg.id] = prop(
+              {
+                boolean: false,
+                numberOrString: ""
+              },
+              arg.type
+            );
             constructedInputs[arg.id] = block.inputs.INPUTS.value[i++];
           }
 
@@ -629,7 +665,7 @@ export default function toSb3(
       }
     }
 
-    return {inputs, fields, mutation, blockData};
+    return { inputs, fields, mutation, blockData };
   }
 
   interface SerializeBlockOptions {
@@ -645,9 +681,12 @@ export default function toSb3(
     y?: number;
   }
 
-  function serializeBlock(block: Block, options: SerializeBlockOptions): {
-    blockData: BlockData,
-    blockId: string | null
+  function serializeBlock(
+    block: Block,
+    options: SerializeBlockOptions
+  ): {
+    blockData: BlockData;
+    blockId: string | null;
   } {
     // Serialize a block, returning the resultant block data as well as the
     // ID which should be used when referring to this block, or null if no
@@ -682,7 +721,7 @@ export default function toSb3(
 
     const blockData = newBlockData();
 
-    const {getBroadcastId, getCustomBlockData, parent, siblingBlocks, stage, target} = options;
+    const { getBroadcastId, getCustomBlockData, parent, siblingBlocks, stage, target } = options;
 
     let nextBlock: Block;
     let nextBlockId: sb3.Block["next"];
@@ -692,8 +731,9 @@ export default function toSb3(
     }
 
     if (nextBlock) {
-      const {blockData: nextBlockData, blockId} = serializeBlock(nextBlock, {
-        stage, target,
+      const { blockData: nextBlockData, blockId } = serializeBlock(nextBlock, {
+        stage,
+        target,
         getBroadcastId,
         getCustomBlockData,
         parent: block,
@@ -713,7 +753,7 @@ export default function toSb3(
     });
 
     if (!serializeInputsResult) {
-      return {blockData, blockId: nextBlockId};
+      return { blockData, blockId: nextBlockId };
     }
 
     const { inputs, fields, mutation, blockData: inputBlockData } = serializeInputsResult;
@@ -743,17 +783,17 @@ export default function toSb3(
 
     blockData[blockId] = obj;
 
-    return {blockData, blockId};
+    return { blockData, blockId };
   }
 
   interface CustomBlockData {
     args: Array<{
-      default: string,
-      id: string,
-      name: string,
-      type: "boolean" | "numberOrString"
-    }>,
-    warp: boolean
+      default: string;
+      id: string;
+      name: string;
+      type: "boolean" | "numberOrString";
+    }>;
+    warp: boolean;
   }
 
   type GetCustomBlockData = (proccode: string) => CustomBlockData;
@@ -774,7 +814,7 @@ export default function toSb3(
     // each input on the custom block, since those will influence the initial
     // value & shadow type in the serialized caller block's inputs.)
 
-    const data: {[proccode: string]: CustomBlockData} = {};
+    const data: { [proccode: string]: CustomBlockData } = {};
 
     for (const script of target.scripts) {
       const block = script.blocks[0];
@@ -786,13 +826,13 @@ export default function toSb3(
       const warp = block.inputs.WARP.value;
 
       const args: Array<{
-        default: string,
-        id: string
-        name: string,
-        type: "boolean" | "numberOrString"
+        default: string;
+        id: string;
+        name: string;
+        type: "boolean" | "numberOrString";
       }> = [];
 
-      for (const {name, type} of block.inputs.ARGUMENTS.value) {
+      for (const { name, type } of block.inputs.ARGUMENTS.value) {
         if (type === "label") {
           continue;
         }
@@ -803,14 +843,17 @@ export default function toSb3(
           id,
           name,
           type,
-          default: prop({
-            boolean: "false",
-            numberOrString: ""
-          }, type)
+          default: prop(
+            {
+              boolean: "false",
+              numberOrString: ""
+            },
+            type
+          )
         });
       }
 
-      data[proccode] = {args, warp};
+      data[proccode] = { args, warp };
     }
 
     return (proccode: string): CustomBlockData => {
@@ -850,31 +893,35 @@ export default function toSb3(
     // etc into the structures Scratch 3.0 expects.
 
     const mapToIdObject = (
-      values: Array<{id: string, [propName: string]: any}>,
+      values: Array<{ id: string; [propName: string]: any }>,
       fn: (x: any) => any
-    ): {[key: string]: any} => {
+    ): { [key: string]: any } => {
       const ret = {};
       for (const object of values) {
         ret[object.id] = fn(object);
       }
       return ret;
-    }
+    };
 
-    const {broadcasts, getBroadcastId, stage} = options;
+    const { broadcasts, getBroadcastId, stage } = options;
 
     const blockData = newBlockData();
 
     const getCustomBlockData = collectCustomBlockData(target);
 
     for (const script of target.scripts) {
-      applyBlockData(blockData, serializeBlock(script.blocks[0], {
-        stage, target,
-        getBroadcastId,
-        getCustomBlockData,
-        siblingBlocks: script.blocks,
-        x: script.x,
-        y: script.y
-      }).blockData);
+      applyBlockData(
+        blockData,
+        serializeBlock(script.blocks[0], {
+          stage,
+          target,
+          getBroadcastId,
+          getCustomBlockData,
+          siblingBlocks: script.blocks,
+          x: script.x,
+          y: script.y
+        }).blockData
+      );
     }
 
     const blocks = blockData;
@@ -913,7 +960,7 @@ export default function toSb3(
 
       variables: mapToIdObject(target.variables, ({ name, value, cloud }) => {
         if (cloud) {
-          return [name, value, cloud]
+          return [name, value, cloud];
         } else {
           return [name, value];
         }
@@ -923,10 +970,10 @@ export default function toSb3(
     };
   }
 
-  const rotationStyleMap: {[key: string]: "all around" | "left-right" | "don't rotate"} = {
-    "normal": "all around",
-    "leftRight": "left-right",
-    "none": "don't rotate"
+  const rotationStyleMap: { [key: string]: "all around" | "left-right" | "don't rotate" } = {
+    normal: "all around",
+    leftRight: "left-right",
+    none: "don't rotate"
   };
 
   interface SerializeSpriteOptions {
@@ -939,7 +986,7 @@ export default function toSb3(
     // Serialize a sprite. Extending from a serialized target, sprites carry
     // a variety of properties for their on-screen position and appearance.
 
-    const {getBroadcastId, stage} = options;
+    const { getBroadcastId, stage } = options;
     return {
       ...serializeTarget(sprite, {
         stage,
@@ -975,9 +1022,9 @@ export default function toSb3(
     // additional properties for values shared across the project - notably,
     // the broadcast dictionary, as well as values for some extensions.
 
-    const {broadcasts, getBroadcastId} = options;
+    const { broadcasts, getBroadcastId } = options;
     return {
-      ...serializeTarget(stage, {broadcasts, getBroadcastId, stage}),
+      ...serializeTarget(stage, { broadcasts, getBroadcastId, stage }),
       isStage: true,
       tempo: options.tempo,
       textToSpeechLanguage: options.textToSpeechLanguage,
@@ -1000,8 +1047,8 @@ export default function toSb3(
     // getBroadcastId; ID -> name is the format which is directly serialized
     // on the stage object. (Only the stage need carries a filled-out broadcast
     // dictionary in Scratch 3.0.)
-    let broadcastNameToId: {[name: string]: string} = {};
-    let broadcastIdToName: {[id: string]: string} = {};
+    let broadcastNameToId: { [name: string]: string } = {};
+    let broadcastIdToName: { [id: string]: string } = {};
 
     const getBroadcastId = (name: string): string => {
       if (!(name in broadcastNameToId)) {
@@ -1029,16 +1076,22 @@ export default function toSb3(
     }
 
     // Sort broadcasts by name.
-    broadcastNameToId = Object.assign({}, ...Object.entries(broadcastNameToId)
-      .sort(([name1], [name2]) => name1 < name2 ? -1 : 1)
-      .map(([name, id]) => ({[name]: id})));
-    broadcastIdToName = Object.assign({}, ...Object.entries(broadcastIdToName)
-      .sort(([, name1], [, name2]) => name1 < name2 ? -1 : 1)
-      .map(([id, name]) => ({[id]: name})));
+    broadcastNameToId = Object.assign(
+      {},
+      ...Object.entries(broadcastNameToId)
+        .sort(([name1], [name2]) => (name1 < name2 ? -1 : 1))
+        .map(([name, id]) => ({ [name]: id }))
+    );
+    broadcastIdToName = Object.assign(
+      {},
+      ...Object.entries(broadcastIdToName)
+        .sort(([, name1], [, name2]) => (name1 < name2 ? -1 : 1))
+        .map(([id, name]) => ({ [id]: name }))
+    );
 
     // Set the broadcast name used in obscured broadcast inputs to the first
     // sorted-alphabetically broadcast's name.
-    getBroadcastId.initialBroadcastName = Object.keys(broadcastNameToId)[0] || 'message1';
+    getBroadcastId.initialBroadcastName = Object.keys(broadcastNameToId)[0] || "message1";
 
     return {
       targets: [
@@ -1049,13 +1102,15 @@ export default function toSb3(
           tempo: project.tempo,
           textToSpeechLanguage: project.textToSpeechLanguage,
           videoState: project.videoOn ? "on" : "off",
-          videoTransparency: project.videoAlpha,
+          videoTransparency: project.videoAlpha
         }),
-        ...project.sprites.map(sprite => serializeSprite(sprite, {
-          stage: project.stage,
+        ...project.sprites.map(sprite =>
+          serializeSprite(sprite, {
+            stage: project.stage,
 
-          getBroadcastId
-        }))
+            getBroadcastId
+          })
+        )
       ],
       meta: {
         semver: "3.0.0"
