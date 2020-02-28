@@ -196,6 +196,10 @@ export default function toSb3(
       // Broadcast primitives, unlike all other primitives, expect two values:
       // the broadcast name and its ID.
       shadowValue = [BIS.BROADCAST_PRIMITIVE, value, getBroadcastId(value)];
+    } else if (primitiveOrOpCode === BIS.COLOR_PICKER_PRIMITIVE) {
+      // Color primitive. Convert the {r, g, b} object into hex form.
+      const hex = (k: string): string => (value || { r: 0, g: 0, b: 0})[k].toString(16).padStart(2, "0");
+      shadowValue = [BIS.COLOR_PICKER_PRIMITIVE, "#" + hex("r") + hex("g") + hex("b")];
     } else if (typeof primitiveOrOpCode === "number") {
       // Primitive shadow, can be stored in compressed form.
       shadowValue = [primitiveOrOpCode, value];
