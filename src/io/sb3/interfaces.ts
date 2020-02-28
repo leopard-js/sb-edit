@@ -59,21 +59,16 @@ export interface Block {
     [key: string]: BlockField;
   };
 
+  // JSON representation of an XML object. Structure varies per opcode.
+  mutation?: {
+    [attribute: string]: any;
+  };
+
   shadow: boolean;
   topLevel: boolean;
 
   x?: number;
   y?: number;
-
-  mutation?: {
-    tagName: string;
-    children: any[]; // TODO: What is this?
-    proccode: string;
-    argumentids: string;
-    argumentnames?: string;
-    argumentdefaults?: string;
-    warp: "true" | "false";
-  };
 }
 
 export type BlockField = string[];
