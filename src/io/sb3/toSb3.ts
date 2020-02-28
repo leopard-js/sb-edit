@@ -358,16 +358,6 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
       blockData
     };
 
-    // Just for debugging!
-    const entryKeys = Object.keys(inputEntries);
-    const fieldEntryKeys = Object.keys(sb3.fieldTypeMap[block.opcode] || {});
-    const missingEntries = Object.keys(inputs).filter(
-      inp => !(entryKeys.includes(inp) || fieldEntryKeys.includes(inp))
-    );
-    for (const key of missingEntries) {
-      warn(`Missing entry for input ${key} on ${block.opcode} (${block.id} in ${target.name})`);
-    }
-
     for (const [key, entry] of Object.entries(inputEntries)) {
       const input = inputs[key];
       if (entry === sb3.BooleanOrSubstackInputStatus) {
