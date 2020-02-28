@@ -10,7 +10,7 @@ async function loadProject(filename) {
 
 test("sb3 -> sb3", async () => {
   const project = await loadProject("test.sb3");
-  expect(project.toSb3()).toMatchSnapshot();
+  expect(JSON.parse(project.toSb3().json)).toMatchSnapshot();
 });
 
 test("sb3 -> scratch-js", async () => {
