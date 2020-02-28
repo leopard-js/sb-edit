@@ -370,6 +370,7 @@ export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAssetData
       sounds: await extractSounds(stage, options.getAssetData),
       scripts: Object.entries(stage.blocks)
         .filter(([id, block]) => block.topLevel)
+        .filter(([id, block]) => !block.shadow)
         .map(
           ([id, block]) =>
             new Script({
