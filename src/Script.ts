@@ -2,15 +2,15 @@ import Block from "./Block";
 import { OpCode } from "./OpCode";
 
 export default class Script {
-  public x: number = 0;
-  public y: number = 0;
+  public x = 0;
+  public y = 0;
   public blocks: Block[];
   public name: string = null;
 
   constructor(options: { blocks: Block[]; x?: number; y?: number; name?: string }) {
     Object.assign(this, options);
 
-    if (!options.hasOwnProperty("name")) {
+    if (!Object.prototype.hasOwnProperty.call(options, "name")) {
       switch (this.blocks[0].opcode) {
         case OpCode.event_whenflagclicked:
           this.name = "when_green_flag_clicked";
@@ -53,7 +53,7 @@ export default class Script {
     return this.blocks.filter(block => !block.isHat);
   }
 
-  public setName(name: string) {
+  public setName(name: string): void {
     this.name = name;
   }
 }

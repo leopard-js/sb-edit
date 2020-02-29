@@ -3,15 +3,15 @@ import { generateID } from "./util/id";
 export default class Variable {
   public name: string;
   public value: number | string;
-  public cloud: boolean = false;
+  public cloud = false;
 
-  public visible: boolean = true;
+  public visible = true;
   public mode: "default" | "slider" | "large" = "default";
-  public x: number = 0;
-  public y: number = 0;
-  public sliderMin: number = 0;
-  public sliderMax: number = 100;
-  public isDiscrete: boolean = true;
+  public x = 0;
+  public y = 0;
+  public sliderMin = 0;
+  public sliderMax = 100;
+  public isDiscrete = true;
 
   public id: string;
 
@@ -41,7 +41,7 @@ export default class Variable {
     }
   }
 
-  public setName(name: string) {
+  public setName(name: string): void {
     this.name = name;
   }
 }

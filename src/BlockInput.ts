@@ -332,7 +332,7 @@ export type FieldAny =
   | ForwardBackwardMenu
   | CostumeNumberName;
 
-// tslint:disable:ban-types
+/* eslint-disable @typescript-eslint/ban-types */
 export type Any =
   | Number
   | String

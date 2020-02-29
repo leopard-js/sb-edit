@@ -39,9 +39,9 @@ export default class Project {
 
   public stage: Stage = new Stage();
   public sprites: Sprite[] = [];
-  public tempo: number = 60;
-  public videoOn: boolean = false;
-  public videoAlpha: number = 0.5;
+  public tempo = 60;
+  public videoOn = false;
+  public videoAlpha = 0.5;
   public textToSpeechLanguage: TextToSpeechLanguage = null;
 
   constructor(options: {
