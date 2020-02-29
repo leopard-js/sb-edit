@@ -113,7 +113,7 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
                   if (typeof value !== "string") {
                     return value;
                   }
-                  const asNum = parseFloat(value);
+                  const asNum = Number(value);
                   if (!isNaN(asNum)) {
                     return asNum;
                   }
@@ -179,14 +179,15 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
             case BIS.WHOLE_NUM_PRIMITIVE:
             case BIS.INTEGER_NUM_PRIMITIVE: {
               let storedValue: string | number = value[1];
-              if (!isNaN(parseFloat(storedValue as string))) {
-                storedValue = parseFloat(storedValue as string);
+              const asNum = Number(storedValue as string);
+              if (!isNaN(asNum)) {
+                storedValue = asNum;
               }
               addInput(inputName, { type: "number", value: storedValue });
               break;
             }
             case BIS.ANGLE_NUM_PRIMITIVE:
-              addInput(inputName, { type: "angle", value: parseFloat(value[1] as string) });
+              addInput(inputName, { type: "angle", value: Number(value[1] as string) });
               break;
             case BIS.COLOR_PICKER_PRIMITIVE:
               addInput(inputName, {
@@ -243,8 +244,9 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
                 return { type: "string", value: null };
               }
               if (typeof value.value === "string") {
-                if (!isNaN(parseFloat(value.value))) {
-                  value.value = parseFloat(value.value);
+                const asNum = Number(value.value);
+                if (!isNaN(asNum)) {
+                  value.value = asNum;
                 }
               }
               return value;
