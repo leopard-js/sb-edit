@@ -942,6 +942,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
       costumes: target.costumes.map(costume => ({
         name: costume.name,
         assetId: costume.md5,
+        md5ext: costume.md5 + "." + costume.dataFormat,
         bitmapResolution: costume.bitmapResolution,
         dataFormat: costume.dataFormat,
         rotationCenterX: costume.centerX,
