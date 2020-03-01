@@ -10,7 +10,6 @@ export default class Sound {
   public data: any;
 
   public md5: string;
-  public ext: string;
 
   public sampleCount: number;
   public sampleRate: number;
@@ -23,7 +22,6 @@ export default class Sound {
     data: any;
 
     md5: string;
-    ext: string;
 
     sampleCount: number;
     sampleRate: number;

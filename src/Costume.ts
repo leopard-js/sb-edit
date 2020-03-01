@@ -10,7 +10,6 @@ export default class Costume {
   public data: any;
 
   public md5: string;
-  public ext: string;
 
   public bitmapResolution: number;
   public centerX: number;
@@ -24,7 +23,6 @@ export default class Costume {
     data: any;
 
     md5: string;
-    ext: string;
 
     bitmapResolution: number;
     centerX: number;

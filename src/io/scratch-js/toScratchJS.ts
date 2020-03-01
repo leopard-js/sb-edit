@@ -899,7 +899,7 @@ export default function toScratchJS(
                       target: target.name,
                       name: costume.name,
                       md5: costume.md5,
-                      ext: costume.ext
+                      ext: costume.dataFormat
                     })
                   )}, ${JSON.stringify({
                     x: costume.centerX / costume.bitmapResolution,
@@ -919,7 +919,7 @@ export default function toScratchJS(
                       target: target.name,
                       name: sound.name,
                       md5: sound.md5,
-                      ext: sound.ext
+                      ext: sound.dataFormat
                     })
                   )})`
               )
