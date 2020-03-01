@@ -26,7 +26,6 @@ function extractCostumes(target: sb3.Target, getAssetData: getAssetData): Promis
       async (costumeData: sb3.Costume) =>
         new Costume({
           name: costumeData.name,
-          dataFormat: costumeData.dataFormat,
           data: await getAssetData({
             type: "costume",
             name: costumeData.name,
@@ -36,6 +35,7 @@ function extractCostumes(target: sb3.Target, getAssetData: getAssetData): Promis
           }),
 
           md5: costumeData.assetId,
+          ext: costumeData.dataFormat,
 
           // It's possible that the rotation center of the costume is null.
           // Because computing a rotation center ourselves would be messy and
@@ -55,7 +55,6 @@ async function extractSounds(target: sb3.Target, getAssetData: getAssetData): Pr
       async (soundData: sb3.Sound) =>
         new Sound({
           name: soundData.name,
-          dataFormat: soundData.dataFormat,
           data: await getAssetData({
             type: "sound",
             name: soundData.name,
@@ -65,6 +64,7 @@ async function extractSounds(target: sb3.Target, getAssetData: getAssetData): Pr
           }),
 
           md5: soundData.assetId,
+          ext: soundData.dataFormat,
 
           sampleCount: soundData.sampleCount,
           sampleRate: soundData.rate

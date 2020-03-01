@@ -929,9 +929,9 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
 
       sounds: target.sounds.map(sound => ({
         name: sound.name,
-        dataFormat: sound.dataFormat,
+        dataFormat: sound.ext,
         assetId: sound.md5,
-        md5ext: sound.md5 + "." + sound.dataFormat,
+        md5ext: sound.md5 + "." + sound.ext,
         sampleCount: sound.sampleCount,
         rate: sound.sampleRate
       })),
@@ -939,9 +939,9 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
       costumes: target.costumes.map(costume => ({
         name: costume.name,
         assetId: costume.md5,
-        md5ext: costume.md5 + "." + costume.dataFormat,
+        md5ext: costume.md5 + "." + costume.ext,
         bitmapResolution: costume.bitmapResolution,
-        dataFormat: costume.dataFormat,
+        dataFormat: costume.ext,
         rotationCenterX: costume.centerX,
         rotationCenterY: costume.centerY
       })),
