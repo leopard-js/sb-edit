@@ -6,10 +6,10 @@ export default class Sound {
   public name: string;
   public id: string;
 
-  public dataFormat: SoundDataFormat;
   public data: any;
 
   public md5: string;
+  public ext: SoundDataFormat;
 
   public sampleCount: number;
   public sampleRate: number;
@@ -18,10 +18,10 @@ export default class Sound {
     name: string;
     id?: string;
 
-    dataFormat: SoundDataFormat;
     data: any;
 
     md5: string;
+    ext: SoundDataFormat;
 
     sampleCount: number;
     sampleRate: number;

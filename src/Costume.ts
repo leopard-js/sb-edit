@@ -6,10 +6,10 @@ export default class Costume {
   public name: string;
   public id: string;
 
-  public dataFormat: CostumeDataFormat;
   public data: any;
 
   public md5: string;
+  public ext: CostumeDataFormat;
 
   public bitmapResolution: number;
   public centerX: number | null;
@@ -19,10 +19,10 @@ export default class Costume {
     name: string;
     id?: string;
 
-    dataFormat: CostumeDataFormat;
     data: any;
 
     md5: string;
+    ext: CostumeDataFormat;
 
     bitmapResolution: number;
     centerX: number | null;
