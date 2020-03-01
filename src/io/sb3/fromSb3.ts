@@ -37,9 +37,13 @@ function extractCostumes(target: sb3.Target, getAssetData: getAssetData): Promis
 
           md5: costumeData.assetId,
 
-          bitmapResolution: costumeData.bitmapResolution || 1,
-          centerX: costumeData.rotationCenterX || 0,
-          centerY: costumeData.rotationCenterY || 0
+          // It's possible that the rotation center of the costume is null.
+          // Because computing a rotation center ourselves would be messy and
+          // easily incompatible with Scratch, pass such complexity onto the
+          // Scratch implementation running a project exported from sb-edit.
+          bitmapResolution: costumeData.bitmapResolution || 2,
+          centerX: costumeData.rotationCenterX,
+          centerY: costumeData.rotationCenterY
         })
     )
   );
