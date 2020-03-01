@@ -36,7 +36,6 @@ function extractCostumes(target: sb3.Target, getAssetData: getAssetData): Promis
           }),
 
           md5: costumeData.assetId,
-          ext: costumeData.dataFormat,
 
           bitmapResolution: costumeData.bitmapResolution || 1,
           centerX: costumeData.rotationCenterX || 0,
@@ -62,7 +61,6 @@ async function extractSounds(target: sb3.Target, getAssetData: getAssetData): Pr
           }),
 
           md5: soundData.assetId,
-          ext: soundData.dataFormat,
 
           sampleCount: soundData.sampleCount,
           sampleRate: soundData.rate

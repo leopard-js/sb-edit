@@ -934,7 +934,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
         name: sound.name,
         dataFormat: sound.dataFormat,
         assetId: sound.md5,
-        md5ext: sound.md5 + "." + sound.ext,
+        md5ext: sound.md5 + "." + sound.dataFormat,
         sampleCount: sound.sampleCount,
         rate: sound.sampleRate
       })),
