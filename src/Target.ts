@@ -51,7 +51,7 @@ export default class Target {
   }
 }
 
-type TargetOptions = Partial<Target> & { name: string };
+export type TargetOptions = Partial<Target> & { name: string };
 
 export class Stage extends Target {
   public name = "Stage";
