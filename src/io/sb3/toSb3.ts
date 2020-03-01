@@ -776,13 +776,15 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     return { blockData, blockId };
   }
 
+  interface CustomBlockArg {
+    default: string;
+    id: string;
+    name: string;
+    type: "boolean" | "numberOrString";
+  }
+
   interface CustomBlockData {
-    args: Array<{
-      default: string;
-      id: string;
-      name: string;
-      type: "boolean" | "numberOrString";
-    }>;
+    args: CustomBlockArg[];
     warp: boolean;
   }
 
@@ -815,12 +817,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
       const proccode = block.inputs.PROCCODE.value;
       const warp = block.inputs.WARP.value;
 
-      const args: Array<{
-        default: string;
-        id: string;
-        name: string;
-        type: "boolean" | "numberOrString";
-      }> = [];
+      const args: CustomBlockArg[] = [];
 
       for (const { name, type } of block.inputs.ARGUMENTS.value) {
         if (type === "label") {
