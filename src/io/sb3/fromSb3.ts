@@ -8,7 +8,7 @@ import * as BlockInput from "../../BlockInput";
 import Costume from "../../Costume";
 import Project from "../../Project";
 import Sound from "../../Sound";
-import { Sprite, Stage } from "../../Target";
+import Target, { Sprite, Stage, TargetOptions } from "../../Target";
 import { List, Variable } from "../../Data";
 import Script from "../../Script";
 
@@ -359,53 +359,44 @@ export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAssetData
 
   const stage = json.targets.find(target => target.isStage) as sb3.Stage;
 
-  return new Project({
-    stage: new Stage({
-      name: stage.name,
-      costumes: await extractCostumes(stage, options.getAssetData),
-      costumeNumber: stage.currentCostume,
-      sounds: await extractSounds(stage, options.getAssetData),
-      scripts: Object.entries(stage.blocks)
-        .filter(([id, block]) => block.topLevel)
-        .filter(([id, block]) => !block.shadow)
+  async function getTargetOptions(target: sb3.Target): Promise<TargetOptions> {
+    const [costumes, sounds] = await Promise.all([
+      extractCostumes(target, options.getAssetData),
+      extractSounds(target, options.getAssetData)
+    ]);
+
+    return {
+      name: target.name,
+      isStage: target.isStage,
+      costumes,
+      costumeNumber: target.currentCostume,
+      sounds,
+      scripts: Object.entries(target.blocks)
+        .filter(([id, block]) => block.topLevel && !block.shadow)
         .map(
           ([id, block]) =>
             new Script({
-              blocks: getBlockScript(stage.blocks)(id),
+              blocks: getBlockScript(target.blocks)(id),
               x: block.x,
               y: block.y
             })
         ),
-      variables: getVariables(stage),
-      lists: getLists(stage),
-      volume: stage.volume,
-      layerOrder: stage.layerOrder
-    }),
+      variables: getVariables(target),
+      lists: getLists(target),
+      volume: target.volume,
+      layerOrder: target.layerOrder
+    };
+  }
+
+  return new Project({
+    stage: new Stage(await getTargetOptions(stage)),
     sprites: await Promise.all(
       json.targets
         .filter(target => !target.isStage)
         .map(
           async (spriteData: sb3.Sprite) =>
             new Sprite({
-              name: spriteData.name,
-              costumes: await extractCostumes(spriteData, options.getAssetData),
-              costumeNumber: spriteData.currentCostume,
-              sounds: await extractSounds(spriteData, options.getAssetData),
-              scripts: Object.entries(spriteData.blocks)
-                .filter(([id, block]) => block.topLevel)
-                .filter(([id, block]) => !block.shadow)
-                .map(
-                  ([id, block]) =>
-                    new Script({
-                      blocks: getBlockScript(spriteData.blocks)(id),
-                      x: block.x,
-                      y: block.y
-                    })
-                ),
-              variables: getVariables(spriteData),
-              lists: getLists(spriteData),
-              volume: spriteData.volume,
-              layerOrder: spriteData.layerOrder,
+              ...(await getTargetOptions(spriteData)),
               x: spriteData.x,
               y: spriteData.y,
               size: spriteData.size,
