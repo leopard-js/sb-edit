@@ -157,8 +157,8 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
           } else {
             let isBlocks;
             if (BlockBase.isKnownBlock(block.opcode)) {
-              const { type } = BlockBase.getDefaultInput(block.opcode, inputName) || {};
-              if (type === "blocks") {
+              const defaultInput = BlockBase.getDefaultInput(block.opcode, inputName);
+              if (defaultInput && defaultInput.type === "blocks") {
                 isBlocks = true;
               }
             }
