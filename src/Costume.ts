@@ -12,8 +12,8 @@ export default class Costume {
   public md5: string;
 
   public bitmapResolution: number;
-  public centerX: number;
-  public centerY: number;
+  public centerX: number | null;
+  public centerY: number | null;
 
   constructor(options: {
     name: string;
@@ -25,8 +25,8 @@ export default class Costume {
     md5: string;
 
     bitmapResolution: number;
-    centerX: number;
-    centerY: number;
+    centerX: number | null;
+    centerY: number | null;
   }) {
     Object.assign(this, options);
 
