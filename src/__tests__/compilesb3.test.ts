@@ -5,7 +5,7 @@ import * as path from "path";
 
 async function loadProject(filename) {
   const file = fs.readFileSync(path.join(__dirname, filename));
-  return await Project.fromSb3(file);
+  return Project.fromSb3(file);
 }
 
 test("sb3 -> sb3", async () => {

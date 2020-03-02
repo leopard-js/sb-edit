@@ -421,7 +421,7 @@ export default async function fromSb3(fileData: Parameters<typeof JSZip.loadAsyn
   const inZip = await JSZip.loadAsync(fileData);
   const json = await inZip.file("project.json").async("text");
   const getAssetData = async ({ md5, ext }) => {
-    return await inZip.file(`${md5}.${ext}`).async("arraybuffer");
+    return inZip.file(`${md5}.${ext}`).async("arraybuffer");
   };
-  return await fromSb3JSON(JSON.parse(json), { getAssetData });
+  return fromSb3JSON(JSON.parse(json), { getAssetData });
 }
