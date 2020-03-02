@@ -924,7 +924,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
       blocks,
       broadcasts,
 
-      // sb-edit doesn't support comments (as of feb 12, 2020)
+      // @todo sb-edit doesn't support comments (as of feb 12, 2020)
       comments: {},
 
       sounds: target.sounds.map(sound => ({
