@@ -568,7 +568,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
           mutation = {
             tagName: "mutation",
             children: [],
-            proccode: block.inputs.PROCCODE.value,
+            proccode,
             argumentids: JSON.stringify(args.map(arg => arg.id)),
             warp: JSON.stringify(warp) as "true" | "false"
           };
