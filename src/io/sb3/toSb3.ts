@@ -48,7 +48,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     return list ? list.id : null;
   }
 
-  interface SerializeInputsToFields {
+  interface SerializeInputsToFieldsOptions {
     stage: Stage;
     target: Target;
 
@@ -57,7 +57,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
 
   function serializeInputsToFields(
     inputs: { [key: string]: BlockInput.Any },
-    options: SerializeInputsToFields
+    options: SerializeInputsToFieldsOptions
   ): {
     fields: { [key: string]: any };
   } {
