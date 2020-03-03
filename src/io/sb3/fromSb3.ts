@@ -74,7 +74,7 @@ async function extractSounds(target: sb3.Target, getAssetData: getAssetData): Pr
 }
 
 function getBlockScript(blocks: { [key: string]: sb3.Block }) {
-  function getBlockInputs(block: sb3.Block): Block["inputs"] {
+  function getBlockInputs(block: sb3.Block, blockId: string): Block["inputs"] {
     return {
       ...translateInputs(block.inputs),
       ...translateFields(block.fields, block.opcode)
@@ -211,8 +211,8 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
                 type: "block",
                 value: new BlockBase({
                   opcode: OpCode.data_variable,
-                  inputs: { VARIABLE: { type: "variable", value: value[1] } }
-                  // TODO: Set "parent"
+                  inputs: { VARIABLE: { type: "variable", value: value[1] } },
+                  parent: blockId
                 }) as Block
               });
               break;
@@ -222,7 +222,8 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
                 type: "block",
                 value: new BlockBase({
                   opcode: OpCode.data_listcontents,
-                  inputs: { LIST: { type: "list", value: value[1] } }
+                  inputs: { LIST: { type: "list", value: value[1] } },
+                  parent: blockId
                 }) as Block
               });
               break;
@@ -273,7 +274,7 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
     const sb3Block = blocks[blockId];
     const block = new BlockBase({
       opcode: sb3Block.opcode,
-      inputs: getBlockInputs(sb3Block),
+      inputs: getBlockInputs(sb3Block, blockId),
       id: blockId,
       parent: parentId,
       next: sb3Block.next
