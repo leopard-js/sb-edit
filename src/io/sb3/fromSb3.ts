@@ -12,15 +12,17 @@ import Target, { Sprite, Stage, TargetOptions } from "../../Target";
 import { List, Variable } from "../../Data";
 import Script from "../../Script";
 
-type getAssetData = (info: {
+interface AssetInfo {
   type: "costume" | "sound";
   name: string;
   md5: string;
   ext: string;
   spriteName: string;
-}) => Promise<any>;
+}
 
-function extractCostumes(target: sb3.Target, getAssetData: getAssetData): Promise<Costume[]> {
+type GetAssetData = (info: AssetInfo) => Promise<any>;
+
+function extractCostumes(target: sb3.Target, getAssetData: GetAssetData): Promise<Costume[]> {
   return Promise.all(
     target.costumes.map(
       async (costumeData: sb3.Costume) =>
@@ -49,7 +51,7 @@ function extractCostumes(target: sb3.Target, getAssetData: getAssetData): Promis
   );
 }
 
-async function extractSounds(target: sb3.Target, getAssetData: getAssetData): Promise<Sound[]> {
+async function extractSounds(target: sb3.Target, getAssetData: GetAssetData): Promise<Sound[]> {
   return Promise.all(
     target.sounds.map(
       async (soundData: sb3.Sound) =>
@@ -289,7 +291,7 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
   return blockWithNext;
 }
 
-export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAssetData: getAssetData }): Promise<Project> {
+export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAssetData: GetAssetData }): Promise<Project> {
   function getVariables(target: sb3.Target): Variable[] {
     return Object.entries(target.variables).map(([id, [name, value, cloud = false]]) => {
       let monitor = json.monitors.find(monitor => monitor.id === id) as sb3.VariableMonitor;
