@@ -1051,13 +1051,17 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     // generate a broadcast ID for each of them.
     for (const target of [project.stage, ...project.sprites]) {
       for (const block of target.blocks) {
-        if (block.opcode === OpCode.event_whenbroadcastreceived) {
-          if (block.inputs.BROADCAST_OPTION.type === "broadcast") {
-            getBroadcastId(block.inputs.BROADCAST_OPTION.value);
-          }
-        } else if (block.opcode === OpCode.event_broadcast || block.opcode === OpCode.event_broadcastandwait) {
-          if (block.inputs.BROADCAST_INPUT.type === "broadcast") {
-            getBroadcastId(block.inputs.BROADCAST_INPUT.value);
+        if (
+          block.opcode === OpCode.event_whenbroadcastreceived ||
+          block.opcode === OpCode.event_broadcast ||
+          block.opcode === OpCode.event_broadcastandwait
+        ) {
+          const broadcastInput = (block.opcode === OpCode.event_whenbroadcastreceived) ?
+            block.inputs.BROADCAST_OPTION :
+            block.inputs.BROADCAST_INPUT;
+
+          if (broadcastInput.type === "broadcast") {
+            getBroadcastId(broadcastInput.value);
           }
         }
       }
