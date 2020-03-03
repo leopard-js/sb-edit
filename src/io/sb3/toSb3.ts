@@ -628,7 +628,10 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
 
           const initialValues = {};
           for (const key of Object.keys(inputEntries)) {
-            initialValues[key] = (BlockBase.getDefaultInput(block.opcode, key) || {}).initial;
+            const defaultInput = BlockBase.getDefaultInput(block.opcode, key);
+            if (defaultInput) {
+              initialValues[key] = defaultInput.initial;
+            }
           }
 
           const result = serializeInputsToInputs(block.inputs, {
