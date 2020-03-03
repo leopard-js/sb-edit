@@ -90,7 +90,7 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
       for (const [inputName, input] of Object.entries(inputs)) {
         const value = input[1];
         if (typeof value === "string") {
-          const inputScript = blockWithNext(value);
+          const inputScript = blockWithNext(value, blockId);
           if (inputScript.length === 1 && blocks[value].shadow) {
             // Input contains a shadow block.
             // Conceptually, shadow blocks are weird.
