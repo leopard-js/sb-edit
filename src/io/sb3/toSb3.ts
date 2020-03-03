@@ -31,18 +31,6 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     warn = options.warn;
   }
 
-  type BlockData = sb3.Target["blocks"];
-
-  function applyBlockData(a: BlockData, b?: BlockData) {
-    if (b) {
-      Object.assign(a, b);
-    }
-  }
-
-  function newBlockData(): BlockData {
-    return {};
-  }
-
   function getVariableId(variableName: string, target: Target, stage: Stage): string | null {
     // Get the ID associated with the provided variable name on either the
     // provided target or the stage, or null if no matching variable is found.
@@ -142,7 +130,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     options: SerializeInputShadowOptions
   ): {
     shadowValue: sb3.BlockInputValue;
-    blockData: BlockData;
+    blockData: sb3.Target["blocks"];
   } {
     // Serialize the shadow block representing a provided value and type.
     //
@@ -193,7 +181,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
 
     const { getBroadcastId, parentId, primitiveOrOpCode } = options;
 
-    const blockData = newBlockData();
+    const blockData: sb3.Target["blocks"] = {};
     let shadowValue = null;
 
     if (primitiveOrOpCode === BIS.BROADCAST_PRIMITIVE) {
@@ -257,7 +245,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     options: SerializeInputsToInputsOptions<PassedInputs>
   ): {
     inputs: sb3.Block["inputs"];
-    blockData: BlockData;
+    blockData: sb3.Target["blocks"];
   } {
     // Serialize provided inputs into an "inputs" mapping that can be stored
     // on a serialized block.
@@ -348,11 +336,11 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
 
     const { block, getBroadcastId, getCustomBlockData, initialValues, inputEntries, stage, target } = options;
 
-    const blockData = newBlockData();
+    const blockData: sb3.Target["blocks"] = {};
 
     const result: {
       inputs: sb3.Block["inputs"];
-      blockData: BlockData;
+      blockData: sb3.Target["blocks"];
     } = {
       inputs: {},
       blockData
@@ -380,7 +368,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
             stage,
             target
           });
-          applyBlockData(blockData, inputBlockData);
+          Object.assign(blockData, inputBlockData);
 
           if (blockId) {
             result.inputs[key] = [BIS.INPUT_BLOCK_NO_SHADOW, blockId];
@@ -411,7 +399,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
           parentId: block.id,
           primitiveOrOpCode: entry as number | OpCode
         });
-        applyBlockData(blockData, shadowBlockData);
+        Object.assign(blockData, shadowBlockData);
 
         let obscuringBlockValue;
 
@@ -432,7 +420,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
               stage,
               target
             });
-            applyBlockData(blockData, inputBlockData);
+            Object.assign(blockData, inputBlockData);
             obscuringBlockValue = blockId;
           }
         }
@@ -463,7 +451,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     inputs: sb3.Block["inputs"];
     fields: sb3.Block["fields"];
     mutation?: sb3.Block["mutation"];
-    blockData: BlockData;
+    blockData: sb3.Target["blocks"];
   } {
     // Serialize a block's inputs, returning the data which should be stored on
     // the serialized block, as well as any associated blockData.
@@ -503,7 +491,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
       target
     });
 
-    const blockData = newBlockData();
+    const blockData: sb3.Target["blocks"] = {};
     let inputs: sb3.Block["inputs"] = {};
     let mutation: sb3.Block["mutation"];
 
@@ -624,7 +612,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
           });
 
           inputs = result.inputs;
-          applyBlockData(blockData, result.blockData);
+          Object.assign(blockData, result.blockData);
 
           break;
         }
@@ -650,7 +638,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
           });
 
           inputs = result.inputs;
-          applyBlockData(blockData, result.blockData);
+          Object.assign(blockData, result.blockData);
         }
       }
     }
@@ -675,7 +663,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     block: Block,
     options: SerializeBlockOptions
   ): {
-    blockData: BlockData;
+    blockData: sb3.Target["blocks"];
     blockId: string | null;
   } {
     // Serialize a block, returning the resultant block data as well as the
@@ -699,8 +687,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     // serializeBlock is in charge of serializing an individual block, as well
     // as its following block, and building the links between it and its parent
     // and siblings. As with other block-related functions, data is collected
-    // into a BlockData object, a wrapper around the mapping of IDs to their
-    // associated serialized block.
+    // into a flat mapping of IDs to their associated serialized block.
     //
     // It's possible for a block to be skipped altogether during serialization,
     // because it referred to some value which could not be converted into
@@ -709,7 +696,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     // (or leaving an empty connection if there is none). It's up to the caller
     // to handle serializeBlock returning a null blockId usefully.
 
-    const blockData = newBlockData();
+    const blockData: sb3.Target["blocks"] = {};
 
     const { getBroadcastId, getCustomBlockData, parent, siblingBlocks, stage, target } = options;
 
@@ -730,7 +717,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
         siblingBlocks
       });
 
-      applyBlockData(blockData, nextBlockData);
+      Object.assign(blockData, nextBlockData);
       nextBlockId = blockId;
     }
 
@@ -748,7 +735,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
 
     const { inputs, fields, mutation, blockData: inputBlockData } = serializeInputsResult;
 
-    applyBlockData(blockData, inputBlockData);
+    Object.assign(blockData, inputBlockData);
 
     const obj: sb3.Block = {
       opcode: block.opcode,
@@ -868,11 +855,8 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     // This differs considerably from 2.0, where the scripts property of any
     // target contained an AST (abstract syntax tree) representation.
     //
-    // Since all blocks are stored in a flat mapping (and none share an ID),
-    // sb-edit makes use of a "BlockData" system, which is really just a
-    // syntactical wrapper around Object.assign-ing data onto an object.
-    // When a block is serialized, a BlockData store is returned, and this is
-    // combined into the BlockData of whatever is consuming the serialized
+    // When a block is serialized, a flat block mapping is returned, and this
+    // is combined into the mapping of whatever is consuming the serialized
     // data. Eventually, all blocks (and their subblocks, inputs, etc) have
     // been serialized, and the collected data is stored on the target.
     //
@@ -892,12 +876,12 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
 
     const { broadcasts, getBroadcastId, stage } = options;
 
-    const blockData = newBlockData();
+    const blockData: sb3.Target["blocks"] = {};
 
     const getCustomBlockData = collectCustomBlockData(target);
 
     for (const script of target.scripts) {
-      applyBlockData(
+      Object.assign(
         blockData,
         serializeBlock(script.blocks[0], {
           stage,
@@ -911,8 +895,6 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
       );
     }
 
-    const blocks = blockData;
-
     return {
       name: target.name,
       isStage: target.isStage,
@@ -921,7 +903,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
       layerOrder: target.layerOrder,
       volume: target.volume,
 
-      blocks,
+      blocks: blockData,
       broadcasts,
 
       // @todo sb-edit doesn't support comments (as of feb 12, 2020)
