@@ -586,23 +586,23 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
           const inputEntries = {};
           const constructedInputs = {};
           const initialValues = {};
-          let i = 0;
-          for (const arg of args) {
-            inputEntries[arg.id] = prop(
+          for (let i = 0; i < args.length; i++) {
+            const { type, id } = args[i];
+            inputEntries[id] = prop(
               {
                 boolean: sb3.BooleanOrSubstackInputStatus,
                 numberOrString: BIS.TEXT_PRIMITIVE
               },
-              arg.type
+              type
             );
-            initialValues[arg.id] = prop(
+            initialValues[id] = prop(
               {
                 boolean: false,
                 numberOrString: ""
               },
-              arg.type
+              type
             );
-            constructedInputs[arg.id] = block.inputs.INPUTS.value[i++];
+            constructedInputs[id] = block.inputs.INPUTS.value[i];
           }
 
           const result = serializeInputsToInputs(constructedInputs, {
