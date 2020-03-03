@@ -342,30 +342,30 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     for (const [key, entry] of Object.entries(inputEntries)) {
       const input = inputs[key];
       if (entry === sb3.BooleanOrSubstackInputStatus) {
-        let firstBlock: Block;
-        let siblingBlocks: Block[];
+        let blockId: string;
 
-        if (input && input.type === "blocks") {
-          firstBlock = input.value[0];
-          siblingBlocks = input.value;
-        } else if (input && input.type === "block") {
-          firstBlock = input.value;
-        }
-
-        if (firstBlock) {
-          const blockId = serializeBlock(firstBlock, {
+        if (input) {
+          const options = {
             stage,
             target,
             blockData,
             getBroadcastId,
             customBlockDataMap,
-            parent: block,
-            siblingBlocks
-          });
+            parent: block
+          };
 
-          if (blockId) {
-            resultInputs[key] = [BIS.INPUT_BLOCK_NO_SHADOW, blockId];
+          switch (input.type) {
+            case "blocks":
+              blockId = serializeBlockStack(input.value, options);
+              break;
+            case "block":
+              blockId = serializeBlock(input.value, options);
+              break;
           }
+        }
+
+        if (blockId) {
+          resultInputs[key] = [BIS.INPUT_BLOCK_NO_SHADOW, blockId];
         }
       } else {
         let valueForShadow;
@@ -655,7 +655,6 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     customBlockDataMap: CustomBlockDataMap;
 
     parent?: Block;
-    siblingBlocks?: Block[];
     x?: number;
     y?: number;
   }
@@ -693,27 +692,14 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     // stack blocks, it means skipping to the next block in the sibling array
     // (or leaving an empty connection if there is none). It's up to the caller
     // to handle serializeBlock returning a null blockId usefully.
+    //
+    // Note that while serializeBlock will recursively serialize input blocks,
+    // it will not serialize the following sibling block. As such, the
+    // serialized block will always contain {next: null}. The caller is
+    // responsible for updating this and setting it to the following block ID.
+    // (The function serializeBlockStack is generally where this happens.)
 
-    const { blockData, getBroadcastId, customBlockDataMap, parent, siblingBlocks, stage, target } = options;
-
-    let nextBlock: Block;
-    let nextBlockId: sb3.Block["next"];
-    if (siblingBlocks) {
-      const nextIndex = siblingBlocks.indexOf(block) + 1;
-      nextBlock = siblingBlocks[nextIndex];
-    }
-
-    if (nextBlock) {
-      nextBlockId = serializeBlock(nextBlock, {
-        stage,
-        target,
-        blockData,
-        getBroadcastId,
-        customBlockDataMap,
-        parent: block,
-        siblingBlocks
-      });
-    }
+    const { blockData, getBroadcastId, customBlockDataMap, parent, stage, target } = options;
 
     const serializeInputsResult = serializeInputs(block, {
       stage,
@@ -726,7 +712,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     });
 
     if (!serializeInputsResult) {
-      return nextBlockId;
+      return null;
     }
 
     const { inputs, fields, mutation } = serializeInputsResult;
@@ -735,7 +721,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
       opcode: block.opcode,
 
       parent: parent ? parent.id : null,
-      next: nextBlockId,
+      next: null, // The caller is responsible for setting this.
       topLevel: !parent,
 
       inputs,
@@ -755,6 +741,51 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     blockData[blockId] = obj;
 
     return blockId;
+  }
+
+  // Since serializeBlockStack passes the actual serialization behavior to
+  // serializeBlock, the two functions share the same options type.
+  type SerializeBlockStackOptions = SerializeBlockOptions;
+
+  function serializeBlockStack(blocks: Block[], options: SerializeBlockStackOptions): string | null {
+    // Serialize a stack of blocks, returning the ID of the first successfully
+    // serialized block, or null if there is none.
+    //
+    // When serializing a block returns null, there is an expectation that the
+    // block should be "skipped" by the caller. When dealing with stack blocks,
+    // that means making a connection between the previous block and the first
+    // successfully successfully serialized following block. This function
+    // handles that case, as well as building the connections between stack
+    // blocks in general.
+    //
+    // Note that the passed options object will be mutated, to change the
+    // parent block to the previous block in the stack.
+
+    const { blockData } = options;
+
+    let previousBlockId: string;
+    let firstBlockId: string | null = null;
+
+    for (const block of blocks) {
+      const blockId = serializeBlock(block, options);
+
+      if (!blockId) {
+        continue;
+      }
+
+      if (!firstBlockId) {
+        firstBlockId = blockId;
+      }
+
+      if (previousBlockId) {
+        blockData[previousBlockId].next = blockId;
+      }
+
+      previousBlockId = blockId;
+      options.parent = block;
+    }
+
+    return firstBlockId;
   }
 
   interface CustomBlockArg {
@@ -875,13 +906,12 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     const customBlockDataMap = collectCustomBlockData(target);
 
     for (const script of target.scripts) {
-      serializeBlock(script.blocks[0], {
+      serializeBlockStack(script.blocks, {
         stage,
         target,
         blockData,
         getBroadcastId,
         customBlockDataMap,
-        siblingBlocks: script.blocks,
         x: script.x,
         y: script.y
       });
