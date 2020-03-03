@@ -381,16 +381,20 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
         if (input.type === "block") {
           valueForShadow = initialValues[key];
           // Special-case some input opcodes for more realistic initial values.
-          if (entry === OpCode.looks_costume) {
-            if (target.costumes[0]) {
-              valueForShadow = target.costumes[0].name;
-            }
-          } else if (entry === OpCode.sound_sounds_menu) {
-            if (target.sounds[0]) {
-              valueForShadow = target.sounds[0].name;
-            }
-          } else if (entry === OpCode.event_broadcast_menu) {
-            valueForShadow = getBroadcastId.initialBroadcastName;
+          switch (entry) {
+            case OpCode.looks_costume:
+              if (target.costumes[0]) {
+                valueForShadow = target.costumes[0].name;
+              }
+              break;
+            case OpCode.sound_sounds_menu:
+              if (target.sounds[0]) {
+                valueForShadow = target.sounds[0].name;
+              }
+              break;
+            case OpCode.event_broadcast_menu:
+              valueForShadow = getBroadcastId.initialBroadcastName;
+              break;
           }
         } else {
           valueForShadow = input.value;
@@ -641,6 +645,8 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
 
           inputs = result.inputs;
           Object.assign(blockData, result.blockData);
+
+          break;
         }
       }
     }
