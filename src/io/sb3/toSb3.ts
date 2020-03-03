@@ -716,8 +716,8 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     let nextBlock: Block;
     let nextBlockId: sb3.Block["next"];
     if (siblingBlocks) {
-      const thisIndex = siblingBlocks.indexOf(block) + 1;
-      nextBlock = siblingBlocks.find((x, index) => index === thisIndex);
+      const nextIndex = siblingBlocks.indexOf(block) + 1;
+      nextBlock = siblingBlocks[nextIndex];
     }
 
     if (nextBlock) {
