@@ -791,8 +791,8 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     // the data associated with a particular custom block's proccode.
     //
     // It's necesary to collect this data prior to serializing any associated
-    // procedure_call blocks, because they require access to data only found
-    // on the associated procedure_definition. (Specifically, the types of
+    // procedures_call blocks, because they require access to data only found
+    // on the associated procedures_definition. (Specifically, the types of
     // each input on the custom block, since those will influence the initial
     // value & shadow type in the serialized caller block's inputs.)
 
