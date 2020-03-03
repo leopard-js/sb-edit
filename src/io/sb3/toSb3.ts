@@ -232,7 +232,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     target: Target;
 
     getBroadcastId: GetBroadcastId;
-    getCustomBlockData: GetCustomBlockData;
+    customBlockDataMap: CustomBlockDataMap;
 
     block: Block;
     inputEntries;
@@ -336,7 +336,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     // ...where someId is the ID of the variable, and [4, 0] is the obscured
     // shadow block, as usual.
 
-    const { block, getBroadcastId, getCustomBlockData, initialValues, inputEntries, stage, target } = options;
+    const { block, getBroadcastId, customBlockDataMap, initialValues, inputEntries, stage, target } = options;
 
     const blockData: sb3.Target["blocks"] = {};
 
@@ -364,7 +364,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
         if (firstBlock) {
           const { blockData: inputBlockData, blockId } = serializeBlock(firstBlock, {
             getBroadcastId,
-            getCustomBlockData,
+            customBlockDataMap,
             parent: block,
             siblingBlocks,
             stage,
@@ -421,7 +421,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
           } else {
             const { blockData: inputBlockData, blockId } = serializeBlock(input.value, {
               getBroadcastId,
-              getCustomBlockData,
+              customBlockDataMap,
               parent: block,
               stage,
               target
@@ -447,7 +447,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     target: Target;
 
     getBroadcastId: GetBroadcastId;
-    getCustomBlockData: GetCustomBlockData;
+    customBlockDataMap: CustomBlockDataMap;
   }
 
   function serializeInputs(
@@ -489,7 +489,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     // that wouldn't fit on the block's input and field mappings. Specific
     // details may vary greatly based on the opcode.
 
-    const { stage, target, getBroadcastId, getCustomBlockData } = options;
+    const { stage, target, getBroadcastId, customBlockDataMap } = options;
 
     const { fields } = serializeInputsToFields(block.inputs, {
       fieldEntries: sb3.fieldTypeMap[block.opcode],
@@ -506,7 +506,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
         case OpCode.procedures_definition: {
           const prototypeId = generateId();
 
-          const { args, warp } = getCustomBlockData(block.inputs.PROCCODE.value);
+          const { args, warp } = customBlockDataMap[block.inputs.PROCCODE.value];
 
           const prototypeInputs: sb3.Block["inputs"] = {};
           for (const arg of args) {
@@ -565,7 +565,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
 
         case OpCode.procedures_call: {
           const proccode = block.inputs.PROCCODE.value;
-          const customBlockData = getCustomBlockData(proccode);
+          const customBlockData = customBlockDataMap[proccode];
           if (!customBlockData) {
             warn(
               `Missing custom block prototype for proccode ${proccode} (${block.id} in ${target.name}); skipping this block`
@@ -610,7 +610,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
             target,
 
             getBroadcastId,
-            getCustomBlockData,
+            customBlockDataMap,
 
             block,
             initialValues,
@@ -639,7 +639,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
             target,
 
             getBroadcastId,
-            getCustomBlockData,
+            customBlockDataMap,
 
             block,
             initialValues,
@@ -662,7 +662,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     target: Target;
 
     getBroadcastId: GetBroadcastId;
-    getCustomBlockData: GetCustomBlockData;
+    customBlockDataMap: CustomBlockDataMap;
 
     parent?: Block;
     siblingBlocks?: Block[];
@@ -709,7 +709,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
 
     const blockData: sb3.Target["blocks"] = {};
 
-    const { getBroadcastId, getCustomBlockData, parent, siblingBlocks, stage, target } = options;
+    const { getBroadcastId, customBlockDataMap, parent, siblingBlocks, stage, target } = options;
 
     let nextBlock: Block;
     let nextBlockId: sb3.Block["next"];
@@ -723,7 +723,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
         stage,
         target,
         getBroadcastId,
-        getCustomBlockData,
+        customBlockDataMap,
         parent: block,
         siblingBlocks
       });
@@ -737,7 +737,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
       target,
 
       getBroadcastId,
-      getCustomBlockData
+      customBlockDataMap
     });
 
     if (!serializeInputsResult) {
@@ -786,17 +786,19 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     warp: boolean;
   }
 
-  type GetCustomBlockData = (proccode: string) => CustomBlockData;
+  interface CustomBlockDataMap {
+    [proccode: string]: CustomBlockData
+  }
 
   type BaseGetBroadcastId = (name: string) => string;
   interface GetBroadcastId extends BaseGetBroadcastId {
     initialBroadcastName: string;
   }
 
-  function collectCustomBlockData(target: Target): GetCustomBlockData {
+  function collectCustomBlockData(target: Target): CustomBlockDataMap {
     // Parse the scripts in a target, collecting metadata about each custom
-    // block's arguments and other info, and return a function for accessing
-    // the data associated with a particular custom block's proccode.
+    // block's arguments and other info, and return a mapping of proccode to
+    // the associated data.
     //
     // It's necesary to collect this data prior to serializing any associated
     // procedures_call blocks, because they require access to data only found
@@ -804,7 +806,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     // each input on the custom block, since those will influence the initial
     // value & shadow type in the serialized caller block's inputs.)
 
-    const data: { [proccode: string]: CustomBlockData } = {};
+    const data: CustomBlockDataMap = {};
 
     for (const script of target.scripts) {
       const block = script.blocks[0];
@@ -841,9 +843,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
       data[proccode] = { args, warp };
     }
 
-    return (proccode: string): CustomBlockData => {
-      return data[proccode];
-    };
+    return data;
   }
 
   interface SerializeTargetOptions {
@@ -889,7 +889,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
 
     const blockData: sb3.Target["blocks"] = {};
 
-    const getCustomBlockData = collectCustomBlockData(target);
+    const customBlockDataMap = collectCustomBlockData(target);
 
     for (const script of target.scripts) {
       Object.assign(
@@ -898,7 +898,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
           stage,
           target,
           getBroadcastId,
-          getCustomBlockData,
+          customBlockDataMap,
           siblingBlocks: script.blocks,
           x: script.x,
           y: script.y
