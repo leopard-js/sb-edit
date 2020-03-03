@@ -106,10 +106,13 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
       switch (input.type) {
         case "variable":
           id = getVariableId(input.value, target, stage);
+          break;
         case "list":
           id = getListId(input.value, target, stage);
+          break;
         default:
           id = null;
+          break;
       }
       result.fields[key] = [input.value, id];
       continue;
