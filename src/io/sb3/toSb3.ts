@@ -22,9 +22,8 @@ interface ToSb3Output {
 
 export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output {
   // Serialize a project. Returns an object containing the text to be stored
-  // in the caller's project.json output file.
-
-  const project: Project = this;
+  // in the caller's project.json output file. toSb3 should be bound or applied
+  // so that 'this' refers to the Project object to be serialized.
 
   let warn = (message: string) => undefined;
   if (options.warn) {
@@ -1096,6 +1095,6 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
   }
 
   return {
-    json: JSON.stringify(serializeProject(project))
+    json: JSON.stringify(serializeProject(this))
   };
 }
