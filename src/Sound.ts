@@ -19,7 +19,7 @@ export default class Sound {
     Object.assign(this, options);
   }
 
-  public setName(name: string) {
+  public setName(name: string): void {
     this.name = name;
   }
 }

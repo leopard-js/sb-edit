@@ -4,9 +4,9 @@ export default class List {
   public name: string;
   public value: string[];
 
-  public visible: boolean = true;
-  public x: number = 0;
-  public y: number = 0;
+  public visible = true;
+  public x = 0;
+  public y = 0;
   public width: number = null;
   public height: number = null;
 
@@ -35,7 +35,7 @@ export default class List {
     }
   }
 
-  public setName(name: string) {
+  public setName(name: string): void {
     this.name = name;
   }
 }

@@ -9,13 +9,13 @@ import Variable from "./Variable";
 export default class Target {
   public name: string;
   public costumes: Costume[] = [];
-  public costumeNumber: number = 0;
+  public costumeNumber = 0;
   public sounds: Sound[] = [];
   public scripts: Script[] = [];
   public variables: Variable[] = [];
   public lists: List[] = [];
-  public volume: number = 100;
-  public layerOrder: number = 0;
+  public volume = 100;
+  public layerOrder = 0;
 
   public project?: Project;
 
@@ -31,7 +31,7 @@ export default class Target {
     });
   }
 
-  public setName(name: string) {
+  public setName(name: string): void {
     this.name = name;
   }
 }
@@ -39,7 +39,7 @@ export default class Target {
 type TargetOptions = Partial<Target> & { name: string };
 
 export class Stage extends Target {
-  public name: string = "Stage";
+  public name = "Stage";
   public isStage = true;
 
   constructor(options: TargetOptions = { name: "Stage" }) {
@@ -52,13 +52,13 @@ export class Stage extends Target {
 type SpriteOptions = TargetOptions & Partial<Sprite>;
 
 export class Sprite extends Target {
-  public x: number = 0;
-  public y: number = 0;
-  public size: number = 1;
-  public direction: number = 90;
+  public x = 0;
+  public y = 0;
+  public size = 1;
+  public direction = 90;
   public rotationStyle: "normal" | "leftRight" | "none" = "normal";
-  public isDraggable: boolean = true;
-  public visible: boolean = true;
+  public isDraggable = true;
+  public visible = true;
 
   constructor(options: SpriteOptions) {
     super(options);
@@ -66,7 +66,7 @@ export class Sprite extends Target {
     Object.assign(this, options);
   }
 
-  public delete() {
+  public delete(): void {
     const index = this.project.sprites.indexOf(this);
     this.project.sprites.splice(index, 1);
   }
