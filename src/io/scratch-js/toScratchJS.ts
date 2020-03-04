@@ -230,7 +230,8 @@ export default function toScratchJS(
         default:
           const asNum = Number(input.value as string);
           if (!isNaN(asNum)) {
-            return JSON.stringify(asNum);
+            // Don't re-stringify; if this can be parsed as a number, use it as-is
+            return String(input.value);
           }
           return JSON.stringify(input.value);
       }
