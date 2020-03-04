@@ -110,7 +110,6 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
           break;
       }
       fields[key] = [input.value, id];
-      continue;
     }
 
     return fields;
