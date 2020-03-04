@@ -868,7 +868,7 @@ export default function toScratchJS(
     if (typeof value !== "string") {
       return value;
     }
-    const asNum = parseFloat(value);
+    const asNum = Number(value);
     if (!isNaN(asNum)) {
       return asNum;
     }
