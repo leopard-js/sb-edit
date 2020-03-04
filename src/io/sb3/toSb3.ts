@@ -116,7 +116,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
   }
 
   interface SerializeInputShadowOptions {
-    blockData: sb3.Target["blocks"]
+    blockData: sb3.Target["blocks"];
 
     getBroadcastId: GetBroadcastId;
 
@@ -124,10 +124,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     primitiveOrOpCode: number | OpCode;
   }
 
-  function serializeInputShadow(
-    value: any,
-    options: SerializeInputShadowOptions
-  ): sb3.BlockInputValue {
+  function serializeInputShadow(value: any, options: SerializeInputShadowOptions): sb3.BlockInputValue {
     // Serialize the shadow block representing a provided value and type.
     //
     // To gather an understanding of what shadow blocks are used for, have
@@ -328,7 +325,16 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     // ...where someId is the ID of the variable, and [4, 0] is the obscured
     // shadow block, as usual.
 
-    const { block, blockData, getBroadcastId, customBlockDataMap, initialValues, inputEntries, stage, target } = options;
+    const {
+      block,
+      blockData,
+      getBroadcastId,
+      customBlockDataMap,
+      initialValues,
+      inputEntries,
+      stage,
+      target
+    } = options;
 
     const resultInputs: sb3.Block["inputs"] = {};
 
@@ -657,10 +663,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     y?: number;
   }
 
-  function serializeBlock(
-    block: Block,
-    options: SerializeBlockOptions
-  ): string | null {
+  function serializeBlock(block: Block, options: SerializeBlockOptions): string | null {
     // Serialize a block, mutating the passed block data and returning the
     // ID which should be used when referring to this block, or null if no
     // such block could be serialized.
@@ -799,7 +802,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
   }
 
   interface CustomBlockDataMap {
-    [proccode: string]: CustomBlockData
+    [proccode: string]: CustomBlockData;
   }
 
   type BaseGetBroadcastId = (name: string) => string;
@@ -1058,9 +1061,10 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
           block.opcode === OpCode.event_broadcast ||
           block.opcode === OpCode.event_broadcastandwait
         ) {
-          const broadcastInput = (block.opcode === OpCode.event_whenbroadcastreceived) ?
-            block.inputs.BROADCAST_OPTION :
-            block.inputs.BROADCAST_INPUT;
+          const broadcastInput =
+            block.opcode === OpCode.event_whenbroadcastreceived
+              ? block.inputs.BROADCAST_OPTION
+              : block.inputs.BROADCAST_INPUT;
 
           if (broadcastInput.type === "broadcast") {
             getBroadcastId(broadcastInput.value);
