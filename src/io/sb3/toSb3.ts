@@ -132,9 +132,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
   function serializeInputShadow(
     value: any,
     options: SerializeInputShadowOptions
-  ): {
-    shadowValue: sb3.BlockInputValue;
-  } {
+  ): sb3.BlockInputValue {
     // Serialize the shadow block representing a provided value and type.
     //
     // To gather an understanding of what shadow blocks are used for, have
@@ -224,7 +222,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
       }
     }
 
-    return { shadowValue };
+    return shadowValue;
   }
 
   interface SerializeInputsToInputsOptions<PassedInputs extends { [key: string]: BlockInput.Any }> {
@@ -391,7 +389,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
           valueForShadow = input.value;
         }
 
-        const { shadowValue } = serializeInputShadow(valueForShadow, {
+        const shadowValue = serializeInputShadow(valueForShadow, {
           blockData,
           getBroadcastId,
           parentId: block.id,
