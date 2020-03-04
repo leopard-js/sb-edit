@@ -398,30 +398,35 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
           primitiveOrOpCode: entry as number | OpCode
         });
 
-        let obscuringBlockValue;
-
         if (input.type === "block") {
-          if (input.value.opcode === OpCode.data_variable) {
-            const variableName = input.value.inputs.VARIABLE.value;
-            const variableId = getVariableId(variableName, target, stage);
-            obscuringBlockValue = [BIS.VAR_PRIMITIVE, variableName, variableId];
-          } else if (input.value.opcode === OpCode.data_listcontents) {
-            const listName = input.value.inputs.LIST.value;
-            const listId = getListId(listName, target, stage);
-            obscuringBlockValue = [BIS.LIST_PRIMITIVE, listName, listId];
-          } else {
-            obscuringBlockValue = serializeBlock(input.value, {
-              blockData,
-              getBroadcastId,
-              customBlockDataMap,
-              parent: block,
-              stage,
-              target
-            });
-          }
-        }
+          let obscuringBlockValue;
 
-        if (obscuringBlockValue) {
+          switch (input.value.opcode) {
+            case OpCode.data_variable: {
+              const variableName = input.value.inputs.VARIABLE.value;
+              const variableId = getVariableId(variableName, target, stage);
+              obscuringBlockValue = [BIS.VAR_PRIMITIVE, variableName, variableId];
+              break;
+            }
+            case OpCode.data_listcontents: {
+              const listName = input.value.inputs.LIST.value;
+              const listId = getListId(listName, target, stage);
+              obscuringBlockValue = [BIS.LIST_PRIMITIVE, listName, listId];
+              break;
+            }
+            default: {
+              obscuringBlockValue = serializeBlock(input.value, {
+                blockData,
+                getBroadcastId,
+                customBlockDataMap,
+                parent: block,
+                stage,
+                target
+              });
+              break;
+            }
+          }
+
           resultInputs[key] = [BIS.INPUT_DIFF_BLOCK_SHADOW, obscuringBlockValue, shadowValue];
         } else {
           resultInputs[key] = [BIS.INPUT_SAME_BLOCK_SHADOW, shadowValue];
