@@ -47,12 +47,6 @@ export class Stage extends Target {
 
     Object.assign(this, options);
   }
-
-  public toObject() {
-    const result = { ...this };
-    delete result.project;
-    return result;
-  }
 }
 
 type SpriteOptions = TargetOptions & Partial<Sprite>;
@@ -75,11 +69,5 @@ export class Sprite extends Target {
   public delete() {
     const index = this.project.sprites.indexOf(this);
     this.project.sprites.splice(index, 1);
-  }
-
-  public toObject() {
-    const result = { ...this };
-    delete result.project;
-    return result;
   }
 }

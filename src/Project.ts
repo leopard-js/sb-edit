@@ -69,12 +69,4 @@ export default class Project {
         return null;
     }
   }
-
-  public toObject() {
-    return {
-      ...this,
-      stage: this.stage.toObject(),
-      sprites: this.sprites.map(sprite => sprite.toObject())
-    };
-  }
 }
