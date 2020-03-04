@@ -58,9 +58,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
   function serializeInputsToFields(
     inputs: { [key: string]: BlockInput.Any },
     options: SerializeInputsToFieldsOptions
-  ): {
-    fields: { [key: string]: any };
-  } {
+  ): { [key: string]: any } {
     // Serialize provided inputs into a "fields" mapping that can be stored
     // on a serialized block.
     //
@@ -90,12 +88,10 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
 
     const { fieldEntries, stage, target } = options;
 
-    const result = {
-      fields: {}
-    };
+    const fields = {};
 
     if (!fieldEntries) {
-      return result;
+      return fields;
     }
 
     for (const key of Object.keys(fieldEntries)) {
@@ -113,11 +109,11 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
           id = null;
           break;
       }
-      result.fields[key] = [input.value, id];
+      fields[key] = [input.value, id];
       continue;
     }
 
-    return result;
+    return fields;
   }
 
   interface SerializeInputShadowOptions {
@@ -485,7 +481,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
 
     const { blockData, stage, target, getBroadcastId, customBlockDataMap } = options;
 
-    const { fields } = serializeInputsToFields(block.inputs, {
+    const fields = serializeInputsToFields(block.inputs, {
       fieldEntries: sb3.fieldTypeMap[block.opcode],
       stage,
       target
