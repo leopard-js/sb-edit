@@ -7,14 +7,14 @@ import { OpCode } from "../../OpCode";
 import * as prettier from "prettier";
 import Target from "../../Target";
 
-function triggerInitCode(script: Script) {
+function triggerInitCode(script: Script): string | null {
   const hat = script.hat;
 
   if (hat === null) {
     return null;
   }
 
-  const triggerInitStr = (name: string, options?: object) =>
+  const triggerInitStr = (name: string, options?: object): string =>
     `new Trigger(Trigger.${name}${options ? `, ${JSON.stringify(options)}` : ""}, this.${script.name})`;
 
   switch (hat.opcode) {
@@ -35,7 +35,7 @@ function triggerInitCode(script: Script) {
 }
 
 function uniqueNameGenerator(usedNames: string[] = []) {
-  function uniqueName(name) {
+  function uniqueName(name): string {
     if (!usedNames.includes(name)) {
       usedNames.push(name);
       return name;
@@ -56,7 +56,7 @@ function uniqueNameGenerator(usedNames: string[] = []) {
   return uniqueName;
 }
 
-function camelCase(name: string, upper = false) {
+function camelCase(name: string, upper = false): string {
   const validChars = /[^a-zA-Z0-9]/;
   const ignoredChars = /[']/g;
   let parts = name.replace(ignoredChars, "").split(validChars);
@@ -106,7 +106,7 @@ export default function toScratchJS(
           return `../${name}/${name}.mjs`;
       }
     },
-    getAssetURL: ({ type, target, name, md5, ext }) => {
+    getAssetURL: ({ type, target, name, ext }) => {
       switch (type) {
         case "costume":
           return `./${target}/costumes/${name}.${ext}`;
