@@ -26,12 +26,12 @@ export default function toScratchblocks(
       .join("\n");
   }
 
-  function input(inp: BlockInput.Any, target: Target, flag: boolean = false): string {
+  function input(inp: BlockInput.Any, target: Target, flag = false): string {
     if (!inp) {
       return "";
     }
 
-    const escape = (value: string): string => (value || "").toString().replace(/[()\[\]]|v$/g, m => "\\" + m);
+    const escape = (value: string): string => (value || "").toString().replace(/[()[\]]|v$/g, m => "\\" + m);
 
     switch (inp.type) {
       case "number":
@@ -50,13 +50,14 @@ export default function toScratchblocks(
       case "graphicEffect":
       case "soundEffect":
       case "currentMenu":
-      case "greaterThanMenu":
+      case "greaterThanMenu": {
         const value =
           {
             PAN: "pan left/right",
             DAYOFWEEK: "day of week"
           }[inp.value] || (inp.value || "").toLowerCase();
         return `[${escape(value)} v]`;
+      }
 
       case "variable":
       case "list":
@@ -106,9 +107,10 @@ export default function toScratchblocks(
           return `(${escape(inp.value)} v)`;
         }
 
-      case "color":
+      case "color": {
         const hex = (k: string): string => (inp.value || { r: 0, g: 0, b: 0 })[k].toString(16).padStart(2, "0");
         return `[#${hex("r") + hex("g") + hex("b")}]`;
+      }
 
       case "block":
         if (flag) {
@@ -149,7 +151,7 @@ export default function toScratchblocks(
 
     const i = (key: string, ...args): string => input(block.inputs[key], target, ...args);
     const operator = (op: string): string => `(${i("NUM1")} ${op} ${i("NUM2")})`;
-    const boolop = (op: string, flag: boolean = false): string => {
+    const boolop = (op: string, flag = false): string => {
       if (flag) {
         return `<${i("OPERAND1") || "<>"} ${op} ${i("OPERAND2") || "<>"}>`;
       } else {
@@ -455,7 +457,7 @@ export default function toScratchblocks(
         return `hide list ${i("LIST")}`;
 
       // custom blocks ----------------------------------------------- //
-      case OpCode.procedures_definition:
+      case OpCode.procedures_definition: {
         const spec = block.inputs.ARGUMENTS.value
           .map(({ type, name }) => {
             switch (type) {
@@ -469,7 +471,8 @@ export default function toScratchblocks(
           })
           .join(" ");
         return `define ${spec}` + (block.inputs.WARP.value ? " // run without screen refresh" : "");
-      case OpCode.procedures_call:
+      }
+      case OpCode.procedures_call: {
         const definition = target.scripts
           .map(s => s.blocks[0])
           .find(
@@ -494,6 +497,7 @@ export default function toScratchblocks(
         } else {
           return `... // missing custom block definition for ${block.inputs.PROCCODE.value}`;
         }
+      }
       case OpCode.argument_reporter_string_number:
         return `(${block.inputs.VALUE.value} :: custom-arg)`;
       case OpCode.argument_reporter_boolean:

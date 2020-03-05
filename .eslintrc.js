@@ -12,11 +12,9 @@ module.exports = {
     'plugin:prettier/recommended'
   ],
   "rules": {
-    "object-literal-sort-keys": "off",
-    "no-shadowed-variable": "off",
     "prefer-const": "off",
-    "max-classes-per-file": "off",
-    "ordered-imports": "off",
-    "@typescript-eslint/camelcase": "off"
+    "@typescript-eslint/camelcase": "off",
+    "@typescript-eslint/no-use-before-define": ["error", {"functions": false}],
+    "@typescript-eslint/no-this-alias": "off"
   }
 };
