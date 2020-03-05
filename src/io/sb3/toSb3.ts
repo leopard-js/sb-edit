@@ -1,8 +1,5 @@
-import Block, { BlockBase, KnownBlock, ProcedureBlock } from "../../Block";
-import Costume from "../../Costume";
+import Block, { BlockBase } from "../../Block";
 import Project, { TextToSpeechLanguage } from "../../Project";
-import Script from "../../Script";
-import Sound from "../../Sound";
 import Target, { Sprite, Stage } from "../../Target";
 import * as BlockInput from "../../BlockInput";
 import * as sb3 from "./interfaces";
@@ -25,7 +22,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
   // in the caller's project.json output file. toSb3 should be bound or applied
   // so that 'this' refers to the Project object to be serialized.
 
-  let warn = (message: string) => undefined;
+  let warn = (message: string): void => undefined;
   if (options.warn) {
     warn = options.warn;
   }

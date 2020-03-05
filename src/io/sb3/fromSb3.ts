@@ -20,7 +20,7 @@ interface AssetInfo {
   spriteName: string;
 }
 
-type GetAssetData = (info: AssetInfo) => Promise<any>;
+type GetAssetData = (info: AssetInfo) => Promise<ArrayBuffer>;
 
 function extractCostumes(target: sb3.Target, getAssetData: GetAssetData): Promise<Costume[]> {
   return Promise.all(
@@ -85,7 +85,7 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
     function translateInputs(inputs: sb3.Block["inputs"]): Block["inputs"] {
       let result = {};
 
-      const addInput = (name: string, value: BlockInput.Any) => {
+      const addInput = (name: string, value: BlockInput.Any): void => {
         result = { ...result, [name]: value };
       };
 
@@ -425,7 +425,7 @@ export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAssetData
 export default async function fromSb3(fileData: Parameters<typeof JSZip.loadAsync>[0]): Promise<Project> {
   const inZip = await JSZip.loadAsync(fileData);
   const json = await inZip.file("project.json").async("text");
-  const getAssetData = async ({ md5, ext }) => {
+  const getAssetData = async ({ md5, ext }): Promise<ArrayBuffer> => {
     return inZip.file(`${md5}.${ext}`).async("arraybuffer");
   };
   return fromSb3JSON(JSON.parse(json), { getAssetData });
