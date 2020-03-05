@@ -14,7 +14,7 @@ module.exports = {
   "rules": {
     "prefer-const": "off",
     "@typescript-eslint/camelcase": "off",
-    "@typescript-eslint/no-use-before-define": ["error", {"functions": false}],
+    "@typescript-eslint/no-use-before-define": "off",
     "@typescript-eslint/no-this-alias": "off"
   }
 };
