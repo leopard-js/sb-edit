@@ -1074,23 +1074,12 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
       }
     }
 
-    // Sort broadcasts by name.
-    broadcastNameToId = Object.assign(
-      {},
-      ...Object.entries(broadcastNameToId)
-        .sort(([name1], [name2]) => (name1 < name2 ? -1 : 1))
-        .map(([name, id]) => ({ [name]: id }))
-    );
-    broadcastIdToName = Object.assign(
-      {},
-      ...Object.entries(broadcastIdToName)
-        .sort(([, name1], [, name2]) => (name1 < name2 ? -1 : 1))
-        .map(([id, name]) => ({ [id]: name }))
-    );
-
     // Set the broadcast name used in obscured broadcast inputs to the first
     // sorted-alphabetically broadcast's name.
-    getBroadcastId.initialBroadcastName = Object.keys(broadcastNameToId)[0] || "message1";
+    getBroadcastId.initialBroadcastName =
+      Object.keys(broadcastNameToId).reduce((lowestName, currentName) =>
+        lowestName < currentName ? lowestName : currentName
+      ) || "message1";
 
     return {
       targets: [
