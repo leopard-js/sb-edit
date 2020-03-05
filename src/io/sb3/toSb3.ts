@@ -890,6 +890,10 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
       values: Array<{ id: string; [propName: string]: any }>,
       fn: (x: any) => any
     ): { [key: string]: any } => {
+      // Map an Array of objects with an `id` property
+      // (e.g [{id: 1, prop: "val"}, ...])
+      // into an object whose keys are the 'id' property,
+      // and whose values are the passed objects transformed by `fn`.
       const ret = {};
       for (const object of values) {
         ret[object.id] = fn(object);
