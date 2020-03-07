@@ -391,7 +391,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
           blockData,
           initialBroadcastName,
           parentId: block.id,
-          shadowId: block.id + '-' + key,
+          shadowId: block.id + "-" + key,
           primitiveOrOpCode: entry as number | OpCode
         });
 
@@ -496,13 +496,13 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     if (block.isKnownBlock()) {
       switch (block.opcode) {
         case OpCode.procedures_definition: {
-          const prototypeId = block.id + '-prototype';
+          const prototypeId = block.id + "-prototype";
 
           const { args, warp } = customBlockDataMap[block.inputs.PROCCODE.value];
 
           const prototypeInputs: sb3.Block["inputs"] = {};
           for (const arg of args) {
-            const shadowId = arg.id + '-prototype-shadow';
+            const shadowId = arg.id + "-prototype-shadow";
             blockData[shadowId] = {
               opcode: prop(
                 {
@@ -833,7 +833,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
           continue;
         }
 
-        const id = block.id + '-argument-' + i;
+        const id = block.id + "-argument-" + i;
 
         args.push({
           id,
