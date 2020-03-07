@@ -579,20 +579,18 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
           const initialValues = {};
           for (let i = 0; i < args.length; i++) {
             const { type, id } = args[i];
-            inputEntries[id] = prop(
-              {
-                boolean: sb3.BooleanOrSubstackInputStatus,
-                numberOrString: BIS.TEXT_PRIMITIVE
-              },
-              type
-            );
-            initialValues[id] = prop(
-              {
-                boolean: false,
-                numberOrString: ""
-              },
-              type
-            );
+            switch (type) {
+              case "boolean":
+                inputEntries[id] = sb3.BooleanOrSubstackInputStatus;
+                // A boolean input's initialValues entry will never be
+                // referenced (because empty boolean inputs don't contain
+                // shadow blocks), so there's no need to set it.
+                break;
+              case "numberOrString":
+                inputEntries[id] = BIS.TEXT_PRIMITIVE;
+                initialValues[id] = "";
+                break;
+            }
             constructedInputs[id] = block.inputs.INPUTS.value[i];
           }
 
