@@ -4,7 +4,6 @@ import Target, { Sprite, Stage } from "../../Target";
 import * as BlockInput from "../../BlockInput";
 import * as sb3 from "./interfaces";
 import { OpCode } from "../../OpCode";
-import { generateId } from "../../util/id";
 import { prop } from "../../util/ts-util";
 
 const BIS = sb3.BlockInputStatus;
@@ -115,10 +114,11 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
   interface SerializeInputShadowOptions {
     blockData: sb3.Target["blocks"];
 
-    getBroadcastId: GetBroadcastId;
+    initialBroadcastName: string;
 
     parentId: string;
     primitiveOrOpCode: number | OpCode;
+    shadowId: string;
   }
 
   function serializeInputShadow(value: any, options: SerializeInputShadowOptions): sb3.BlockInputValue {
@@ -169,14 +169,16 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     // form. If it's a string, it is a (shadow) block opcode, and should be
     // serialized in the expanded form.
 
-    const { blockData, getBroadcastId, parentId, primitiveOrOpCode } = options;
+    const { blockData, initialBroadcastName, parentId, primitiveOrOpCode, shadowId } = options;
 
     let shadowValue = null;
 
     if (primitiveOrOpCode === BIS.BROADCAST_PRIMITIVE) {
       // Broadcast primitives, unlike all other primitives, expect two values:
-      // the broadcast name and its ID.
-      shadowValue = [BIS.BROADCAST_PRIMITIVE, value, getBroadcastId(value)];
+      // the broadcast name and its ID. We just reuse the name for its ID;
+      // after all, the name is the unique identifier sb-edit uses to refer to
+      // the broadcast.
+      shadowValue = [BIS.BROADCAST_PRIMITIVE, value, value];
     } else if (primitiveOrOpCode === BIS.COLOR_PICKER_PRIMITIVE) {
       // Color primitive. Convert the {r, g, b} object into hex form.
       const hex = (k: string): string => (value || { r: 0, g: 0, b: 0 })[k].toString(16).padStart(2, "0");
@@ -192,9 +194,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
         const fieldKey = Object.keys(fieldEntries)[0];
         const fields = { [fieldKey]: [value] };
 
-        const id = generateId();
-
-        blockData[id] = {
+        blockData[shadowId] = {
           opcode: shadowOpCode,
 
           next: null,
@@ -207,7 +207,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
           topLevel: false
         };
 
-        shadowValue = id;
+        shadowValue = shadowId;
       }
     }
 
@@ -220,7 +220,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
 
     blockData: sb3.Target["blocks"];
 
-    getBroadcastId: GetBroadcastId;
+    initialBroadcastName: string;
     customBlockDataMap: CustomBlockDataMap;
 
     block: Block;
@@ -325,7 +325,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     const {
       block,
       blockData,
-      getBroadcastId,
+      initialBroadcastName,
       customBlockDataMap,
       initialValues,
       inputEntries,
@@ -345,7 +345,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
             stage,
             target,
             blockData,
-            getBroadcastId,
+            initialBroadcastName,
             customBlockDataMap,
             parent: block
           };
@@ -380,7 +380,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
               }
               break;
             case OpCode.event_broadcast_menu:
-              valueForShadow = getBroadcastId.initialBroadcastName;
+              valueForShadow = initialBroadcastName;
               break;
           }
         } else {
@@ -389,8 +389,9 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
 
         const shadowValue = serializeInputShadow(valueForShadow, {
           blockData,
-          getBroadcastId,
+          initialBroadcastName,
           parentId: block.id,
+          shadowId: block.id + '-' + key,
           primitiveOrOpCode: entry as number | OpCode
         });
 
@@ -413,7 +414,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
             default: {
               obscuringBlockValue = serializeBlock(input.value, {
                 blockData,
-                getBroadcastId,
+                initialBroadcastName,
                 customBlockDataMap,
                 parent: block,
                 stage,
@@ -439,7 +440,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
 
     blockData: sb3.Target["blocks"];
 
-    getBroadcastId: GetBroadcastId;
+    initialBroadcastName: string;
     customBlockDataMap: CustomBlockDataMap;
   }
 
@@ -481,7 +482,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     // that wouldn't fit on the block's input and field mappings. Specific
     // details may vary greatly based on the opcode.
 
-    const { blockData, stage, target, getBroadcastId, customBlockDataMap } = options;
+    const { blockData, stage, target, initialBroadcastName, customBlockDataMap } = options;
 
     const fields = serializeInputsToFields(block.inputs, {
       fieldEntries: sb3.fieldTypeMap[block.opcode],
@@ -495,13 +496,13 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     if (block.isKnownBlock()) {
       switch (block.opcode) {
         case OpCode.procedures_definition: {
-          const prototypeId = generateId();
+          const prototypeId = block.id + '-prototype';
 
           const { args, warp } = customBlockDataMap[block.inputs.PROCCODE.value];
 
           const prototypeInputs: sb3.Block["inputs"] = {};
           for (const arg of args) {
-            const shadowId = generateId();
+            const shadowId = arg.id + '-prototype-shadow';
             blockData[shadowId] = {
               opcode: prop(
                 {
@@ -600,7 +601,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
 
             blockData,
 
-            getBroadcastId,
+            initialBroadcastName,
             customBlockDataMap,
 
             block,
@@ -628,7 +629,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
 
             blockData,
 
-            getBroadcastId,
+            initialBroadcastName,
             customBlockDataMap,
 
             block,
@@ -650,7 +651,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
 
     blockData: sb3.Target["blocks"];
 
-    getBroadcastId: GetBroadcastId;
+    initialBroadcastName: string;
     customBlockDataMap: CustomBlockDataMap;
 
     parent?: Block;
@@ -695,7 +696,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     // responsible for updating this and setting it to the following block ID.
     // (The function serializeBlockStack is generally where this happens.)
 
-    const { blockData, getBroadcastId, customBlockDataMap, parent, stage, target } = options;
+    const { blockData, initialBroadcastName, customBlockDataMap, parent, stage, target } = options;
 
     const serializeInputsResult = serializeInputs(block, {
       stage,
@@ -703,7 +704,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
 
       blockData,
 
-      getBroadcastId,
+      initialBroadcastName,
       customBlockDataMap
     });
 
@@ -829,12 +830,15 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
 
       const args: CustomBlockArg[] = [];
 
-      for (const { name, type } of block.inputs.ARGUMENTS.value) {
+      const argData = block.inputs.ARGUMENTS.value;
+      for (let i = 0; i < argData.length; i++) {
+        const { name, type } = argData[i];
+
         if (type === "label") {
           continue;
         }
 
-        const id = generateId();
+        const id = block.id + '-argument-' + i;
 
         args.push({
           id,
@@ -859,7 +863,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
   interface SerializeTargetOptions {
     stage: Stage;
 
-    getBroadcastId: GetBroadcastId;
+    initialBroadcastName: string;
 
     broadcasts: sb3.Sprite["broadcasts"];
   }
@@ -899,7 +903,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
       return ret;
     };
 
-    const { broadcasts, getBroadcastId, stage } = options;
+    const { broadcasts, initialBroadcastName, stage } = options;
 
     const blockData: sb3.Target["blocks"] = {};
 
@@ -910,7 +914,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
         stage,
         target,
         blockData,
-        getBroadcastId,
+        initialBroadcastName,
         customBlockDataMap,
         x: script.x,
         y: script.y
@@ -971,19 +975,19 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
   interface SerializeSpriteOptions {
     stage: Stage;
 
-    getBroadcastId: GetBroadcastId;
+    initialBroadcastName: string;
   }
 
   function serializeSprite(sprite: Sprite, options: SerializeSpriteOptions): sb3.Sprite {
     // Serialize a sprite. Extending from a serialized target, sprites carry
     // a variety of properties for their on-screen position and appearance.
 
-    const { getBroadcastId, stage } = options;
+    const { initialBroadcastName, stage } = options;
     return {
       ...serializeTarget(sprite, {
         stage,
 
-        getBroadcastId,
+        initialBroadcastName,
 
         // Broadcasts are stored on the stage, not on any sprite.
         broadcasts: {}
@@ -1000,7 +1004,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
   }
 
   interface SerializeStageOptions {
-    getBroadcastId: GetBroadcastId;
+    initialBroadcastName: string;
 
     broadcasts: sb3.Target["broadcasts"];
     tempo: number;
@@ -1014,9 +1018,9 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     // additional properties for values shared across the project - notably,
     // the broadcast dictionary, as well as values for some extensions.
 
-    const { broadcasts, getBroadcastId } = options;
+    const { broadcasts, initialBroadcastName } = options;
     return {
-      ...serializeTarget(stage, { broadcasts, getBroadcastId, stage }),
+      ...serializeTarget(stage, { broadcasts, initialBroadcastName, stage }),
       isStage: true,
       tempo: options.tempo,
       textToSpeechLanguage: options.textToSpeechLanguage,
@@ -1032,28 +1036,13 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     // format. It also provides utility functions shared across every target's
     // serialization, e.g. broadcast utilities.
 
-    // Maintain broadcast dictionaries in both name <-> id directions. sb-edit
-    // operates on broadcast names, but Scratch 3.0 largely requires access to
-    // their IDs as well, so we generate IDs for names as they are required.
-    // Name -> ID is for converting sb-edit names and is the backbone behind
-    // getBroadcastId; ID -> name is the format which is directly serialized
-    // on the stage object. (Only the stage need carries a filled-out broadcast
-    // dictionary in Scratch 3.0.)
-    let broadcastNameToId: { [name: string]: string } = {};
-    let broadcastIdToName: { [id: string]: string } = {};
-
-    const getBroadcastId = (name: string): string => {
-      if (!(name in broadcastNameToId)) {
-        const id = generateId();
-        broadcastNameToId[name] = id;
-        broadcastIdToName[id] = name;
-      }
-      return broadcastNameToId[name];
-    };
-
     // Set the broadcast name used in obscured broadcast inputs to the first
-    // sorted-alphabetically broadcast's name.
+    // sorted-alphabetically broadcast's name. While we're parsing through
+    // all the broadcast names in the project, also store them on a simple
+    // mapping of (name -> name), to be stored on the stage. (toSb3 uses a
+    // broadcast's name as its ID.)
     let lowestName;
+    const broadcasts = {};
     for (const target of [project.stage, ...project.sprites]) {
       for (const block of target.blocks) {
         if (
@@ -1071,19 +1060,20 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
             if (currentName < lowestName || !lowestName) {
               lowestName = currentName;
             }
+            broadcasts[currentName] = currentName;
           }
         }
       }
     }
 
-    getBroadcastId.initialBroadcastName = lowestName || "message1";
+    const initialBroadcastName = lowestName || "message1";
 
     return {
       targets: [
         serializeStage(project.stage, {
-          getBroadcastId,
+          initialBroadcastName,
 
-          broadcasts: broadcastIdToName,
+          broadcasts,
           tempo: project.tempo,
           textToSpeechLanguage: project.textToSpeechLanguage,
           videoState: project.videoOn ? "on" : "off",
@@ -1093,7 +1083,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
           serializeSprite(sprite, {
             stage: project.stage,
 
-            getBroadcastId
+            initialBroadcastName
           })
         )
       ],
