@@ -902,8 +902,8 @@ export default function toScratchJS(
                       ext: costume.ext
                     })
                   )}, ${JSON.stringify({
-                    x: costume.centerX / costume.bitmapResolution,
-                    y: costume.centerY / costume.bitmapResolution
+                    x: costume.centerX,
+                    y: costume.centerY
                   })})`
               )
               .join(",\n")}
