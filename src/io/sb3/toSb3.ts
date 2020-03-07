@@ -801,11 +801,6 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     [proccode: string]: CustomBlockData;
   }
 
-  type BaseGetBroadcastId = (name: string) => string;
-  interface GetBroadcastId extends BaseGetBroadcastId {
-    initialBroadcastName: string;
-  }
-
   function collectCustomBlockData(target: Target): CustomBlockDataMap {
     // Parse the scripts in a target, collecting metadata about each custom
     // block's arguments and other info, and return a mapping of proccode to
