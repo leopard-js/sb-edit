@@ -1051,8 +1051,9 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
       return broadcastNameToId[name];
     };
 
-    // Preemptively parse through all the broadcast inputs in the project and
-    // generate a broadcast ID for each of them.
+    // Set the broadcast name used in obscured broadcast inputs to the first
+    // sorted-alphabetically broadcast's name.
+    let lowestName;
     for (const target of [project.stage, ...project.sprites]) {
       for (const block of target.blocks) {
         if (
@@ -1066,18 +1067,16 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
               : block.inputs.BROADCAST_INPUT;
 
           if (broadcastInput.type === "broadcast") {
-            getBroadcastId(broadcastInput.value);
+            const currentName = broadcastInput.value;
+            if (currentName < lowestName || !lowestName) {
+              lowestName = currentName;
+            }
           }
         }
       }
     }
 
-    // Set the broadcast name used in obscured broadcast inputs to the first
-    // sorted-alphabetically broadcast's name.
-    getBroadcastId.initialBroadcastName =
-      Object.keys(broadcastNameToId).reduce((lowestName, currentName) =>
-        lowestName < currentName ? lowestName : currentName
-      ) || "message1";
+    getBroadcastId.initialBroadcastName = lowestName || "message1";
 
     return {
       targets: [
