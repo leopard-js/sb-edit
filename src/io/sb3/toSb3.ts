@@ -21,7 +21,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
   // in the caller's project.json output file. toSb3 should be bound or applied
   // so that 'this' refers to the Project object to be serialized.
 
-  let warn = (message: string): void => undefined;
+  let warn: ToSb3Options["warn"] = (): void => undefined;
   if (options.warn) {
     warn = options.warn;
   }
@@ -54,7 +54,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
   function serializeInputsToFields(
     inputs: { [key: string]: BlockInput.Any },
     options: SerializeInputsToFieldsOptions
-  ): { [key: string]: any } {
+  ): { [key: string]: string[] } {
     // Serialize provided inputs into a "fields" mapping that can be stored
     // on a serialized block.
     //
@@ -114,14 +114,12 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
   interface SerializeInputShadowOptions {
     blockData: sb3.Target["blocks"];
 
-    initialBroadcastName: string;
-
     parentId: string;
     primitiveOrOpCode: number | OpCode;
     shadowId: string;
   }
 
-  function serializeInputShadow(value: any, options: SerializeInputShadowOptions): sb3.BlockInputValue {
+  function serializeInputShadow(value: string | number, options: SerializeInputShadowOptions): sb3.BlockInputValue {
     // Serialize the shadow block representing a provided value and type.
     //
     // To gather an understanding of what shadow blocks are used for, have
@@ -169,7 +167,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     // form. If it's a string, it is a (shadow) block opcode, and should be
     // serialized in the expanded form.
 
-    const { blockData, initialBroadcastName, parentId, primitiveOrOpCode, shadowId } = options;
+    const { blockData, parentId, primitiveOrOpCode, shadowId } = options;
 
     let shadowValue = null;
 
@@ -192,7 +190,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
       const fieldEntries = sb3.fieldTypeMap[shadowOpCode];
       if (fieldEntries) {
         const fieldKey = Object.keys(fieldEntries)[0];
-        const fields = { [fieldKey]: [value] };
+        const fields = { [fieldKey]: [value as string] };
 
         blockData[shadowId] = {
           opcode: shadowOpCode,
@@ -389,7 +387,6 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
 
         const shadowValue = serializeInputShadow(valueForShadow, {
           blockData,
-          initialBroadcastName,
           parentId: block.id,
           shadowId: block.id + "-" + key,
           primitiveOrOpCode: entry as number | OpCode
@@ -883,20 +880,20 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     // serializeTarget also handles converting costumes, sounds, variables,
     // etc into the structures Scratch 3.0 expects.
 
-    const mapToIdObject = (
-      values: Array<{ id: string; [propName: string]: any }>,
-      fn: (x: any) => any
-    ): { [key: string]: any } => {
-      // Map an Array of objects with an `id` property
+    function mapToIdObject<Entry extends { id: string }, ReturnType>(
+      values: Array<Entry>,
+      fn: (x: Entry) => ReturnType
+    ): { [key: string]: ReturnType } {
+      // Map an Array of objects with an "id` property
       // (e.g [{id: 1, prop: "val"}, ...])
-      // into an object whose keys are the 'id' property,
+      // into an object whose keys are the `id` property,
       // and whose values are the passed objects transformed by `fn`.
       const ret = {};
       for (const object of values) {
         ret[object.id] = fn(object);
       }
       return ret;
-    };
+    }
 
     const { broadcasts, initialBroadcastName, stage } = options;
 
