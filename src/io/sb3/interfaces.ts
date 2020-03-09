@@ -1,7 +1,7 @@
 import { OpCode } from "../../OpCode";
 import { KnownBlock, ProcedureBlock } from "../../Block";
 import { TextToSpeechLanguage } from "../../Project";
-import * as BlockInput from "../../BlockInput";
+import * as _BlockInput from "../../BlockInput";
 
 // Note: This schema is designed to match the definitions in
 // https://github.com/LLK/scratch-parser/blob/master/lib/sb3_definitions.json
@@ -183,7 +183,7 @@ export interface ProjectJSON {
 
 export const fieldTypeMap: {
   [opcode in OpCode]?: {
-    [fieldName: string]: BlockInput.Any["type"];
+    [fieldName: string]: _BlockInput.Any["type"];
   };
 } = {
   [OpCode.motion_setrotationstyle]: { STYLE: "rotationStyle" },
