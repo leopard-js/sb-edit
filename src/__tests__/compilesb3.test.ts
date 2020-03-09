@@ -3,7 +3,7 @@ import { Project } from "..";
 import * as fs from "fs";
 import * as path from "path";
 
-async function loadProject(filename) {
+async function loadProject(filename): Promise<Project> {
   const file = fs.readFileSync(path.join(__dirname, filename));
   return Project.fromSb3(file);
 }

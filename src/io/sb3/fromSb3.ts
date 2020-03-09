@@ -103,15 +103,15 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
               const { mutation } = blocks[value];
 
               // Split proccode (such as "letter %n of %s") into ["letter", "%n", "of", "%s"]
-              let parts = mutation.proccode.split(/((^|[^\\])%[nsb])/);
+              let parts = (mutation.proccode as string).split(/((^|[^\\])%[nsb])/);
               parts = parts.map(str => str.trim());
               parts = parts.filter(str => str !== "");
 
-              const argNames: string[] = JSON.parse(mutation.argumentnames);
-              const argDefaults: any[] = JSON.parse(mutation.argumentdefaults);
+              const argNames: string[] = JSON.parse(mutation.argumentnames as string);
+              const argDefaults: string[] = JSON.parse(mutation.argumentdefaults as string);
 
               const args: BlockInput.CustomBlockArgument[] = parts.map(part => {
-                const optionalToNumber = value => {
+                const optionalToNumber = (value: string | number): string | number => {
                   if (typeof value !== "string") {
                     return value;
                   }
@@ -127,14 +127,14 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
                   case "%n":
                     return {
                       type: "numberOrString",
-                      name: argNames.splice(0, 1)[0],
-                      defaultValue: optionalToNumber(argDefaults.splice(0, 1)[0])
+                      name: argNames.shift(),
+                      defaultValue: optionalToNumber(argDefaults.shift())
                     };
                   case "%b":
                     return {
                       type: "boolean",
-                      name: argNames.splice(0, 1)[0],
-                      defaultValue: argDefaults.splice(0, 1)[0] === "true"
+                      name: argNames.shift(),
+                      defaultValue: argDefaults.shift() === "true"
                     };
                   default:
                     return {
@@ -144,7 +144,7 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
                 }
               });
 
-              addInput("PROCCODE", { type: "string", value: mutation.proccode });
+              addInput("PROCCODE", { type: "string", value: mutation.proccode as string });
               addInput("ARGUMENTS", { type: "customBlockArguments", value: args });
               addInput("WARP", { type: "boolean", value: mutation.warp === "true" });
             } else {
@@ -238,7 +238,7 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
           PROCCODE: { type: "string", value: block.mutation.proccode },
           INPUTS: {
             type: "customBlockInputValues",
-            value: (JSON.parse(block.mutation.argumentids) as string[]).map((argumentid, i) => {
+            value: (JSON.parse(block.mutation.argumentids as string) as string[]).map(argumentid => {
               let value = result[argumentid];
               if (value === undefined) {
                 // TODO: Find a way to determine type of missing input value
@@ -377,7 +377,7 @@ export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAssetData
       costumeNumber: target.currentCostume,
       sounds,
       scripts: Object.entries(target.blocks)
-        .filter(([id, block]) => block.topLevel && !block.shadow)
+        .filter(([, block]) => block.topLevel && !block.shadow)
         .map(
           ([id, block]) =>
             new Script({

@@ -46,6 +46,12 @@ export interface Sound {
   sampleCount?: number;
 }
 
+// JSON representation of an XML object. Structure varies per opcode.
+interface Mutation {
+  [attribute: string]: Mutation[] | string;
+  children: Mutation[];
+}
+
 export interface Block {
   opcode: OpCode;
 
@@ -59,10 +65,7 @@ export interface Block {
     [key: string]: BlockField;
   };
 
-  // JSON representation of an XML object. Structure varies per opcode.
-  mutation?: {
-    [attribute: string]: any;
-  };
+  mutation?: Mutation;
 
   shadow: boolean;
   topLevel: boolean;
@@ -271,7 +274,7 @@ export const BooleanOrSubstackInputStatus = BIS.INPUT_BLOCK_NO_SHADOW;
 export type BlockInput =
   | [BIS.INPUT_SAME_BLOCK_SHADOW, BlockInputValue]
   | [BIS.INPUT_BLOCK_NO_SHADOW, BlockInputValue]
-  | [BIS.INPUT_DIFF_BLOCK_SHADOW, BlockInputValue, any];
+  | [BIS.INPUT_DIFF_BLOCK_SHADOW, BlockInputValue, BlockInputValue];
 
 export type BlockInputValue =
   | string // Block ID

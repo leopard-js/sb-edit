@@ -289,7 +289,7 @@ export interface CostumeNumberName extends Base {
 
 export type CustomBlockArgument =
   | { type: "label"; name: string }
-  | { type: "numberOrString"; name: string; defaultValue: string }
+  | { type: "numberOrString"; name: string; defaultValue: string | number }
   | { type: "boolean"; name: string; defaultValue: boolean };
 
 export interface CustomBlockArguments extends Base {

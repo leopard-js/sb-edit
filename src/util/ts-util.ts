@@ -6,6 +6,6 @@
 //
 // From:
 // https://mariusschulz.com/blog/keyof-and-lookup-types-in-typescript
-export function prop<T, K extends keyof T>(obj: T, key: K) {
+export function prop<T, K extends keyof T>(obj: T, key: K): T[K] {
   return obj[key];
 }
