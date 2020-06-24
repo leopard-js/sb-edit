@@ -8,7 +8,7 @@ import * as BlockInput from "../../BlockInput";
 import Costume from "../../Costume";
 import Project from "../../Project";
 import Sound from "../../Sound";
-import Target, { Sprite, Stage, TargetOptions } from "../../Target";
+import { Sprite, Stage, TargetOptions } from "../../Target";
 import { List, Variable } from "../../Data";
 import Script from "../../Script";
 
@@ -20,15 +20,18 @@ interface AssetInfo {
   spriteName: string;
 }
 
-type GetAssetData = (info: AssetInfo) => Promise<ArrayBuffer>;
+// "any" allows user to store the asset encoded however it's useful to them.
+// sb-edit doesn't care, it just stores the asset as it's provided for easy
+// access later.
+type GetAsset = (info: AssetInfo) => Promise<any>;
 
-function extractCostumes(target: sb3.Target, getAssetData: GetAssetData): Promise<Costume[]> {
+function extractCostumes(target: sb3.Target, getAsset: GetAsset): Promise<Costume[]> {
   return Promise.all(
     target.costumes.map(
       async (costumeData: sb3.Costume) =>
         new Costume({
           name: costumeData.name,
-          data: await getAssetData({
+          asset: await getAsset({
             type: "costume",
             name: costumeData.name,
             md5: costumeData.assetId,
@@ -51,13 +54,13 @@ function extractCostumes(target: sb3.Target, getAssetData: GetAssetData): Promis
   );
 }
 
-async function extractSounds(target: sb3.Target, getAssetData: GetAssetData): Promise<Sound[]> {
+async function extractSounds(target: sb3.Target, getAsset: GetAsset): Promise<Sound[]> {
   return Promise.all(
     target.sounds.map(
       async (soundData: sb3.Sound) =>
         new Sound({
           name: soundData.name,
-          data: await getAssetData({
+          asset: await getAsset({
             type: "sound",
             name: soundData.name,
             md5: soundData.assetId,
@@ -291,7 +294,7 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
   return blockWithNext;
 }
 
-export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAssetData: GetAssetData }): Promise<Project> {
+export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAsset: GetAsset }): Promise<Project> {
   function getVariables(target: sb3.Target): Variable[] {
     return Object.entries(target.variables).map(([id, [name, value, cloud = false]]) => {
       let monitor = json.monitors.find(monitor => monitor.id === id) as sb3.VariableMonitor;
@@ -366,8 +369,8 @@ export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAssetData
 
   async function getTargetOptions(target: sb3.Target): Promise<TargetOptions> {
     const [costumes, sounds] = await Promise.all([
-      extractCostumes(target, options.getAssetData),
-      extractSounds(target, options.getAssetData)
+      extractCostumes(target, options.getAsset),
+      extractSounds(target, options.getAsset)
     ]);
 
     return {
@@ -425,8 +428,8 @@ export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAssetData
 export default async function fromSb3(fileData: Parameters<typeof JSZip.loadAsync>[0]): Promise<Project> {
   const inZip = await JSZip.loadAsync(fileData);
   const json = await inZip.file("project.json").async("text");
-  const getAssetData = async ({ md5, ext }): Promise<ArrayBuffer> => {
+  const getAsset = async ({ md5, ext }): Promise<ArrayBuffer> => {
     return inZip.file(`${md5}.${ext}`).async("arraybuffer");
   };
-  return fromSb3JSON(JSON.parse(json), { getAssetData });
+  return fromSb3JSON(JSON.parse(json), { getAsset });
 }

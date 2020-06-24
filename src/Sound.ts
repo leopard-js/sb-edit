@@ -6,7 +6,7 @@ export default class Sound {
   public name: string;
   public id: string;
 
-  public data: any;
+  public asset: any;
 
   public md5: string;
   public ext: SoundDataFormat;
@@ -18,7 +18,7 @@ export default class Sound {
     name: string;
     id?: string;
 
-    data: any;
+    asset: any;
 
     md5: string;
     ext: SoundDataFormat;

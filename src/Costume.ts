@@ -6,7 +6,7 @@ export default class Costume {
   public name: string;
   public id: string;
 
-  public data: any;
+  public asset: any;
 
   public md5: string;
   public ext: CostumeDataFormat;
@@ -19,7 +19,7 @@ export default class Costume {
     name: string;
     id?: string;
 
-    data: any;
+    asset: any;
 
     md5: string;
     ext: CostumeDataFormat;
