@@ -101,9 +101,9 @@ export default function toScratchJS(
     getTargetURL: ({ name, from }) => {
       switch (from) {
         case "index":
-          return `./${name}/${name}.mjs`;
+          return `./${name}/${name}.js`;
         case "target":
-          return `../${name}/${name}.mjs`;
+          return `../${name}/${name}.js`;
       }
     },
     getAssetURL: ({ type, target, name, ext }) => {
@@ -114,7 +114,7 @@ export default function toScratchJS(
           return `./${target}/sounds/${name}.${ext}`;
       }
     },
-    indexURL: "./index.mjs",
+    indexURL: "./index.js",
     autoplay: true
   };
   options = { ...defaultOptions, ...options };
@@ -832,7 +832,7 @@ export default function toScratchJS(
         </body>
       </html>
     `,
-    "index.mjs": `
+    "index.js": `
       import { Project } from ${JSON.stringify(options.scratchJSURL)};
 
       ${[project.stage, ...project.sprites]
@@ -880,7 +880,7 @@ export default function toScratchJS(
   };
 
   for (const target of [project.stage, ...project.sprites]) {
-    files[`${target.name}/${target.name}.mjs`] = `
+    files[`${target.name}/${target.name}.js`] = `
       import { ${target.isStage ? "Stage as StageBase" : "Sprite"}, Trigger, Costume, Color, Sound } from '${
       options.scratchJSURL
     }';

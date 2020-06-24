@@ -2809,7 +2809,7 @@ Object {
 
 exports[`sb3 -> scratch-js 1`] = `
 Object {
-  "Abby/Abby.mjs": "import {
+  "Abby/Abby.js": "import {
   Sprite,
   Trigger,
   Costume,
@@ -2862,7 +2862,7 @@ export default class Abby extends Sprite {
   }
 }
 ",
-  "Stage/Stage.mjs": "import {
+  "Stage/Stage.js": "import {
   Stage as StageBase,
   Trigger,
   Costume,
@@ -3034,7 +3034,7 @@ export default class Stage extends StageBase {
     <div id=\\"project\\"></div>
 
     <script type=\\"module\\">
-      import project from \\"./index.mjs\\";
+      import project from \\"./index.js\\";
 
       project.attach(\\"#project\\");
 
@@ -3048,10 +3048,10 @@ export default class Stage extends StageBase {
   </body>
 </html>
 ",
-  "index.mjs": "import { Project } from \\"https://pulljosh.github.io/scratch-js/scratch-js/index.mjs\\";
+  "index.js": "import { Project } from \\"https://pulljosh.github.io/scratch-js/scratch-js/index.mjs\\";
 
-import Stage from \\"./Stage/Stage.mjs\\";
-import Abby from \\"./Abby/Abby.mjs\\";
+import Stage from \\"./Stage/Stage.js\\";
+import Abby from \\"./Abby/Abby.js\\";
 
 const stage = new Stage({ costumeNumber: 1 });
 
