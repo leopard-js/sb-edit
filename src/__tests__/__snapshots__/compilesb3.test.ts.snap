@@ -2815,7 +2815,7 @@ Object {
   Costume,
   Color,
   Sound
-} from \\"https://pulljosh.github.io/scratch-js/scratch-js/index.mjs\\";
+} from \\"https://pulljosh.github.io/scratch-js/scratch-js/index.js\\";
 
 export default class Abby extends Sprite {
   constructor(...args) {
@@ -2868,7 +2868,7 @@ export default class Abby extends Sprite {
   Costume,
   Color,
   Sound
-} from \\"https://pulljosh.github.io/scratch-js/scratch-js/index.mjs\\";
+} from \\"https://pulljosh.github.io/scratch-js/scratch-js/index.js\\";
 
 export default class Stage extends StageBase {
   constructor(...args) {
@@ -3048,7 +3048,7 @@ export default class Stage extends StageBase {
   </body>
 </html>
 ",
-  "index.js": "import { Project } from \\"https://pulljosh.github.io/scratch-js/scratch-js/index.mjs\\";
+  "index.js": "import { Project } from \\"https://pulljosh.github.io/scratch-js/scratch-js/index.js\\";
 
 import Stage from \\"./Stage/Stage.js\\";
 import Abby from \\"./Abby/Abby.js\\";

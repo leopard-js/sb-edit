@@ -96,7 +96,7 @@ export default function toScratchJS(
   const project: Project = this;
 
   const defaultOptions: ToScratchJSOptions = {
-    scratchJSURL: "https://pulljosh.github.io/scratch-js/scratch-js/index.mjs",
+    scratchJSURL: "https://pulljosh.github.io/scratch-js/scratch-js/index.js",
     scratchJSCSSURL: "https://pulljosh.github.io/scratch-js/scratch-js/index.css",
     getTargetURL: ({ name, from }) => {
       switch (from) {
