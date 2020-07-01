@@ -10,12 +10,12 @@ sb-edit is a javascript library for manipulating Scratch project files.
 
 sb-edit allows importing and exporting a variety of Scratch project file types:
 
-| File Format                                            | Import         | Export         |
-| ------------------------------------------------------ | -------------- | -------------- |
-| Scratch 3.0 (**.sb3**)                                 | ✅ Yes         | ✅ Yes         |
-| Scratch 2.0 (**.sb2**)                                 | 🕒 Planned     | 🕒 Planned     |
-| [scratch-js](https://github.com/PullJosh/scratch-js)   | ❌ No          | 🚧 In progress |
-| [scratchblocks](https://github.com/tjvr/scratchblocks) | 👻 Maybe!      | 🚧 In progress |
+| File Format                                            | Import     | Export         |
+| ------------------------------------------------------ | ---------- | -------------- |
+| Scratch 3.0 (**.sb3**)                                 | ✅ Yes     | ✅ Yes         |
+| Scratch 2.0 (**.sb2**)                                 | 🕒 Planned | 🕒 Planned     |
+| [Leopard](https://github.com/PullJosh/leopard)         | ❌ No      | ✅ Yes         |
+| [scratchblocks](https://github.com/tjvr/scratchblocks) | 👻 Maybe!  | 🚧 In progress |
 
 ## Editing
 
@@ -28,20 +28,9 @@ sb-edit can also be used to modify Scratch projects. A few things you can/will b
 | Scripts             | 🕒 Planned | 🕒 Planned | 🕒 Planned |
 | Costumes and sounds | 🕒 Planned | 🕒 Planned | 🕒 Planned |
 
-## 🕒 Terminal
+## Development
 
-In the future it should be possible to use sb-edit to transform scratch projects locally. You can expect it to look something like this:
-
-```shell
-> # This doesn't work yet!
-> npm i -g sb-edit
-> sb-edit -i myProject.sb2 -o myProject.sb3 # Soon: Convert from .sb2 to .sb3
-> sb-edit -i myProject.sb2 -o myProject.zip # Soon: Convert from .sb2 to scratch-js
-```
-
-## Installation
-
-Right now sb-edit is not published on npm, so you'll have to do things the hard way:
+If you want to help develop the sb-edit package, you'll need to follow these steps:
 
 ### Step 1: Download sb-edit and prepare to use
 
@@ -59,7 +48,7 @@ Right now sb-edit is not published on npm, so you'll have to do things the hard 
 > npm link sb-edit # Similar to `npm install` but uses local version
 ```
 
-### Step 3 (optional): Modify sb-edit
+### Step 3: Modify sb-edit
 
 If you make any changes to the sb-edit source code, you'll have to rebuild the package. Here's how:
 
@@ -114,7 +103,7 @@ fs.writeFileSync(saveLocation, Buffer.from(await project.toSb3()));
 // `project` is now saved at ./myProject.sb3
 ```
 
-### Get scratch-js code for project
+### Get Leopard code for project
 
 ```js
 const project = /* Get yourself a `Project`... */;

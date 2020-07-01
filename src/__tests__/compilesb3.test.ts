@@ -13,9 +13,9 @@ test("sb3 -> sb3", async () => {
   expect(JSON.parse(project.toSb3().json)).toMatchSnapshot();
 });
 
-test("sb3 -> scratch-js", async () => {
+test("sb3 -> leopard", async () => {
   const project = await loadProject("test.sb3");
-  expect(project.toScratchJS()).toMatchSnapshot();
+  expect(project.toLeopard()).toMatchSnapshot();
 });
 
 test("sb3 -> scratchblocks", async () => {

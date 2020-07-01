@@ -2,7 +2,7 @@ import { Sprite, Stage } from "./Target";
 
 import fromSb3, { fromSb3JSON } from "./io/sb3/fromSb3";
 import toSb3 from "./io/sb3/toSb3";
-import toScratchJS from "./io/scratch-js/toScratchJS";
+import toLeopard from "./io/leopard/toLeopard";
 import toScratchblocks from "./io/scratchblocks/toScratchblocks";
 
 export type TextToSpeechLanguage =
@@ -35,7 +35,7 @@ export default class Project {
   public static fromSb3JSON = fromSb3JSON;
 
   public toSb3: typeof toSb3 = toSb3.bind(this);
-  public toScratchJS: typeof toScratchJS = toScratchJS.bind(this);
+  public toLeopard: typeof toLeopard = toLeopard.bind(this);
   public toScratchblocks: typeof toScratchblocks = toScratchblocks.bind(this);
 
   public stage: Stage = new Stage();

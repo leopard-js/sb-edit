@@ -81,23 +81,23 @@ function camelCase(name: string, upper = false): string {
   return result;
 }
 
-interface ToScratchJSOptions {
-  scratchJSURL: string;
-  scratchJSCSSURL: string;
+interface ToLeopardOptions {
+  leopardJSURL: string;
+  leopardCSSURL: string;
   getTargetURL: (info: { name: string; from: "index" | "target" }) => string;
   getAssetURL: (info: { type: "costume" | "sound"; target: string; name: string; md5: string; ext: string }) => string;
   indexURL: string;
   autoplay: boolean;
 }
-export default function toScratchJS(
-  options: Partial<ToScratchJSOptions> = {},
+export default function toLeopard(
+  options: Partial<ToLeopardOptions> = {},
   prettierConfig: prettier.Options = {}
 ): { [fileName: string]: string } {
   const project: Project = this;
 
-  const defaultOptions: ToScratchJSOptions = {
-    scratchJSURL: "https://pulljosh.github.io/scratch-js/scratch-js/index.js",
-    scratchJSCSSURL: "https://pulljosh.github.io/scratch-js/scratch-js/index.css",
+  const defaultOptions: ToLeopardOptions = {
+    leopardJSURL: "https://unpkg.com/leopard@^1/dist/index.esm.js",
+    leopardCSSURL: "https://unpkg.com/leopard@^1/dist/index.min.css",
     getTargetURL: ({ name, from }) => {
       switch (from) {
         case "index":
@@ -810,7 +810,7 @@ export default function toScratchJS(
       <!DOCTYPE html>
       <html>
         <head>
-          <link rel="stylesheet" href="${options.scratchJSCSSURL}" />
+          <link rel="stylesheet" href="${options.leopardCSSURL}" />
         </head>
         <body>
           <button id="greenFlag">Green Flag</button>
@@ -833,7 +833,7 @@ export default function toScratchJS(
       </html>
     `,
     "index.js": `
-      import { Project } from ${JSON.stringify(options.scratchJSURL)};
+      import { Project } from ${JSON.stringify(options.leopardJSURL)};
 
       ${[project.stage, ...project.sprites]
         .map(
@@ -882,7 +882,7 @@ export default function toScratchJS(
   for (const target of [project.stage, ...project.sprites]) {
     files[`${target.name}/${target.name}.js`] = `
       import { ${target.isStage ? "Stage as StageBase" : "Sprite"}, Trigger, Costume, Color, Sound } from '${
-      options.scratchJSURL
+      options.leopardJSURL
     }';
 
       export default class ${target.name} extends ${target.isStage ? "StageBase" : "Sprite"} {

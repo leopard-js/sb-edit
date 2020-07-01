@@ -1,5 +1,270 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`sb3 -> leopard 1`] = `
+Object {
+  "Abby/Abby.js": "import {
+  Sprite,
+  Trigger,
+  Costume,
+  Color,
+  Sound
+} from \\"https://unpkg.com/leopard@^1/dist/index.esm.js\\";
+
+export default class Abby extends Sprite {
+  constructor(...args) {
+    super(...args);
+
+    this.costumes = [
+      new Costume(\\"abby-a\\", \\"./Abby/costumes/abby-a.svg\\", { x: 31, y: 100 }),
+      new Costume(\\"abby-b\\", \\"./Abby/costumes/abby-b.svg\\", { x: 31, y: 100 }),
+      new Costume(\\"abby-c\\", \\"./Abby/costumes/abby-c.svg\\", { x: 32, y: 100 }),
+      new Costume(\\"abby-d\\", \\"./Abby/costumes/abby-d.svg\\", { x: 32, y: 101 })
+    ];
+
+    this.sounds = [new Sound(\\"pop\\", \\"./Abby/sounds/pop.wav\\")];
+
+    this.triggers = [
+      new Trigger(Trigger.CLONE_START, this.startAsClone),
+      new Trigger(Trigger.KEY_PRESSED, { key: \\"any\\" }, this.whenKeyAnyPressed)
+    ];
+  }
+
+  *startAsClone() {
+    this.move(10);
+  }
+
+  *whenKeyAnyPressed() {
+    this.direction += this.costumeNumber;
+    this.direction -= 15;
+    this.goto(this.random(-240, 240), this.random(-180, 180));
+    this.goto(this.y, -23);
+    yield* this.glide(1, this.mouse.x, this.mouse.y);
+    yield* this.glide(1, -36, this.x);
+    this.direction = 90;
+    this.direction = this.radToScratch(
+      Math.atan2(this.mouse.y - this.y, this.mouse.x - this.x)
+    );
+    this.x += this.direction;
+    this.x = -36;
+    this.y += 10;
+    this.y = -23;
+    /* TODO: Implement motion_ifonedgebounce */ null;
+    this.rotationStyle = Sprite.RotationStyle.LEFT_RIGHT;
+    this.createClone();
+    this.deleteThisClone();
+  }
+}
+",
+  "Stage/Stage.js": "import {
+  Stage as StageBase,
+  Trigger,
+  Costume,
+  Color,
+  Sound
+} from \\"https://unpkg.com/leopard@^1/dist/index.esm.js\\";
+
+export default class Stage extends StageBase {
+  constructor(...args) {
+    super(...args);
+
+    this.costumes = [
+      new Costume(\\"backdrop1\\", \\"./Stage/costumes/backdrop1.svg\\", {
+        x: 240,
+        y: 180
+      })
+    ];
+
+    this.sounds = [new Sound(\\"pop\\", \\"./Stage/sounds/pop.wav\\")];
+
+    this.triggers = [
+      new Trigger(Trigger.GREEN_FLAG, this.whenGreenFlagClicked),
+      new Trigger(
+        Trigger.KEY_PRESSED,
+        { key: \\"space\\" },
+        this.whenKeySpacePressed
+      ),
+      new Trigger(Trigger.CLICKED, this.whenstageclicked),
+      new Trigger(
+        Trigger.BROADCAST,
+        { name: \\"message1\\" },
+        this.whenIReceiveMessage1
+      )
+    ];
+
+    this.vars.myVariable = 0;
+    this.vars.CloudVar = 20.1;
+    this.vars.testList = [5];
+  }
+
+  *whenGreenFlagClicked() {
+    this.costume = \\"backdrop1\\";
+    /* TODO: Implement looks_switchbackdroptoandwait */ null;
+    this.costumeNumber += 1;
+    this.effects.color += this.costumeNumber;
+    this.effects.color = this.costume.name;
+    this.effects.clear();
+  }
+
+  *whenKeySpacePressed() {
+    yield* this.playSoundUntilDone(\\"pop\\");
+    yield* this.startSound(\\"pop\\");
+    this.stopAllSounds();
+    this.audioEffects.pan += 10;
+    this.audioEffects.pan = this.audioEffects.volume;
+    this.audioEffects.clear();
+    this.audioEffects.volume += -10;
+    this.audioEffects.volume = 100;
+  }
+
+  *whenstageclicked() {
+    yield* this.askAndWait(\\"What's your name?\\");
+    yield* this.askAndWait(this.answer);
+    yield* this.askAndWait(this.keyPressed(\\"space\\"));
+    yield* this.askAndWait(this.mouse.down);
+    yield* this.askAndWait(this.mouse.x);
+    yield* this.askAndWait(this.mouse.y);
+    yield* this.askAndWait(/* TODO: Implement sensing_loudness */ null);
+    yield* this.askAndWait(this.timer);
+    yield* this.askAndWait(this.stage.costumeNumber);
+    yield* this.askAndWait(this.stage.vars[\\"CloudVar\\"]);
+    yield* this.askAndWait(new Date().getDay() + 1);
+    yield* this.askAndWait(
+      ((new Date().getTime() - new Date(2000, 0, 1)) / 1000 / 60 +
+        new Date().getTimezoneOffset()) /
+        60 /
+        24
+    );
+    yield* this.askAndWait(/* no username */ \\"\\");
+    this.restartTimer();
+  }
+
+  *whenbackdropswitchesto() {
+    yield* this.wait(1);
+    while (!null) {
+      yield;
+    }
+    this.sprites[undefined].createClone();
+    for (let i = 0; i < 10; i++) {
+      while (!this.keyPressed(\\"space\\")) {
+        if (this.mouse.down) {
+          if (null) {
+            null;
+          } else {
+            null;
+          }
+        }
+        yield;
+      }
+      /* TODO: Implement stop all */ null;
+      yield;
+    }
+    while (true) {
+      null;
+      yield;
+    }
+  }
+
+  *whengreaterthan() {
+    this.vars.CloudVar = this.vars.myVariable;
+    this.vars.CloudVar += 1;
+    this.vars.myVariable = 0;
+    this.vars.myVariable += this.vars.CloudVar;
+    /* TODO: Implement data_showvariable */ null;
+    /* TODO: Implement data_hidevariable */ null;
+    this.vars.testList.push(this.vars.testList.includes(\\"thing\\"));
+    this.vars.testList.splice(1 - 1, 1);
+    this.vars.testList = [];
+    this.vars.testList.splice(
+      this.vars.testList.indexOf(\\"thing\\") + 1 - 1,
+      0,
+      \\"thing\\"
+    );
+    this.vars.testList.splice(
+      this.vars.testList[1 - 1] - 1,
+      1,
+      this.vars.testList.length
+    );
+    /* TODO: Implement data_showlist */ null;
+    /* TODO: Implement data_hidelist */ null;
+  }
+
+  *whenIReceiveMessage1() {
+    this.broadcast(\\"message1\\");
+    yield* this.broadcastAndWait(\\"message1\\");
+    yield* this.askAndWait(5 + this.random(8 / 4, 10));
+    yield* this.askAndWait(0 - 0);
+    yield* this.askAndWait(0 * 0);
+    yield* this.askAndWait(0 / 0);
+    yield* this.askAndWait(0 < 50 && 0 > 50);
+    yield* this.askAndWait(0 == 50 || 0);
+    yield* this.askAndWait(!null);
+    yield* this.askAndWait(\\"\\" + \\"apple \\" + \\"apple\\"[1 - 1]);
+    yield* this.askAndWait(\\"apple\\".length);
+    yield* this.askAndWait(\\"apple\\".includes(\\"a\\"));
+    yield* this.askAndWait(12 % 7);
+    yield* this.askAndWait(Math.round(0));
+    yield* this.askAndWait(10 ** 15);
+  }
+
+  *blockNameLabelText(boolean, numberOrText) {
+    yield* this.playSoundUntilDone(numberOrText);
+    if (boolean) {
+      null;
+    }
+  }
+}
+",
+  "index.html": "<!DOCTYPE html>
+<html>
+  <head>
+    <link
+      rel=\\"stylesheet\\"
+      href=\\"https://unpkg.com/leopard@^1/dist/index.min.css\\"
+    />
+  </head>
+  <body>
+    <button id=\\"greenFlag\\">Green Flag</button>
+    <div id=\\"project\\"></div>
+
+    <script type=\\"module\\">
+      import project from \\"./index.js\\";
+
+      project.attach(\\"#project\\");
+
+      document.querySelector(\\"#greenFlag\\").addEventListener(\\"click\\", () => {
+        project.greenFlag();
+      });
+
+      // Autoplay
+      project.greenFlag();
+    </script>
+  </body>
+</html>
+",
+  "index.js": "import { Project } from \\"https://unpkg.com/leopard@^1/dist/index.esm.js\\";
+
+import Stage from \\"./Stage/Stage.js\\";
+import Abby from \\"./Abby/Abby.js\\";
+
+const stage = new Stage({ costumeNumber: 1 });
+
+const sprites = {
+  Abby: new Abby({
+    x: -36,
+    y: -23,
+    direction: 90,
+    costumeNumber: 1,
+    size: 100,
+    visible: true
+  })
+};
+
+const project = new Project(stage, sprites);
+export default project;
+",
+}
+`;
+
 exports[`sb3 -> sb3 1`] = `
 Object {
   "meta": Object {
@@ -2804,271 +3069,6 @@ Object {
       "y": -23,
     },
   ],
-}
-`;
-
-exports[`sb3 -> scratch-js 1`] = `
-Object {
-  "Abby/Abby.js": "import {
-  Sprite,
-  Trigger,
-  Costume,
-  Color,
-  Sound
-} from \\"https://pulljosh.github.io/scratch-js/scratch-js/index.js\\";
-
-export default class Abby extends Sprite {
-  constructor(...args) {
-    super(...args);
-
-    this.costumes = [
-      new Costume(\\"abby-a\\", \\"./Abby/costumes/abby-a.svg\\", { x: 31, y: 100 }),
-      new Costume(\\"abby-b\\", \\"./Abby/costumes/abby-b.svg\\", { x: 31, y: 100 }),
-      new Costume(\\"abby-c\\", \\"./Abby/costumes/abby-c.svg\\", { x: 32, y: 100 }),
-      new Costume(\\"abby-d\\", \\"./Abby/costumes/abby-d.svg\\", { x: 32, y: 101 })
-    ];
-
-    this.sounds = [new Sound(\\"pop\\", \\"./Abby/sounds/pop.wav\\")];
-
-    this.triggers = [
-      new Trigger(Trigger.CLONE_START, this.startAsClone),
-      new Trigger(Trigger.KEY_PRESSED, { key: \\"any\\" }, this.whenKeyAnyPressed)
-    ];
-  }
-
-  *startAsClone() {
-    this.move(10);
-  }
-
-  *whenKeyAnyPressed() {
-    this.direction += this.costumeNumber;
-    this.direction -= 15;
-    this.goto(this.random(-240, 240), this.random(-180, 180));
-    this.goto(this.y, -23);
-    yield* this.glide(1, this.mouse.x, this.mouse.y);
-    yield* this.glide(1, -36, this.x);
-    this.direction = 90;
-    this.direction = this.radToScratch(
-      Math.atan2(this.mouse.y - this.y, this.mouse.x - this.x)
-    );
-    this.x += this.direction;
-    this.x = -36;
-    this.y += 10;
-    this.y = -23;
-    /* TODO: Implement motion_ifonedgebounce */ null;
-    this.rotationStyle = Sprite.RotationStyle.LEFT_RIGHT;
-    this.createClone();
-    this.deleteThisClone();
-  }
-}
-",
-  "Stage/Stage.js": "import {
-  Stage as StageBase,
-  Trigger,
-  Costume,
-  Color,
-  Sound
-} from \\"https://pulljosh.github.io/scratch-js/scratch-js/index.js\\";
-
-export default class Stage extends StageBase {
-  constructor(...args) {
-    super(...args);
-
-    this.costumes = [
-      new Costume(\\"backdrop1\\", \\"./Stage/costumes/backdrop1.svg\\", {
-        x: 240,
-        y: 180
-      })
-    ];
-
-    this.sounds = [new Sound(\\"pop\\", \\"./Stage/sounds/pop.wav\\")];
-
-    this.triggers = [
-      new Trigger(Trigger.GREEN_FLAG, this.whenGreenFlagClicked),
-      new Trigger(
-        Trigger.KEY_PRESSED,
-        { key: \\"space\\" },
-        this.whenKeySpacePressed
-      ),
-      new Trigger(Trigger.CLICKED, this.whenstageclicked),
-      new Trigger(
-        Trigger.BROADCAST,
-        { name: \\"message1\\" },
-        this.whenIReceiveMessage1
-      )
-    ];
-
-    this.vars.myVariable = 0;
-    this.vars.CloudVar = 20.1;
-    this.vars.testList = [5];
-  }
-
-  *whenGreenFlagClicked() {
-    this.costume = \\"backdrop1\\";
-    /* TODO: Implement looks_switchbackdroptoandwait */ null;
-    this.costumeNumber += 1;
-    this.effects.color += this.costumeNumber;
-    this.effects.color = this.costume.name;
-    this.effects.clear();
-  }
-
-  *whenKeySpacePressed() {
-    yield* this.playSoundUntilDone(\\"pop\\");
-    yield* this.startSound(\\"pop\\");
-    this.stopAllSounds();
-    this.audioEffects.pan += 10;
-    this.audioEffects.pan = this.audioEffects.volume;
-    this.audioEffects.clear();
-    this.audioEffects.volume += -10;
-    this.audioEffects.volume = 100;
-  }
-
-  *whenstageclicked() {
-    yield* this.askAndWait(\\"What's your name?\\");
-    yield* this.askAndWait(this.answer);
-    yield* this.askAndWait(this.keyPressed(\\"space\\"));
-    yield* this.askAndWait(this.mouse.down);
-    yield* this.askAndWait(this.mouse.x);
-    yield* this.askAndWait(this.mouse.y);
-    yield* this.askAndWait(/* TODO: Implement sensing_loudness */ null);
-    yield* this.askAndWait(this.timer);
-    yield* this.askAndWait(this.stage.costumeNumber);
-    yield* this.askAndWait(this.stage.vars[\\"CloudVar\\"]);
-    yield* this.askAndWait(new Date().getDay() + 1);
-    yield* this.askAndWait(
-      ((new Date().getTime() - new Date(2000, 0, 1)) / 1000 / 60 +
-        new Date().getTimezoneOffset()) /
-        60 /
-        24
-    );
-    yield* this.askAndWait(/* no username */ \\"\\");
-    this.restartTimer();
-  }
-
-  *whenbackdropswitchesto() {
-    yield* this.wait(1);
-    while (!null) {
-      yield;
-    }
-    this.sprites[undefined].createClone();
-    for (let i = 0; i < 10; i++) {
-      while (!this.keyPressed(\\"space\\")) {
-        if (this.mouse.down) {
-          if (null) {
-            null;
-          } else {
-            null;
-          }
-        }
-        yield;
-      }
-      /* TODO: Implement stop all */ null;
-      yield;
-    }
-    while (true) {
-      null;
-      yield;
-    }
-  }
-
-  *whengreaterthan() {
-    this.vars.CloudVar = this.vars.myVariable;
-    this.vars.CloudVar += 1;
-    this.vars.myVariable = 0;
-    this.vars.myVariable += this.vars.CloudVar;
-    /* TODO: Implement data_showvariable */ null;
-    /* TODO: Implement data_hidevariable */ null;
-    this.vars.testList.push(this.vars.testList.includes(\\"thing\\"));
-    this.vars.testList.splice(1 - 1, 1);
-    this.vars.testList = [];
-    this.vars.testList.splice(
-      this.vars.testList.indexOf(\\"thing\\") + 1 - 1,
-      0,
-      \\"thing\\"
-    );
-    this.vars.testList.splice(
-      this.vars.testList[1 - 1] - 1,
-      1,
-      this.vars.testList.length
-    );
-    /* TODO: Implement data_showlist */ null;
-    /* TODO: Implement data_hidelist */ null;
-  }
-
-  *whenIReceiveMessage1() {
-    this.broadcast(\\"message1\\");
-    yield* this.broadcastAndWait(\\"message1\\");
-    yield* this.askAndWait(5 + this.random(8 / 4, 10));
-    yield* this.askAndWait(0 - 0);
-    yield* this.askAndWait(0 * 0);
-    yield* this.askAndWait(0 / 0);
-    yield* this.askAndWait(0 < 50 && 0 > 50);
-    yield* this.askAndWait(0 == 50 || 0);
-    yield* this.askAndWait(!null);
-    yield* this.askAndWait(\\"\\" + \\"apple \\" + \\"apple\\"[1 - 1]);
-    yield* this.askAndWait(\\"apple\\".length);
-    yield* this.askAndWait(\\"apple\\".includes(\\"a\\"));
-    yield* this.askAndWait(12 % 7);
-    yield* this.askAndWait(Math.round(0));
-    yield* this.askAndWait(10 ** 15);
-  }
-
-  *blockNameLabelText(boolean, numberOrText) {
-    yield* this.playSoundUntilDone(numberOrText);
-    if (boolean) {
-      null;
-    }
-  }
-}
-",
-  "index.html": "<!DOCTYPE html>
-<html>
-  <head>
-    <link
-      rel=\\"stylesheet\\"
-      href=\\"https://pulljosh.github.io/scratch-js/scratch-js/index.css\\"
-    />
-  </head>
-  <body>
-    <button id=\\"greenFlag\\">Green Flag</button>
-    <div id=\\"project\\"></div>
-
-    <script type=\\"module\\">
-      import project from \\"./index.js\\";
-
-      project.attach(\\"#project\\");
-
-      document.querySelector(\\"#greenFlag\\").addEventListener(\\"click\\", () => {
-        project.greenFlag();
-      });
-
-      // Autoplay
-      project.greenFlag();
-    </script>
-  </body>
-</html>
-",
-  "index.js": "import { Project } from \\"https://pulljosh.github.io/scratch-js/scratch-js/index.js\\";
-
-import Stage from \\"./Stage/Stage.js\\";
-import Abby from \\"./Abby/Abby.js\\";
-
-const stage = new Stage({ costumeNumber: 1 });
-
-const sprites = {
-  Abby: new Abby({
-    x: -36,
-    y: -23,
-    direction: 90,
-    costumeNumber: 1,
-    size: 100,
-    visible: true
-  })
-};
-
-const project = new Project(stage, sprites);
-export default project;
-",
 }
 `;
 
