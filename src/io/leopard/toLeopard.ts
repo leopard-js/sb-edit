@@ -658,7 +658,7 @@ export default function toLeopard(
         case OpCode.operator_join:
           return `("" + (${inputToJS(block.inputs.STRING1)}) + (${inputToJS(block.inputs.STRING2)}))`;
         case OpCode.operator_letter_of:
-          return `((${inputToJS(block.inputs.STRING)})[(${inputToJS(block.inputs.LETTER)}) - 1])`;
+          return `(String(${inputToJS(block.inputs.STRING)})[(${inputToJS(block.inputs.LETTER)}) - 1])`;
         case OpCode.operator_length:
           return `(${inputToJS(block.inputs.STRING)}).length`;
         case OpCode.operator_contains:
