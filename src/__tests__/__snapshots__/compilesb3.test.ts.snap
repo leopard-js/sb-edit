@@ -195,8 +195,8 @@ export default class Stage extends StageBase {
     yield* this.askAndWait(0 - 0);
     yield* this.askAndWait(0 * 0);
     yield* this.askAndWait(0 / 0);
-    yield* this.askAndWait(0 < 50 && 0 > 50);
-    yield* this.askAndWait(0 == 50 || 0);
+    yield* this.askAndWait(\\"\\" < 50 && \\"\\" > 50);
+    yield* this.askAndWait(\\"\\" == 50 || 0);
     yield* this.askAndWait(!null);
     yield* this.askAndWait(\\"\\" + \\"apple \\" + String(\\"apple\\")[1 - 1]);
     yield* this.askAndWait(\\"apple\\".length);

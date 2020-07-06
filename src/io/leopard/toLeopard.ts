@@ -229,7 +229,7 @@ export default function toLeopard(
           return input.value.map(block => blockToJS(block as Block)).join(";\n");
         default: {
           const asNum = Number(input.value as string);
-          if (!isNaN(asNum)) {
+          if (!isNaN(asNum) && input.value !== "") {
             return JSON.stringify(asNum);
           }
           return JSON.stringify(input.value);
