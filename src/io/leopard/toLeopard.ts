@@ -865,19 +865,37 @@ export default function toLeopard(
     `
   };
 
-  const optionalToNumber = value => {
+  // Scratch doesn't care much about "types" (like numbers vs strings), but
+  // sometimes Javascript does. This function attempts to parse a Scratch
+  // value and turn it into the most appropriate Javascript representation
+  function toOptimalJavascriptRepresentation(value): string {
     if (Array.isArray(value)) {
-      return value.map(optionalToNumber);
+      return `[${value.map(toOptimalJavascriptRepresentation).join(", ")}]`;
     }
-    if (typeof value !== "string") {
-      return value;
+
+    if (typeof value === "string") {
+      // Does this string look like a number?
+      const numValue = Number(value);
+
+      if (isNaN(numValue)) {
+        // Not a number! Treat it like a string!
+        return JSON.stringify(value);
+      }
+
+      if (Number.isInteger(numValue) && !Number.isSafeInteger(numValue)) {
+        // If this number is an integer that is so large it cannot be reliably
+        // stored, leave it as a string instead. (Usually in these cases the
+        // Scratch user is treating the number like a string anyway.)
+        return JSON.stringify(value);
+      }
+
+      // This looks like a nice, safe number
+      return JSON.stringify(numValue);
     }
-    const asNum = Number(value);
-    if (!isNaN(asNum)) {
-      return asNum;
-    }
-    return value;
-  };
+
+    // Here's the catch-all for something else that might pass through
+    return JSON.stringify(value);
+  }
 
   for (const target of [project.stage, ...project.sprites]) {
     files[`${target.name}/${target.name}.js`] = `
@@ -936,7 +954,7 @@ export default function toLeopard(
           ${target.volume !== 100 ? `this.audioEffects.volume = ${target.volume};` : ""}
 
           ${[...target.variables, ...target.lists]
-            .map(variable => `this.vars.${variable.name} = ${JSON.stringify(optionalToNumber(variable.value))};`)
+            .map(variable => `this.vars.${variable.name} = ${toOptimalJavascriptRepresentation(variable.value)};`)
             .join("\n")}
         }
 
