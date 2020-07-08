@@ -854,7 +854,8 @@ export default function toLeopard(
                 direction: sprite.direction,
                 costumeNumber: sprite.costumeNumber + 1,
                 size: sprite.size,
-                visible: sprite.visible
+                visible: sprite.visible,
+                layerOrder: sprite.layerOrder
               })})`
           )
           .join(",\n")}
