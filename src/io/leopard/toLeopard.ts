@@ -678,17 +678,17 @@ export default function toLeopard(
             case "sqrt":
               return `Math.sqrt(${inputToJS(block.inputs.NUM)})`;
             case "sin":
-              return `Math.sin(this.scratchToRad(${inputToJS(block.inputs.NUM)}))`;
+              return `Math.sin(this.degToRad(${inputToJS(block.inputs.NUM)}))`;
             case "cos":
-              return `Math.cos(this.scratchToRad(${inputToJS(block.inputs.NUM)}))`;
+              return `Math.cos(this.degToRad(${inputToJS(block.inputs.NUM)}))`;
             case "tan":
-              return `Math.tan(this.scratchToRad(${inputToJS(block.inputs.NUM)}))`;
+              return `Math.tan(this.degToRad(${inputToJS(block.inputs.NUM)}))`;
             case "asin":
-              return `this.radToScratch(Math.asin(${inputToJS(block.inputs.NUM)}))`;
+              return `this.radToDeg(Math.asin(${inputToJS(block.inputs.NUM)}))`;
             case "acos":
-              return `this.radToScratch(Math.acos(${inputToJS(block.inputs.NUM)}))`;
+              return `this.radToDeg(Math.acos(${inputToJS(block.inputs.NUM)}))`;
             case "atan":
-              return `this.radToScratch(Math.atan(${inputToJS(block.inputs.NUM)}))`;
+              return `this.radToDeg(Math.atan(${inputToJS(block.inputs.NUM)}))`;
             case "ln":
               return `Math.log(${inputToJS(block.inputs.NUM)})`;
             case "log":
