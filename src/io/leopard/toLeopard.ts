@@ -376,6 +376,18 @@ export default function toLeopard(
           return `this.visible = true`;
         case OpCode.looks_hide:
           return `this.visible = false`;
+        case OpCode.looks_gotofrontback:
+          if (block.inputs.FRONT_BACK.value === "front") {
+            return `this.moveAhead()`;
+          } else {
+            return `this.moveBehind()`;
+          }
+        case OpCode.looks_goforwardbackwardlayers:
+          if (block.inputs.FORWARD_BACKWARD.value === "forward") {
+            return `this.moveAhead(${inputToJS(block.inputs.NUM)})`;
+          } else {
+            return `this.moveBehind(${inputToJS(block.inputs.NUM)})`;
+          }
         // Obsolete no-op blocks:
         case OpCode.looks_hideallsprites:
         case OpCode.looks_changestretchby:
