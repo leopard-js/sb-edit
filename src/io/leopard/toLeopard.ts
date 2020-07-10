@@ -6,6 +6,7 @@ import { OpCode } from "../../OpCode";
 
 import * as prettier from "prettier";
 import Target from "../../Target";
+import { List, Variable } from "../../Data";
 
 function triggerInitCode(script: Script): string | null {
   const hat = script.hat;
@@ -246,6 +247,7 @@ export default function toLeopard(
       // get the code to grab that variable now for convenience
       let varName: string = null;
       let selectedVarSource: string = null;
+      let selectedWatcherSource: string = null;
       if ("VARIABLE" in block.inputs) {
         varName = block.inputs.VARIABLE.value.toString();
       }
@@ -256,9 +258,11 @@ export default function toLeopard(
         const spriteVars = variableNameMap.get(target);
         if (varName in spriteVars) {
           selectedVarSource = `this.vars.${spriteVars[varName]}`;
+          selectedWatcherSource = `this.watchers.${spriteVars[varName]}`;
         } else {
           const stageVars = variableNameMap.get(project.stage);
           selectedVarSource = `this.stage.vars.${stageVars[varName]}`;
+          selectedWatcherSource = `this.stage.watchers.${stageVars[varName]}`;
         }
       }
 
@@ -719,6 +723,10 @@ export default function toLeopard(
           return `${selectedVarSource} = (${inputToJS(block.inputs.VALUE)})`;
         case OpCode.data_changevariableby:
           return `${selectedVarSource} += (${inputToJS(block.inputs.VALUE)})`;
+        case OpCode.data_showvariable:
+          return `${selectedWatcherSource}.visible = true`;
+        case OpCode.data_hidevariable:
+          return `${selectedWatcherSource}.visible = false`;
         case OpCode.data_listcontents:
           return `${selectedVarSource}.join(" ")`;
         case OpCode.data_addtolist:
@@ -754,6 +762,10 @@ export default function toLeopard(
           return `${selectedVarSource}.length`;
         case OpCode.data_listcontainsitem:
           return `${selectedVarSource}.includes(${inputToJS(block.inputs.ITEM)})`;
+        case OpCode.data_showlist:
+          return `${selectedWatcherSource}.visible = true`;
+        case OpCode.data_hidelist:
+          return `${selectedWatcherSource}.visible = false`;
         case OpCode.procedures_call:
           return `yield* this.${
             // Get name of custom block script with given PROCCODE:
@@ -913,8 +925,32 @@ export default function toLeopard(
   }
 
   for (const target of [project.stage, ...project.sprites]) {
+    // We don't want to include JavaScript for unused variable watchers.
+    // Some watchers start invisible but appear later, so this code builds a list of
+    // watchers that appear in "show variable" and "show list" blocks. The list is
+    // actually *used* later, by some other code.
+    let shownWatchers = new Set();
+    let targetsToCheckForShowBlocks: Target[];
+    if (target.isStage) {
+      targetsToCheckForShowBlocks = [project.stage, ...project.sprites];
+    } else {
+      targetsToCheckForShowBlocks = [target];
+    }
+    for (const checkTarget of targetsToCheckForShowBlocks) {
+      for (const script of checkTarget.scripts) {
+        for (const block of script.blocks) {
+          if (block.opcode === OpCode.data_showvariable) {
+            shownWatchers.add(block.inputs.VARIABLE.value);
+          }
+          if (block.opcode === OpCode.data_showlist) {
+            shownWatchers.add(block.inputs.LIST.value);
+          }
+        }
+      }
+    }
+
     files[`${target.name}/${target.name}.js`] = `
-      import { ${target.isStage ? "Stage as StageBase" : "Sprite"}, Trigger, Costume, Color, Sound } from '${
+      import { ${target.isStage ? "Stage as StageBase" : "Sprite"}, Trigger, Watcher, Costume, Color, Sound } from '${
       options.leopardJSURL
     }';
 
@@ -970,6 +1006,37 @@ export default function toLeopard(
 
           ${[...target.variables, ...target.lists]
             .map(variable => `this.vars.${variable.name} = ${toOptimalJavascriptRepresentation(variable.value)};`)
+            .join("\n")}
+          
+          ${[...target.variables, ...target.lists]
+            .map(
+              variable =>
+                [
+                  variable,
+                  Object.entries(variableNameMap.get(target)).find(([, newName]) => newName === variable.name)[0]
+                ] as [Variable | List, string]
+            )
+            .filter(([variable, oldName]) => variable.visible || shownWatchers.has(oldName))
+            .map(([variable, oldName]) => {
+              return `this.watchers.${variable.name} = new Watcher({
+              label: ${JSON.stringify((target.isStage ? "" : `${target.name}: `) + oldName)},
+              style: ${JSON.stringify(
+                variable instanceof List
+                  ? "normal"
+                  : { default: "normal", large: "large", slider: "slider" }[variable.mode]
+              )},
+              visible: ${JSON.stringify(variable.visible)},
+              value: () => this.vars.${variable.name},
+              ${
+                variable instanceof Variable && variable.mode === "slider"
+                  ? `setValue: (value) => { this.vars.${variable.name} = value; },\n`
+                  : ""
+              }x: ${JSON.stringify(variable.x + 240)},
+              y: ${JSON.stringify(180 - variable.y)},
+              ${"width" in variable ? `width: ${JSON.stringify(variable.width)},` : ""}
+              ${"height" in variable ? `height: ${JSON.stringify(variable.height)},` : ""}
+            });`;
+            })
             .join("\n")}
         }
 
