@@ -887,7 +887,9 @@ export default function toLeopard(
           .join(",\n")}
       };
 
-      const project = new Project(stage, sprites);
+      const project = new Project(stage, sprites, {
+        frameRate: 30 // Set to 60 to make your project run faster
+      });
       export default project;
     `
   };
