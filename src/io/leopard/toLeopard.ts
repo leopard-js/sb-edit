@@ -172,7 +172,9 @@ export default function toLeopard(
       "clones",
       "andClones",
       "effects",
-      "rotationStyle"
+      "rotationStyle",
+      "moveAhead",
+      "moveBehind"
     ]);
     for (const script of target.scripts) {
       script.setName(uniqueScriptName(camelCase(script.name)));
