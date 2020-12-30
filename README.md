@@ -108,5 +108,5 @@ fs.writeFileSync(saveLocation, Buffer.from(await project.toSb3()));
 ```js
 const project = /* Get yourself a `Project`... */;
 
-console.log(project.toScratchJS({ printWidth: 100 })); // Optionally pass a Prettier config object!
+console.log(project.toLeopard({ printWidth: 100 })); // Optionally pass a Prettier config object!
 ```
