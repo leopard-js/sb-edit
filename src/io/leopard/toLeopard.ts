@@ -766,16 +766,24 @@ export default function toLeopard(
           return `${selectedWatcherSource}.visible = true`;
         case OpCode.data_hidelist:
           return `${selectedWatcherSource}.visible = false`;
-        case OpCode.procedures_call:
-          return `yield* this.${
-            // Get name of custom block script with given PROCCODE:
-            target.scripts.find(
-              script =>
-                script.hat !== null &&
-                script.hat.opcode === OpCode.procedures_definition &&
-                script.hat.inputs.PROCCODE.value === block.inputs.PROCCODE.value
-            ).name
-          }(${block.inputs.INPUTS.value.map(inputToJS).join(", ")})`;
+        case OpCode.procedures_call: {
+          // Get name of custom block script with given PROCCODE:
+          const procName = target.scripts.find(
+            script =>
+              script.hat !== null &&
+              script.hat.opcode === OpCode.procedures_definition &&
+              script.hat.inputs.PROCCODE.value === block.inputs.PROCCODE.value
+          ).name;
+
+          const procArgs = `${block.inputs.INPUTS.value.map(inputToJS).join(", ")}`;
+
+          // Warp-mode procedures execute all child procedures in warp mode as well
+          if (warp) {
+            return `this.warp(this.${procName})(${procArgs})`;
+          } else {
+            return `yield* this.${procName}(${procArgs})`;
+          }
+        }
         case OpCode.argument_reporter_string_number:
         case OpCode.argument_reporter_boolean:
           return customBlockArgNameMap.get(script)[block.inputs.VALUE.value];
@@ -1009,7 +1017,7 @@ export default function toLeopard(
           ${[...target.variables, ...target.lists]
             .map(variable => `this.vars.${variable.name} = ${toOptimalJavascriptRepresentation(variable.value)};`)
             .join("\n")}
-          
+
           ${[...target.variables, ...target.lists]
             .map(
               variable =>
