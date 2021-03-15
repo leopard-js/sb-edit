@@ -1019,13 +1019,11 @@ export default function toLeopard(
             .join("\n")}
 
           ${[...target.variables, ...target.lists]
-            .map(
-              variable =>
-                [
-                  variable,
-                  Object.entries(variableNameMap.get(target)).find(([, newName]) => newName === variable.name)[0]
-                ] as [Variable | List, string]
-            )
+            .map(variable => {
+              const varEntries = Object.entries(variableNameMap.get(target));
+              const [oldName] = varEntries.find(([, newName]) => newName === variable.name) || [];
+              return [variable, oldName] as [Variable | List, string];
+            })
             .filter(([variable, oldName]) => variable.visible || shownWatchers.has(oldName))
             .map(([variable, oldName]) => {
               return `this.watchers.${variable.name} = new Watcher({
