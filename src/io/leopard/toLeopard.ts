@@ -520,6 +520,8 @@ export default function toLeopard(
           switch (block.inputs.TOUCHINGOBJECTMENU.value) {
             case "_mouse_":
               return `this.touching("mouse")`;
+            case "_edge_":
+              return `this.touching("edge")`;
             default:
               return `this.touching(this.sprites[${JSON.stringify(
                 targetNameMap[block.inputs.TOUCHINGOBJECTMENU.value]
