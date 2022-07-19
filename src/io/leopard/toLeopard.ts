@@ -606,6 +606,8 @@ export default function toLeopard(
           return `this.mouse.x`;
         case OpCode.sensing_mousey:
           return `this.mouse.y`;
+        case OpCode.sensing_loudness:
+          return `this.loudness`;
         case OpCode.sensing_timer:
           return `this.timer`;
         case OpCode.sensing_resettimer:
