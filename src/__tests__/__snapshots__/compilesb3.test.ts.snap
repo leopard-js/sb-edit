@@ -87,9 +87,19 @@ export default class Stage extends StageBase {
       ),
       new Trigger(Trigger.CLICKED, this.whenstageclicked),
       new Trigger(
+        Trigger.LOUDNESS_GREATER_THAN,
+        { VALUE: 10 },
+        this.whengreaterthan
+      ),
+      new Trigger(
         Trigger.BROADCAST,
         { name: \\"message1\\" },
         this.whenIReceiveMessage1
+      ),
+      new Trigger(
+        Trigger.TIMER_GREATER_THAN,
+        { VALUE: () => this.vars.myVariable * 2 },
+        this.whengreaterthan2
       )
     ];
 
@@ -203,21 +213,6 @@ export default class Stage extends StageBase {
     this.vars.myVariable += this.vars.CloudVar;
     this.watchers.CloudVar.visible = true;
     this.watchers.myVariable.visible = false;
-    this.vars.testList.push(this.vars.testList.includes(\\"thing\\"));
-    this.vars.testList.splice(1 - 1, 1);
-    this.vars.testList = [];
-    this.vars.testList.splice(
-      this.vars.testList.indexOf(\\"thing\\") + 1 - 1,
-      0,
-      \\"thing\\"
-    );
-    this.vars.testList.splice(
-      this.vars.testList[1 - 1] - 1,
-      1,
-      this.vars.testList.length
-    );
-    this.watchers.testList.visible = true;
-    this.watchers.testList.visible = false;
   }
 
   *whenIReceiveMessage1() {
@@ -243,6 +238,24 @@ export default class Stage extends StageBase {
     if (boolean) {
       null;
     }
+  }
+
+  *whengreaterthan2() {
+    this.vars.testList.push(this.vars.testList.includes(\\"thing\\"));
+    this.vars.testList.splice(1 - 1, 1);
+    this.vars.testList = [];
+    this.vars.testList.splice(
+      this.vars.testList.indexOf(\\"thing\\") + 1 - 1,
+      0,
+      \\"thing\\"
+    );
+    this.vars.testList.splice(
+      this.vars.testList[1 - 1] - 1,
+      1,
+      this.vars.testList.length
+    );
+    this.watchers.testList.visible = true;
+    this.watchers.testList.visible = false;
   }
 }
 ",
@@ -329,6 +342,35 @@ Object {
           "next": null,
           "opcode": "operator_letter_of",
           "parent": "YrF~4pz4M;0%ACjBS61$",
+          "shadow": false,
+          "topLevel": false,
+        },
+        "$2pjc0Y=y?zcf/XRxnq~": Object {
+          "fields": Object {},
+          "inputs": Object {
+            "NUM1": Array [
+              3,
+              Array [
+                12,
+                "my variable",
+                "\`jEk@4|i[#Fk?(8x)AV.-my variable",
+              ],
+              Array [
+                4,
+                "",
+              ],
+            ],
+            "NUM2": Array [
+              1,
+              Array [
+                4,
+                2,
+              ],
+            ],
+          },
+          "next": null,
+          "opcode": "operator_multiply",
+          "parent": "38C@%O\`U+*JaX45^6M!w",
           "shadow": false,
           "topLevel": false,
         },
@@ -674,7 +716,7 @@ Object {
           },
           "next": "8^#h+p*}RC1lX9pMF8R=",
           "opcode": "data_addtolist",
-          "parent": "aW|1RIgGD:|^?YM(Xr,9",
+          "parent": "38C@%O\`U+*JaX45^6M!w",
           "shadow": false,
           "topLevel": false,
         },
@@ -719,6 +761,31 @@ Object {
           "parent": "2x$BbcP0S(?36lUIC4C~",
           "shadow": false,
           "topLevel": false,
+        },
+        "38C@%O\`U+*JaX45^6M!w": Object {
+          "fields": Object {
+            "WHENGREATERTHANMENU": Array [
+              "TIMER",
+              null,
+            ],
+          },
+          "inputs": Object {
+            "VALUE": Array [
+              3,
+              "$2pjc0Y=y?zcf/XRxnq~",
+              Array [
+                4,
+                10,
+              ],
+            ],
+          },
+          "next": "1O%-^3G)YMorNcbLWm]u",
+          "opcode": "event_whengreaterthan",
+          "parent": null,
+          "shadow": false,
+          "topLevel": true,
+          "x": 677,
+          "y": 579,
         },
         "3:GP{RA%%HDBF*QX$p41": Object {
           "fields": Object {
@@ -1755,7 +1822,7 @@ Object {
             ],
           },
           "inputs": Object {},
-          "next": "1O%-^3G)YMorNcbLWm]u",
+          "next": null,
           "opcode": "data_hidevariable",
           "parent": "K~497*f={?x0h7Nj\`zr}",
           "shadow": false,
@@ -2514,8 +2581,8 @@ Object {
           "dataFormat": "wav",
           "md5ext": "83a9787d4cb6f3b7632b4ddfebf74367.wav",
           "name": "pop",
-          "rate": 44100,
-          "sampleCount": 1032,
+          "rate": 48000,
+          "sampleCount": 1124,
         },
       ],
       "tempo": 60,
@@ -3093,8 +3160,8 @@ Object {
           "dataFormat": "wav",
           "md5ext": "83a9787d4cb6f3b7632b4ddfebf74367.wav",
           "name": "pop",
-          "rate": 44100,
-          "sampleCount": 1032,
+          "rate": 48000,
+          "sampleCount": 1124,
         },
       ],
       "variables": Object {},
@@ -3195,13 +3262,6 @@ set [my variable v] to [0]
 change [my variable v] by (☁ cloud var :: variables)
 show variable [☁ cloud var v]
 hide variable [my variable v]
-add <[test list v] contains [thing] ? :: list> to [test list v]
-delete (1) of [test list v]
-delete all of [test list v]
-insert [thing] at (item # of [thing] in [test list v]) of [test list v]
-replace item (item (1) of [test list v]) of [test list v] with (length of [test list v])
-show list [test list v]
-hide list [test list v]
 
 when I receive [message1 v]
 broadcast (message1 v)
@@ -3223,6 +3283,15 @@ ask ([10 ^ v] of (15)) and wait
 define block name <boolean> label text (number or text) // run without screen refresh
 play sound (number or text :: custom-arg) until done
 if <boolean :: custom-arg> then
-end",
+end
+
+when [timer v] > ((my variable :: variables) * (2))
+add <[test list v] contains [thing] ? :: list> to [test list v]
+delete (1) of [test list v]
+delete all of [test list v]
+insert [thing] at (item # of [thing] in [test list v]) of [test list v]
+replace item (item (1) of [test list v]) of [test list v] with (length of [test list v])
+show list [test list v]
+hide list [test list v]",
 }
 `;
