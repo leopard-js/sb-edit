@@ -8,33 +8,6 @@ import * as prettier from "prettier";
 import Target from "../../Target";
 import { List, Variable } from "../../Data";
 
-function triggerInitCode(script: Script): string | null {
-  const hat = script.hat;
-
-  if (hat === null) {
-    return null;
-  }
-
-  const triggerInitStr = (name: string, options?: object): string =>
-    `new Trigger(Trigger.${name}${options ? `, ${JSON.stringify(options)}` : ""}, this.${script.name})`;
-
-  switch (hat.opcode) {
-    case OpCode.event_whenflagclicked:
-      return triggerInitStr("GREEN_FLAG");
-    case OpCode.event_whenkeypressed:
-      return triggerInitStr("KEY_PRESSED", { key: hat.inputs.KEY_OPTION.value });
-    case OpCode.event_whenthisspriteclicked:
-    case OpCode.event_whenstageclicked:
-      return triggerInitStr("CLICKED");
-    case OpCode.event_whenbroadcastreceived:
-      return triggerInitStr("BROADCAST", { name: hat.inputs.BROADCAST_OPTION.value });
-    case OpCode.control_start_as_clone:
-      return triggerInitStr("CLONE_START");
-    default:
-      return null;
-  }
-}
-
 function uniqueNameGenerator(usedNames: string[] = []) {
   function uniqueName(name): string {
     if (!usedNames.includes(name)) {
@@ -198,8 +171,66 @@ export default function toLeopard(
     }
   }
 
+  function staticBlockInputToLiteral(value: string | number | boolean | object): string {
+    const asNum = Number(value as string);
+    console.log(value, asNum);
+    if (!isNaN(asNum) && value !== "") {
+      return JSON.stringify(asNum);
+    }
+    return JSON.stringify(value);
+  }
+
+  function triggerInitCode(script: Script, target: Target): string | null {
+    const hat = script.hat;
+
+    if (hat === null) {
+      return null;
+    }
+
+    const triggerInitStr = (name: string, options?: Partial<Record<string, string>>): string => {
+      let optionsStr = "";
+      if (options) {
+        const optionValues = [];
+        for (const [optionName, optionValue] of Object.entries(options)) {
+          optionValues.push(`${optionName}: ${optionValue}`);
+        }
+        optionsStr = `, {${optionValues.join(", ")}}`;
+      }
+      return `new Trigger(Trigger.${name}${optionsStr}, this.${script.name})`;
+    };
+
+    switch (hat.opcode) {
+      case OpCode.event_whenflagclicked:
+        return triggerInitStr("GREEN_FLAG");
+      case OpCode.event_whenkeypressed:
+        return triggerInitStr("KEY_PRESSED", { key: JSON.stringify(hat.inputs.KEY_OPTION.value) });
+      case OpCode.event_whenthisspriteclicked:
+      case OpCode.event_whenstageclicked:
+        return triggerInitStr("CLICKED");
+      case OpCode.event_whenbroadcastreceived:
+        return triggerInitStr("BROADCAST", { name: JSON.stringify(hat.inputs.BROADCAST_OPTION.value) });
+      case OpCode.event_whengreaterthan: {
+        const valueInput = hat.inputs.VALUE as BlockInput.Any;
+        // If the "greater than" value is a literal, we can include it directly.
+        // Otherwise, it's a block that may depend on sprite state and needs to
+        // be a function.
+        const value =
+          valueInput.type === "block"
+            ? `() => ${blockToJSWithContext(valueInput.value, target)}`
+            : staticBlockInputToLiteral(valueInput.value);
+        return triggerInitStr(`${hat.inputs.WHENGREATERTHANMENU.value}_GREATER_THAN`, {
+          VALUE: value
+        });
+      }
+      case OpCode.control_start_as_clone:
+        return triggerInitStr("CLONE_START");
+      default:
+        return null;
+    }
+  }
+
   function scriptToJS(script: Script, target: Target): string {
-    const body = script.body.map(blockToJS).join(";\n");
+    const body = script.body.map(block => blockToJSWithContext(block, target, script)).join(";\n");
     if (script.hat && script.hat.opcode === OpCode.procedures_definition) {
       return `
         * ${script.name}(${script.hat.inputs.ARGUMENTS.value
@@ -215,6 +246,10 @@ export default function toLeopard(
         ${body}
       }
     `;
+  }
+
+  function blockToJSWithContext(block: Block, target: Target, script?: Script): string {
+    return blockToJS(block);
 
     function inputToJS(input: BlockInput.Any): string {
       // TODO: Right now, inputs can be completely undefined if imported from
@@ -231,17 +266,14 @@ export default function toLeopard(
         case "blocks":
           return input.value.map(block => blockToJS(block as Block)).join(";\n");
         default: {
-          const asNum = Number(input.value as string);
-          if (!isNaN(asNum) && input.value !== "") {
-            return JSON.stringify(asNum);
-          }
-          return JSON.stringify(input.value);
+          return staticBlockInputToLiteral(input.value);
         }
       }
     }
 
     function blockToJS(block: Block): string {
-      const warp = script.hat && script.hat.opcode === OpCode.procedures_definition && script.hat.inputs.WARP.value;
+      const warp =
+        script && script.hat && script.hat.opcode === OpCode.procedures_definition && script.hat.inputs.WARP.value;
 
       // If the block contains a variable or list dropdown,
       // get the code to grab that variable now for convenience
@@ -788,6 +820,8 @@ export default function toLeopard(
         }
         case OpCode.argument_reporter_string_number:
         case OpCode.argument_reporter_boolean:
+          // Argument reporters dragged outside their script return 0
+          if (!script) return "0";
           return customBlockArgNameMap.get(script)[block.inputs.VALUE.value];
         case OpCode.pen_clear:
           return `this.clearPen()`;
@@ -1009,7 +1043,7 @@ export default function toLeopard(
 
           this.triggers = [
             ${target.scripts
-              .map(triggerInitCode)
+              .map(script => triggerInitCode(script, target))
               .filter(trigger => trigger !== null)
               .join(",\n")}
           ];
