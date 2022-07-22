@@ -173,7 +173,6 @@ export default function toLeopard(
 
   function staticBlockInputToLiteral(value: string | number | boolean | object): string {
     const asNum = Number(value as string);
-    console.log(value, asNum);
     if (!isNaN(asNum) && value !== "") {
       return JSON.stringify(asNum);
     }
