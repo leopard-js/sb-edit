@@ -15,6 +15,7 @@ module.exports = {
     "prefer-const": "off",
     "@typescript-eslint/camelcase": "off",
     "@typescript-eslint/no-use-before-define": "off",
-    "@typescript-eslint/no-this-alias": "off"
+    "@typescript-eslint/no-this-alias": "off",
+    "no-console": ["error", {"allow": ["warn", "error"]}]
   }
 };
