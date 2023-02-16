@@ -93,19 +93,20 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     for (const key of Object.keys(fieldEntries)) {
       const input = inputs[key];
       // Fields are stored as a plain [value, id?] pair.
+      let valueOrName;
       let id: string;
       switch (input.type) {
         case "variable":
-          id = getVariableId(input.value, target, stage);
-          break;
         case "list":
-          id = getListId(input.value, target, stage);
+          valueOrName = input.value.name;
+          id = input.value.id;
           break;
         default:
+          valueOrName = input.value;
           id = null;
           break;
       }
-      fields[key] = [input.value, id];
+      fields[key] = [valueOrName, id];
     }
 
     return fields;
@@ -397,14 +398,12 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
 
           switch (input.value.opcode) {
             case OpCode.data_variable: {
-              const variableName = input.value.inputs.VARIABLE.value;
-              const variableId = getVariableId(variableName, target, stage);
+              const { id: variableId, name: variableName } = input.value.inputs.VARIABLE.value;
               obscuringBlockValue = [BIS.VAR_PRIMITIVE, variableName, variableId];
               break;
             }
             case OpCode.data_listcontents: {
-              const listName = input.value.inputs.LIST.value;
-              const listId = getListId(listName, target, stage);
+              const { id: listId, name: listName } = input.value.inputs.LIST.value;
               obscuringBlockValue = [BIS.LIST_PRIMITIVE, listName, listId];
               break;
             }

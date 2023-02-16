@@ -61,6 +61,8 @@ export default function toScratchblocks(
 
       case "variable":
       case "list":
+        return `[${escape(inp.value.name)} v]`;
+
       case "rotationStyle":
       case "scrollAlignment":
       case "stopMenu":

@@ -216,7 +216,7 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
                 type: "block",
                 value: new BlockBase({
                   opcode: OpCode.data_variable,
-                  inputs: { VARIABLE: { type: "variable", value: value[1] } },
+                  inputs: { VARIABLE: { type: "variable", value: { id: value[2], name: value[1] } } },
                   parent: blockId
                 }) as Block
               });
@@ -227,7 +227,7 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
                 type: "block",
                 value: new BlockBase({
                   opcode: OpCode.data_listcontents,
-                  inputs: { LIST: { type: "list", value: value[1] } },
+                  inputs: { LIST: { type: "list", value: { id: value[2], name: value[1] } } },
                   parent: blockId
                 }) as Block
               });
@@ -268,7 +268,11 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
       let result = {};
       for (const [fieldName, values] of Object.entries(fields)) {
         const type = sb3.fieldTypeMap[opcode][fieldName];
-        result[fieldName] = { type, value: values[0] };
+        if (fieldName === "VARIABLE" || fieldName === "LIST") {
+          result[fieldName] = { type, value: { id: values[1], name: values[0] } };
+        } else {
+          result[fieldName] = { type, value: values[0] };
+        }
       }
 
       return result;

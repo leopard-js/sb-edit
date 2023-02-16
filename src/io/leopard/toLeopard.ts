@@ -99,7 +99,7 @@ export default function toLeopard(
 
   let targetNameMap = {};
   let customBlockArgNameMap: Map<Script, { [key: string]: string }> = new Map();
-  let variableNameMap: Map<Target, { [key: string]: string }> = new Map();
+  let variableNameMap: { [id: string]: string } = {}; // ID to unique (Leopard) name
 
   for (const target of [project.stage, ...project.sprites]) {
     const newTargetName = uniqueName(camelCase(target.name, true));
@@ -108,19 +108,9 @@ export default function toLeopard(
 
     let uniqueVariableName = uniqueName.branch();
 
-    const varNameMap = {};
-    variableNameMap.set(target, varNameMap);
-
-    for (const list of target.lists) {
-      const newName = uniqueVariableName(camelCase(list.name));
-      varNameMap[list.name] = newName;
-      list.setName(newName);
-    }
-
-    for (const variable of target.variables) {
-      const newName = uniqueVariableName(camelCase(variable.name));
-      varNameMap[variable.name] = newName;
-      variable.setName(newName);
+    for (const { id, name } of [...target.lists, ...target.variables]) {
+      const newName = uniqueVariableName(camelCase(name));
+      variableNameMap[id] = newName;
     }
 
     const uniqueScriptName = uniqueNameGenerator([
@@ -276,24 +266,25 @@ export default function toLeopard(
 
       // If the block contains a variable or list dropdown,
       // get the code to grab that variable now for convenience
-      let varName: string = null;
       let selectedVarSource: string = null;
       let selectedWatcherSource: string = null;
+      let varInputId: string = null;
+      let isSpriteVar: boolean = null;
       if ("VARIABLE" in block.inputs) {
-        varName = block.inputs.VARIABLE.value.toString();
+        varInputId = (block.inputs.VARIABLE.value as { id: string }).id;
+        isSpriteVar = target.variables.some(({ id }) => id === varInputId);
+      } else if ("LIST" in block.inputs) {
+        varInputId = (block.inputs.LIST.value as { id: string }).id;
+        isSpriteVar = target.lists.some(({ id }) => id === varInputId);
       }
-      if ("LIST" in block.inputs) {
-        varName = block.inputs.LIST.value.toString();
-      }
-      if (varName !== null) {
-        const spriteVars = variableNameMap.get(target);
-        if (varName in spriteVars) {
-          selectedVarSource = `this.vars.${spriteVars[varName]}`;
-          selectedWatcherSource = `this.watchers.${spriteVars[varName]}`;
+      if (varInputId) {
+        const newName = variableNameMap[varInputId];
+        if (isSpriteVar) {
+          selectedVarSource = `this.vars.${newName}`;
+          selectedWatcherSource = `this.watchers.${newName}`;
         } else {
-          const stageVars = variableNameMap.get(project.stage);
-          selectedVarSource = `this.stage.vars.${stageVars[varName]}`;
-          selectedWatcherSource = `this.stage.watchers.${stageVars[varName]}`;
+          selectedVarSource = `this.stage.vars.${newName}`;
+          selectedWatcherSource = `this.stage.watchers.${newName}`;
         }
       }
 
@@ -643,7 +634,10 @@ export default function toLeopard(
               if (block.inputs.OBJECT.value !== "_stage_") {
                 varOwner = project.sprites.find(sprite => sprite.name === targetNameMap[block.inputs.OBJECT.value]);
               }
-              propName = `vars[${JSON.stringify(variableNameMap.get(varOwner)[block.inputs.PROPERTY.value])}]`;
+              // "of" block gets variables by name, not ID, using lookupVariableByNameAndType in scratch-vm.
+              const variable = varOwner.variables.find(variable => variable.name === block.inputs.PROPERTY.value);
+              const newName = variableNameMap[variable.id];
+              propName = `vars.${newName}`;
               break;
             }
           }
@@ -976,7 +970,7 @@ export default function toLeopard(
     // Some watchers start invisible but appear later, so this code builds a list of
     // watchers that appear in "show variable" and "show list" blocks. The list is
     // actually *used* later, by some other code.
-    let shownWatchers = new Set();
+    let shownWatchers: Set<string> = new Set();
     let targetsToCheckForShowBlocks: Target[];
     if (target.isStage) {
       targetsToCheckForShowBlocks = [project.stage, ...project.sprites];
@@ -1052,31 +1046,28 @@ export default function toLeopard(
           ${target.volume !== 100 ? `this.audioEffects.volume = ${target.volume};` : ""}
 
           ${[...target.variables, ...target.lists]
-            .map(variable => `this.vars.${variable.name} = ${toOptimalJavascriptRepresentation(variable.value)};`)
+            .map(
+              variable =>
+                `this.vars.${variableNameMap[variable.id]} = ${toOptimalJavascriptRepresentation(variable.value)};`
+            )
             .join("\n")}
 
           ${[...target.variables, ...target.lists]
-            .map(
-              variable =>
-                [
-                  variable,
-                  Object.entries(variableNameMap.get(target)).find(([, newName]) => newName === variable.name)[0]
-                ] as [Variable | List, string]
-            )
-            .filter(([variable, oldName]) => variable.visible || shownWatchers.has(oldName))
-            .map(([variable, oldName]) => {
-              return `this.watchers.${variable.name} = new Watcher({
-              label: ${JSON.stringify((target.isStage ? "" : `${target.name}: `) + oldName)},
+            .map(variable => [variable, variableNameMap[variable.id]] as [Variable | List, string])
+            .filter(([variable]) => variable.visible || shownWatchers.has(variable.id))
+            .map(([variable, newName]) => {
+              return `this.watchers.${newName} = new Watcher({
+              label: ${JSON.stringify((target.isStage ? "" : `${target.name}: `) + variable.name)},
               style: ${JSON.stringify(
                 variable instanceof List
                   ? "normal"
                   : { default: "normal", large: "large", slider: "slider" }[variable.mode]
               )},
               visible: ${JSON.stringify(variable.visible)},
-              value: () => this.vars.${variable.name},
+              value: () => this.vars.${newName},
               ${
                 variable instanceof Variable && variable.mode === "slider"
-                  ? `setValue: (value) => { this.vars.${variable.name} = value; },\n`
+                  ? `setValue: (value) => { this.vars.${newName} = value; },\n`
                   : ""
               }x: ${JSON.stringify(variable.x + 240)},
               y: ${JSON.stringify(180 - variable.y)},
