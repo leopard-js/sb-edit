@@ -141,7 +141,8 @@ export default function toLeopard(
       "rotationStyle",
       "moveAhead",
       "moveBehind",
-      "toBoolean"
+      "toBoolean",
+      "compare"
     ]);
     for (const script of target.scripts) {
       script.setName(uniqueScriptName(camelCase(script.name)));
@@ -1017,17 +1018,17 @@ export default function toLeopard(
 
         case OpCode.operator_gt:
           satisfiesInputShape = "boolean";
-          blockSource = `((${inputToJS(block.inputs.OPERAND1)}) > (${inputToJS(block.inputs.OPERAND2)}))`;
+          blockSource = `(this.compare((${inputToJS(block.inputs.OPERAND1)}), (${inputToJS(block.inputs.OPERAND2)})) > 0)`;
           break;
 
         case OpCode.operator_lt:
           satisfiesInputShape = "boolean";
-          blockSource = `((${inputToJS(block.inputs.OPERAND1)}) < (${inputToJS(block.inputs.OPERAND2)}))`;
+          blockSource = `(this.compare((${inputToJS(block.inputs.OPERAND1)}), (${inputToJS(block.inputs.OPERAND2)})) < 0)`;
           break;
 
         case OpCode.operator_equals:
           satisfiesInputShape = "boolean";
-          blockSource = `((${inputToJS(block.inputs.OPERAND1)}) == (${inputToJS(block.inputs.OPERAND2)}))`;
+          blockSource = `(this.compare((${inputToJS(block.inputs.OPERAND1)}), (${inputToJS(block.inputs.OPERAND2)})) === 0)`;
           break;
 
         case OpCode.operator_and:
