@@ -8,7 +8,7 @@ import * as prettier from "prettier";
 import Target from "../../Target";
 import { List, Variable } from "../../Data";
 
-type InputShape = "number" | "string" | "boolean" | "stack";
+type InputShape = "any" | "number" | "string" | "boolean" | "stack";
 
 function uniqueNameGenerator(usedNames: string[] = []) {
   function uniqueName(name): string {
@@ -450,33 +450,33 @@ export default function toLeopard(
 
         case OpCode.motion_xscroll:
         case OpCode.motion_yscroll:
-          satisfiesInputShape = "string";
+          satisfiesInputShape = "any";
           blockSource = `undefined`; // Compatibility with Scratch 3.0 \:)/
           break;
 
         case OpCode.looks_sayforsecs:
           satisfiesInputShape = "stack";
-          blockSource = `yield* this.sayAndWait((${inputToJS(block.inputs.MESSAGE)}), (${inputToJS(block.inputs.SECS)}))`;
+          blockSource = `yield* this.sayAndWait((${inputToJS(block.inputs.MESSAGE, "string")}), (${inputToJS(block.inputs.SECS)}))`;
           break;
 
         case OpCode.looks_say:
           satisfiesInputShape = "stack";
-          blockSource = `this.say(${inputToJS(block.inputs.MESSAGE)})`;
+          blockSource = `this.say(${inputToJS(block.inputs.MESSAGE, "string")})`;
           break;
 
         case OpCode.looks_thinkforsecs:
           satisfiesInputShape = "stack";
-          blockSource = `yield* this.thinkAndWait((${inputToJS(block.inputs.MESSAGE)}), (${inputToJS(block.inputs.SECS)}))`;
+          blockSource = `yield* this.thinkAndWait((${inputToJS(block.inputs.MESSAGE, "string")}), (${inputToJS(block.inputs.SECS)}))`;
           break;
 
         case OpCode.looks_think:
           satisfiesInputShape = "stack";
-          blockSource = `this.think(${inputToJS(block.inputs.MESSAGE)})`;
+          blockSource = `this.think(${inputToJS(block.inputs.MESSAGE, "string")})`;
           break;
 
         case OpCode.looks_switchcostumeto:
           satisfiesInputShape = "stack";
-          blockSource = `this.costume = (${inputToJS(block.inputs.COSTUME)})`;
+          blockSource = `this.costume = (${inputToJS(block.inputs.COSTUME, "any")})`;
           break;
 
         case OpCode.looks_nextcostume:
@@ -486,7 +486,7 @@ export default function toLeopard(
 
         case OpCode.looks_switchbackdropto:
           satisfiesInputShape = "stack";
-          blockSource = `${stage}.costume = (${inputToJS(block.inputs.BACKDROP)})`;
+          blockSource = `${stage}.costume = (${inputToJS(block.inputs.BACKDROP, "any")})`;
           break;
 
         case OpCode.looks_nextbackdrop:
@@ -594,12 +594,12 @@ export default function toLeopard(
 
         case OpCode.sound_playuntildone:
           satisfiesInputShape = "stack";
-          blockSource = `yield* this.playSoundUntilDone(${inputToJS(block.inputs.SOUND_MENU)})`;
+          blockSource = `yield* this.playSoundUntilDone(${inputToJS(block.inputs.SOUND_MENU, "any")})`;
           break;
 
         case OpCode.sound_play:
           satisfiesInputShape = "stack";
-          blockSource = `yield* this.startSound(${inputToJS(block.inputs.SOUND_MENU)})`;
+          blockSource = `yield* this.startSound(${inputToJS(block.inputs.SOUND_MENU, "any")})`;
           break;
 
         case OpCode.sound_setvolumeto:
@@ -651,12 +651,12 @@ export default function toLeopard(
 
         case OpCode.event_broadcast:
           satisfiesInputShape = "stack";
-          blockSource = `this.broadcast(${inputToJS(block.inputs.BROADCAST_INPUT)})`;
+          blockSource = `this.broadcast(${inputToJS(block.inputs.BROADCAST_INPUT, "string")})`;
           break;
 
         case OpCode.event_broadcastandwait:
           satisfiesInputShape = "stack";
-          blockSource = `yield* this.broadcastAndWait(${inputToJS(block.inputs.BROADCAST_INPUT)})`;
+          blockSource = `yield* this.broadcastAndWait(${inputToJS(block.inputs.BROADCAST_INPUT, "string")})`;
           break;
 
         case OpCode.control_wait:
@@ -842,7 +842,7 @@ export default function toLeopard(
 
         case OpCode.sensing_askandwait:
           satisfiesInputShape = "stack";
-          blockSource = `yield* this.askAndWait(${inputToJS(block.inputs.QUESTION)})`;
+          blockSource = `yield* this.askAndWait(${inputToJS(block.inputs.QUESTION, "string")})`;
           break;
 
         case OpCode.sensing_answer:
@@ -852,7 +852,7 @@ export default function toLeopard(
 
         case OpCode.sensing_keypressed:
           satisfiesInputShape = "boolean";
-          blockSource = `this.keyPressed(${inputToJS(block.inputs.KEY_OPTION)})`;
+          blockSource = `this.keyPressed(${inputToJS(block.inputs.KEY_OPTION, "string")})`;
           break;
 
         case OpCode.sensing_mousedown:
@@ -925,7 +925,7 @@ export default function toLeopard(
               const variable = varOwner.variables.find(variable => variable.name === block.inputs.PROPERTY.value);
               const newName = variableNameMap[variable.id];
               propName = `vars.${newName}`;
-              satisfiesInputShape = "string";
+              satisfiesInputShape = "any";
               break;
             }
           }
@@ -987,7 +987,7 @@ export default function toLeopard(
           break;
 
         case OpCode.sensing_userid:
-          satisfiesInputShape = "string";
+          satisfiesInputShape = "any";
           blockSource = `undefined`; // Obsolete no-op block.
           break;
 
@@ -1048,22 +1048,22 @@ export default function toLeopard(
 
         case OpCode.operator_join:
           satisfiesInputShape = "string";
-          blockSource = `("" + (${inputToJS(block.inputs.STRING1)}) + (${inputToJS(block.inputs.STRING2)}))`;
+          blockSource = `((${inputToJS(block.inputs.STRING1, "string")}) + (${inputToJS(block.inputs.STRING2, "string")}))`;
           break;
 
         case OpCode.operator_letter_of:
           satisfiesInputShape = "string";
-          blockSource = `(String(${inputToJS(block.inputs.STRING)})[(${inputToJS(block.inputs.LETTER)}) - 1])`;
+          blockSource = `(((${inputToJS(block.inputs.STRING, "string")})[(${inputToJS(block.inputs.LETTER)}) - 1]) ?? "")`;
           break;
 
         case OpCode.operator_length:
           satisfiesInputShape = "number";
-          blockSource = `(${inputToJS(block.inputs.STRING)}).length`;
+          blockSource = `(${inputToJS(block.inputs.STRING, "string")}).length`;
           break;
 
         case OpCode.operator_contains:
           satisfiesInputShape = "boolean";
-          blockSource = `(${inputToJS(block.inputs.STRING1)}).includes(${inputToJS(block.inputs.STRING2)})`;
+          blockSource = `(${inputToJS(block.inputs.STRING1, "string")}).includes(${inputToJS(block.inputs.STRING2)})`;
           break;
 
         case OpCode.operator_mod:
@@ -1125,13 +1125,13 @@ export default function toLeopard(
           break;
 
         case OpCode.data_variable:
-          satisfiesInputShape = "string";
+          satisfiesInputShape = "any";
           blockSource = selectedVarSource;
           break;
 
         case OpCode.data_setvariableto:
           satisfiesInputShape = "stack";
-          blockSource = `${selectedVarSource} = (${inputToJS(block.inputs.VALUE)})`;
+          blockSource = `${selectedVarSource} = (${inputToJS(block.inputs.VALUE, "any")})`;
           break;
 
         case OpCode.data_changevariableby:
@@ -1156,7 +1156,7 @@ export default function toLeopard(
 
         case OpCode.data_addtolist:
           satisfiesInputShape = "stack";
-          blockSource = `${selectedVarSource}.push(${inputToJS(block.inputs.ITEM)})`;
+          blockSource = `${selectedVarSource}.push(${inputToJS(block.inputs.ITEM, "any")})`;
           break;
 
         case OpCode.data_deleteoflist:
@@ -1180,29 +1180,29 @@ export default function toLeopard(
         case OpCode.data_insertatlist:
           satisfiesInputShape = "stack";
           blockSource = `${selectedVarSource}.splice(((${inputToJS(block.inputs.INDEX)}) - 1), 0, (${inputToJS(
-            block.inputs.ITEM
+            block.inputs.ITEM, "any"
           )}))`;
           break;
 
         case OpCode.data_replaceitemoflist:
           satisfiesInputShape = "stack";
           blockSource = `${selectedVarSource}.splice(((${inputToJS(block.inputs.INDEX)}) - 1), 1, (${inputToJS(
-            block.inputs.ITEM
+            block.inputs.ITEM, "any"
           )}))`;
           break;
 
         case OpCode.data_itemoflist:
-          satisfiesInputShape = "string";
+          satisfiesInputShape = "any";
           if (block.inputs.INDEX.value === "last") {
-            blockSource = `${selectedVarSource}[${selectedVarSource}.length - 1]`;
+            blockSource = `(${selectedVarSource}[${selectedVarSource}.length - 1] ?? '')`;
           } else {
-            blockSource = `${selectedVarSource}[(${inputToJS(block.inputs.INDEX)}) - 1]`;
+            blockSource = `(${selectedVarSource}[(${inputToJS(block.inputs.INDEX)}) - 1] ?? '')`;
           }
           break;
 
         case OpCode.data_itemnumoflist:
           satisfiesInputShape = "number";
-          blockSource = `(${selectedVarSource}.indexOf(${inputToJS(block.inputs.ITEM)}) + 1)`;
+          blockSource = `(${selectedVarSource}.indexOf(${inputToJS(block.inputs.ITEM, "any")}) + 1)`;
           break;
 
         case OpCode.data_lengthoflist:
@@ -1212,7 +1212,7 @@ export default function toLeopard(
 
         case OpCode.data_listcontainsitem:
           satisfiesInputShape = "boolean";
-          blockSource = `${selectedVarSource}.includes(${inputToJS(block.inputs.ITEM)})`;
+          blockSource = `${selectedVarSource}.includes(${inputToJS(block.inputs.ITEM, "any")})`;
           break;
 
         case OpCode.data_showlist:
@@ -1236,7 +1236,8 @@ export default function toLeopard(
               script.hat.inputs.PROCCODE.value === block.inputs.PROCCODE.value
           ).name;
 
-          const procArgs = `${block.inputs.INPUTS.value.map(input => inputToJS(input)).join(", ")}`;
+          // TODO: Boolean inputs should provide appropriate desiredInputShape instead of "any"
+          const procArgs = `${block.inputs.INPUTS.value.map(input => inputToJS(input, "any")).join(", ")}`;
 
           // Warp-mode procedures execute all child procedures in warp mode as well
           if (warp) {
@@ -1259,7 +1260,7 @@ export default function toLeopard(
           if (block.opcode === OpCode.argument_reporter_boolean) {
             satisfiesInputShape = "boolean";
           } else {
-            satisfiesInputShape = "string";
+            satisfiesInputShape = "any";
           }
           blockSource = customBlockArgNameMap.get(script)[block.inputs.VALUE.value];
           break;
@@ -1341,7 +1342,7 @@ export default function toLeopard(
           break;
 
         default:
-          satisfiesInputShape = "string";
+          satisfiesInputShape = "any";
           blockSource = `/* TODO: Implement ${block.opcode} */ null`;
           break;
       }
@@ -1352,6 +1353,10 @@ export default function toLeopard(
 
       if (desiredInputShape === "boolean") {
         return `(this.toBoolean(${blockSource}))`;
+      }
+
+      if (desiredInputShape === "string") {
+        return `(String(${blockSource}))`;
       }
 
       return blockSource;
