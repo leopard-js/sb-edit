@@ -11,6 +11,9 @@ import { List, Variable } from "../../Data";
 type InputShape = "any" | "index" | "number" | "string" | "boolean" | "stack";
 
 function uniqueNameGenerator(usedNames: string[] = []) {
+  usedNames = usedNames.slice();
+  return uniqueName;
+
   function uniqueName(name): string {
     if (!usedNames.includes(name)) {
       usedNames.push(name);
@@ -23,13 +26,6 @@ function uniqueNameGenerator(usedNames: string[] = []) {
     }
     return uniqueName(name.slice(0, numResult.index) + (parseInt(numResult[0], 10) + 1));
   }
-
-  // Creates hybrid function/object
-  uniqueName.usedNames = usedNames;
-  uniqueName.branch = function() {
-    return uniqueNameGenerator(this.usedNames);
-  };
-  return uniqueName;
 }
 
 function camelCase(name: string, upper = false): string {
@@ -108,7 +104,7 @@ export default function toLeopard(
     targetNameMap[target.name] = newTargetName;
     target.setName(newTargetName);
 
-    let uniqueVariableName = uniqueName.branch();
+    let uniqueVariableName = uniqueNameGenerator();
 
     for (const { id, name } of [...target.lists, ...target.variables]) {
       const newName = uniqueVariableName(camelCase(name));
@@ -150,7 +146,7 @@ export default function toLeopard(
       const argNameMap = {};
       customBlockArgNameMap.set(script, argNameMap);
 
-      const uniqueParamName = uniqueName.branch();
+      const uniqueParamName = uniqueNameGenerator();
       for (const block of script.blocks) {
         if (block.opcode === OpCode.procedures_definition) {
           for (const argument of block.inputs.ARGUMENTS.value) {
