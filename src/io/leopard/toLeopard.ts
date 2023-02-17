@@ -980,11 +980,11 @@ export default function toLeopard(
     for (const checkTarget of targetsToCheckForShowBlocks) {
       for (const script of checkTarget.scripts) {
         for (const block of script.blocks) {
-          if (block.opcode === OpCode.data_showvariable) {
-            shownWatchers.add(block.inputs.VARIABLE.value);
+          if (block.opcode === OpCode.data_showvariable || block.opcode === OpCode.data_hidevariable) {
+            shownWatchers.add(block.inputs.VARIABLE.value.id);
           }
-          if (block.opcode === OpCode.data_showlist) {
-            shownWatchers.add(block.inputs.LIST.value);
+          if (block.opcode === OpCode.data_showlist || block.opcode === OpCode.data_hidelist) {
+            shownWatchers.add(block.inputs.LIST.value.id);
           }
         }
       }
