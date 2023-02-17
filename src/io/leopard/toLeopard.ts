@@ -257,6 +257,40 @@ export default function toLeopard(
   function blockToJSWithContext(block: Block, target: Target, script?: Script): string {
     return blockToJS(block);
 
+    function increase(leftSide: string, input: BlockInput.Any, allowIncrementDecrement: Boolean) {
+      let n;
+      if (input.type === "block" || (n = Number(input.value), isNaN(n))) {
+        return `${leftSide} += (${inputToJS(input, "number")});`;
+      }
+
+      if (allowIncrementDecrement && n === 1) {
+        return `${leftSide}++;`;
+      } else if (allowIncrementDecrement && n === -1) {
+        return `${leftSide}--;`;
+      } else if (n >= 0) {
+        return `${leftSide} += ${JSON.stringify(n)};`;
+      } else if (n < 0) {
+        return `${leftSide} -= ${JSON.stringify(-n)};`;
+      }
+    }
+
+    function decrease(leftSide: string, input: BlockInput.Any, allowIncrementDecrement: Boolean = true) {
+      let n;
+      if (input.type === "block" || (n = Number(input.value), isNaN(n))) {
+        return `${leftSide} -= (${inputToJS(input, "number")})`;
+      }
+
+      if (allowIncrementDecrement && n === 1) {
+        return `${leftSide}--`;
+      } else if (allowIncrementDecrement && n === -1) {
+        return `${leftSide}++`;
+      } else if (n > 0) {
+        return `${leftSide} -= ${JSON.stringify(n)}`;
+      } else if (n <= 0) {
+        return `${leftSide} += ${JSON.stringify(-n)}`;
+      }
+    }
+
     function inputToJS(input: BlockInput.Any, desiredInputShape?: InputShape): string {
       // TODO: Right now, inputs can be completely undefined if imported from
       // the .sb3 format (because sb3 is weird). This little check will replace
@@ -315,12 +349,12 @@ export default function toLeopard(
 
         case OpCode.motion_turnright:
           satisfiesInputShape = "stack";
-          blockSource = `this.direction += (${inputToJS(block.inputs.DEGREES)})`;
+          blockSource = increase(`this.direction`, block.inputs.DEGREES, false);
           break;
 
         case OpCode.motion_turnleft:
           satisfiesInputShape = "stack";
-          blockSource = `this.direction -= (${inputToJS(block.inputs.DEGREES)})`;
+          blockSource = decrease(`this.direction`, block.inputs.DEGREES, false);
           break;
 
         case OpCode.motion_goto:
@@ -392,7 +426,7 @@ export default function toLeopard(
 
         case OpCode.motion_changexby:
           satisfiesInputShape = "stack";
-          blockSource = `this.x += (${inputToJS(block.inputs.DX)})`;
+          blockSource = increase(`this.x`, block.inputs.DX, false);
           break;
 
         case OpCode.motion_setx:
@@ -402,7 +436,7 @@ export default function toLeopard(
 
         case OpCode.motion_changeyby:
           satisfiesInputShape = "stack";
-          blockSource = `this.y += (${inputToJS(block.inputs.DY)})`;
+          blockSource = increase(`this.y`, block.inputs.DY, false);
           break;
 
         case OpCode.motion_sety:
@@ -481,7 +515,7 @@ export default function toLeopard(
 
         case OpCode.looks_nextcostume:
           satisfiesInputShape = "stack";
-          blockSource = `this.costumeNumber += 1`;
+          blockSource = `this.costumeNumber++`;
           break;
 
         case OpCode.looks_switchbackdropto:
@@ -491,12 +525,12 @@ export default function toLeopard(
 
         case OpCode.looks_nextbackdrop:
           satisfiesInputShape = "stack";
-          blockSource = `${stage}.costumeNumber += 1`;
+          blockSource = `${stage}.costumeNumber++`;
           break;
 
         case OpCode.looks_changesizeby:
           satisfiesInputShape = "stack";
-          blockSource = `this.size += (${inputToJS(block.inputs.CHANGE)})`;
+          blockSource = increase(`this.size`, block.inputs.CHANGE, false);
           break;
 
         case OpCode.looks_setsizeto:
@@ -507,7 +541,7 @@ export default function toLeopard(
         case OpCode.looks_changeeffectby: {
           const effectName = block.inputs.EFFECT.value.toLowerCase();
           satisfiesInputShape = "stack";
-          blockSource = `this.effects.${effectName} += ${inputToJS(block.inputs.CHANGE)}`;
+          blockSource = increase(`this.effects.${effectName}`, block.inputs.CHANGE, false);
           break;
         }
 
@@ -609,7 +643,7 @@ export default function toLeopard(
 
         case OpCode.sound_changevolumeby:
           satisfiesInputShape = "stack";
-          blockSource = `this.audioEffects.volume += ${inputToJS(block.inputs.VOLUME)}`;
+          blockSource = increase(`this.audioEffects.volume`, block.inputs.VOLUME, false);
           break;
 
         case OpCode.sound_volume:
@@ -630,11 +664,11 @@ export default function toLeopard(
 
         case OpCode.sound_changeeffectby: {
           satisfiesInputShape = "stack";
-          const value = inputToJS(block.inputs.VALUE);
+          const value = block.inputs.VALUE;
           if (block.inputs.EFFECT.type === "soundEffect") {
-            blockSource = `this.audioEffects.${block.inputs.EFFECT.value.toLowerCase()} += ${value}`;
+            blockSource = increase(`this.audioEffects.${block.inputs.EFFECT.value.toLowerCase()}`, value, false);
           } else {
-            blockSource = `this.audioEffects[${inputToJS(block.inputs.EFFECT)}] += ${value}`;
+            blockSource = increase(`this.audioEffects[${inputToJS(block.inputs.EFFECT)}]`, value, false);
           }
           break;
         }
@@ -1165,7 +1199,7 @@ export default function toLeopard(
 
         case OpCode.data_changevariableby:
           satisfiesInputShape = "stack";
-          blockSource = `${selectedVarSource} += (${inputToJS(block.inputs.VALUE)})`;
+          blockSource = increase(selectedVarSource, block.inputs.VALUE, true);
           break;
 
         case OpCode.data_showvariable:
@@ -1333,13 +1367,13 @@ export default function toLeopard(
           satisfiesInputShape = "stack";
           switch (block.inputs.colorParam.value) {
             case "color":
-              blockSource = `this.penColor.h += (${inputToJS(block.inputs.VALUE)})`;
+              blockSource = increase(`this.penColor.h`, block.inputs.VALUE, false);
               break;
             case "saturation":
-              blockSource = `this.penColor.s += (${inputToJS(block.inputs.VALUE)})`;
+              blockSource = increase(`this.penColor.s`, block.inputs.VALUE, false);
               break;
             case "brightness":
-              blockSource = `this.penColor.v += (${inputToJS(block.inputs.VALUE)})`;
+              blockSource = increase(`this.penColor.v`, block.inputs.VALUE, false);
               break;
             case "transparency":
               blockSource = `this.penColor.a -= ((${inputToJS(block.inputs.VALUE)}) / 100)`;
@@ -1372,7 +1406,7 @@ export default function toLeopard(
 
         case OpCode.pen_changePenSizeBy:
           satisfiesInputShape = "stack";
-          blockSource = `this.penSize += (${inputToJS(block.inputs.SIZE)})`;
+          blockSource = increase(`this.penSize`, block.inputs.SIZE, false);
           break;
 
         default:
