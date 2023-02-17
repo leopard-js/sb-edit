@@ -8,7 +8,7 @@ import * as prettier from "prettier";
 import Target from "../../Target";
 import { List, Variable } from "../../Data";
 
-type InputShape = "any" | "number" | "string" | "boolean" | "stack";
+type InputShape = "any" | "index" | "number" | "string" | "boolean" | "stack";
 
 function uniqueNameGenerator(usedNames: string[] = []) {
   function uniqueName(name): string {
@@ -178,10 +178,14 @@ export default function toLeopard(
     stageVariables.add(list.id);
   }
 
-  function staticBlockInputToLiteral(value: string | number | boolean | object): string {
+  function staticBlockInputToLiteral(value: string | number | boolean | object, desiredInputShape?: InputShape): string {
     const asNum = Number(value as string);
     if (!isNaN(asNum) && value !== "") {
-      return JSON.stringify(asNum);
+      if (desiredInputShape === "index") {
+        return JSON.stringify(asNum - 1);
+      } else {
+        return JSON.stringify(asNum);
+      }
     }
     return JSON.stringify(value);
   }
@@ -223,7 +227,7 @@ export default function toLeopard(
         const value =
           valueInput.type === "block"
             ? `() => ${blockToJSWithContext(valueInput.value, target)}`
-            : staticBlockInputToLiteral(valueInput.value);
+            : staticBlockInputToLiteral(valueInput.value, "number");
         return triggerInitStr(`${hat.inputs.WHENGREATERTHANMENU.value}_GREATER_THAN`, {
           VALUE: value
         });
@@ -272,7 +276,7 @@ export default function toLeopard(
         case "blocks":
           return input.value.map(block => blockToJS(block as Block)).join(";\n");
         default: {
-          return staticBlockInputToLiteral(input.value);
+          return staticBlockInputToLiteral(input.value, desiredInputShape);
         }
       }
     }
@@ -1053,7 +1057,7 @@ export default function toLeopard(
 
         case OpCode.operator_letter_of:
           satisfiesInputShape = "string";
-          blockSource = `(((${inputToJS(block.inputs.STRING, "string")})[(${inputToJS(block.inputs.LETTER)}) - 1]) ?? "")`;
+          blockSource = `(((${inputToJS(block.inputs.STRING, "string")})[${inputToJS(block.inputs.LETTER, "index")}]) ?? "")`;
           break;
 
         case OpCode.operator_length:
@@ -1168,7 +1172,7 @@ export default function toLeopard(
           } else if (block.inputs.INDEX.value === "last") {
             blockSource = `${selectedVarSource}.splice(${selectedVarSource}.length - 1, 1)`;
           } else {
-            blockSource = `${selectedVarSource}.splice(((${inputToJS(block.inputs.INDEX)}) - 1), 1)`;
+            blockSource = `${selectedVarSource}.splice((${inputToJS(block.inputs.INDEX, "index")}), 1)`;
           }
           break;
 
@@ -1179,14 +1183,14 @@ export default function toLeopard(
 
         case OpCode.data_insertatlist:
           satisfiesInputShape = "stack";
-          blockSource = `${selectedVarSource}.splice(((${inputToJS(block.inputs.INDEX)}) - 1), 0, (${inputToJS(
+          blockSource = `${selectedVarSource}.splice((${inputToJS(block.inputs.INDEX, "index")}), 0, (${inputToJS(
             block.inputs.ITEM, "any"
           )}))`;
           break;
 
         case OpCode.data_replaceitemoflist:
           satisfiesInputShape = "stack";
-          blockSource = `${selectedVarSource}.splice(((${inputToJS(block.inputs.INDEX)}) - 1), 1, (${inputToJS(
+          blockSource = `${selectedVarSource}.splice((${inputToJS(block.inputs.INDEX, "index")}), 1, (${inputToJS(
             block.inputs.ITEM, "any"
           )}))`;
           break;
@@ -1196,13 +1200,18 @@ export default function toLeopard(
           if (block.inputs.INDEX.value === "last") {
             blockSource = `(${selectedVarSource}[${selectedVarSource}.length - 1] ?? '')`;
           } else {
-            blockSource = `(${selectedVarSource}[(${inputToJS(block.inputs.INDEX)}) - 1] ?? '')`;
+            blockSource = `(${selectedVarSource}[${inputToJS(block.inputs.INDEX, "index")}] ?? '')`;
           }
           break;
 
         case OpCode.data_itemnumoflist:
-          satisfiesInputShape = "number";
-          blockSource = `(${selectedVarSource}.indexOf(${inputToJS(block.inputs.ITEM, "any")}) + 1)`;
+          if (desiredInputShape === "index") {
+            satisfiesInputShape = "index";
+            blockSource = `(${selectedVarSource}.indexOf(${inputToJS(block.inputs.ITEM, "any")}))`;
+          } else {
+            satisfiesInputShape = "number";
+            blockSource = `(${selectedVarSource}.indexOf(${inputToJS(block.inputs.ITEM, "any")}) + 1)`;
+          }
           break;
 
         case OpCode.data_lengthoflist:
@@ -1357,6 +1366,10 @@ export default function toLeopard(
 
       if (desiredInputShape === "string") {
         return `(String(${blockSource}))`;
+      }
+
+      if (desiredInputShape === "index") {
+        return `((${blockSource}) - 1)`;
       }
 
       return blockSource;
