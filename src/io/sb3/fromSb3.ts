@@ -458,7 +458,7 @@ export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAsset: Ge
     }
 
     for (const varList of [target.variables, target.lists]) {
-      for (let i = 0, variable; variable = varList[i]; i++) {
+      for (let i = 0, variable; (variable = varList[i]); i++) {
         if (variable.visible) {
           continue;
         }
