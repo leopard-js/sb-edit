@@ -996,6 +996,25 @@ export default function toLeopard(
           break;
 
         case OpCode.operator_add:
+          if (desiredInputShape === "index") {
+            if ((block.inputs.NUM2 as BlockInput.Any).type !== "block" && !isNaN(Number(block.inputs.NUM2.value))) {
+              satisfiesInputShape = "index";
+              if (Number(block.inputs.NUM2.value) === 1) {
+                blockSource = `(${inputToJS(block.inputs.NUM1, "number")})`;
+              } else {
+                blockSource = `((${inputToJS(block.inputs.NUM1, "number")}) + ${(block.inputs.NUM2.value as number) - 1})`;
+              }
+              break;
+            } else if ((block.inputs.NUM1 as BlockInput.Any).type !== "block" && !isNaN(Number(block.inputs.NUM1.value))) {
+              satisfiesInputShape = "index";
+              if (Number(block.inputs.NUM1.value) === 1) {
+                blockSource = `(${inputToJS(block.inputs.NUM2, "number")})`;
+              } else {
+                blockSource = `(${(block.inputs.NUM2.value as number) - 1} + ${inputToJS(block.inputs.NUM2, "number")})`;
+              }
+              break;
+            }
+          }
           satisfiesInputShape = "number";
           blockSource = `((${inputToJS(block.inputs.NUM1)}) + (${inputToJS(block.inputs.NUM2)}))`;
           break;
