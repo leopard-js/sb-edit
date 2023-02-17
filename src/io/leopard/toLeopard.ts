@@ -291,7 +291,7 @@ export default function toLeopard(
       }
     }
 
-    function inputToJS(input: BlockInput.Any, desiredInputShape?: InputShape): string {
+    function inputToJS(input: BlockInput.Any, desiredInputShape: InputShape): string {
       // TODO: Right now, inputs can be completely undefined if imported from
       // the .sb3 format (because sb3 is weird). This little check will replace
       // undefined inputs with the value `null`. In theory, this should
@@ -344,7 +344,7 @@ export default function toLeopard(
       switch (block.opcode) {
         case OpCode.motion_movesteps:
           satisfiesInputShape = "stack";
-          blockSource = `this.move(${inputToJS(block.inputs.STEPS)})`;
+          blockSource = `this.move(${inputToJS(block.inputs.STEPS, "number")})`;
           break;
 
         case OpCode.motion_turnright:
@@ -376,7 +376,7 @@ export default function toLeopard(
 
         case OpCode.motion_gotoxy:
           satisfiesInputShape = "stack";
-          blockSource = `this.goto((${inputToJS(block.inputs.X)}), (${inputToJS(block.inputs.Y)}))`;
+          blockSource = `this.goto((${inputToJS(block.inputs.X, "number")}), (${inputToJS(block.inputs.Y, "number")}))`;
           break;
 
         case OpCode.motion_glideto:
@@ -384,15 +384,15 @@ export default function toLeopard(
           switch (block.inputs.TO.value) {
             case "_random_":
               blockSource = `yield* this.glide((${inputToJS(
-                block.inputs.SECS
+                block.inputs.SECS, "number"
               )}), this.random(-240, 240), this.random(-180, 180))`;
               break;
             case "_mouse_":
-              blockSource = `yield* this.glide((${inputToJS(block.inputs.SECS)}), this.mouse.x, this.mouse.y)`;
+              blockSource = `yield* this.glide((${inputToJS(block.inputs.SECS, "number")}), this.mouse.x, this.mouse.y)`;
               break;
             default: {
               const sprite = `(this.sprites[${JSON.stringify(targetNameMap[block.inputs.TO.value])}])`;
-              blockSource = `yield* this.glide((${inputToJS(block.inputs.SECS)}), ${sprite}.x, ${sprite}.y)`;
+              blockSource = `yield* this.glide((${inputToJS(block.inputs.SECS, "number")}), ${sprite}.x, ${sprite}.y)`;
               break;
             }
           }
@@ -400,14 +400,14 @@ export default function toLeopard(
 
         case OpCode.motion_glidesecstoxy:
           satisfiesInputShape = "stack";
-          blockSource = `yield* this.glide((${inputToJS(block.inputs.SECS)}), (${inputToJS(block.inputs.X)}), (${inputToJS(
-            block.inputs.Y
+          blockSource = `yield* this.glide((${inputToJS(block.inputs.SECS, "number")}), (${inputToJS(block.inputs.X, "number")}), (${inputToJS(
+            block.inputs.Y, "number"
           )}))`;
           break;
 
         case OpCode.motion_pointindirection:
           satisfiesInputShape = "stack";
-          blockSource = `this.direction = (${inputToJS(block.inputs.DIRECTION)})`;
+          blockSource = `this.direction = (${inputToJS(block.inputs.DIRECTION, "number")})`;
           break;
 
         case OpCode.motion_pointtowards:
@@ -431,7 +431,7 @@ export default function toLeopard(
 
         case OpCode.motion_setx:
           satisfiesInputShape = "stack";
-          blockSource = `this.x = (${inputToJS(block.inputs.X)})`;
+          blockSource = `this.x = (${inputToJS(block.inputs.X, "number")})`;
           break;
 
         case OpCode.motion_changeyby:
@@ -441,7 +441,7 @@ export default function toLeopard(
 
         case OpCode.motion_sety:
           satisfiesInputShape = "stack";
-          blockSource = `this.y = (${inputToJS(block.inputs.Y)})`;
+          blockSource = `this.y = (${inputToJS(block.inputs.Y, "number")})`;
           break;
 
         case OpCode.motion_setrotationstyle:
@@ -490,7 +490,7 @@ export default function toLeopard(
 
         case OpCode.looks_sayforsecs:
           satisfiesInputShape = "stack";
-          blockSource = `yield* this.sayAndWait((${inputToJS(block.inputs.MESSAGE, "string")}), (${inputToJS(block.inputs.SECS)}))`;
+          blockSource = `yield* this.sayAndWait((${inputToJS(block.inputs.MESSAGE, "string")}), (${inputToJS(block.inputs.SECS, "number")}))`;
           break;
 
         case OpCode.looks_say:
@@ -500,7 +500,7 @@ export default function toLeopard(
 
         case OpCode.looks_thinkforsecs:
           satisfiesInputShape = "stack";
-          blockSource = `yield* this.thinkAndWait((${inputToJS(block.inputs.MESSAGE, "string")}), (${inputToJS(block.inputs.SECS)}))`;
+          blockSource = `yield* this.thinkAndWait((${inputToJS(block.inputs.MESSAGE, "string")}), (${inputToJS(block.inputs.SECS, "number")}))`;
           break;
 
         case OpCode.looks_think:
@@ -535,7 +535,7 @@ export default function toLeopard(
 
         case OpCode.looks_setsizeto:
           satisfiesInputShape = "stack";
-          blockSource = `this.size = (${inputToJS(block.inputs.SIZE)})`;
+          blockSource = `this.size = (${inputToJS(block.inputs.SIZE, "number")})`;
           break;
 
         case OpCode.looks_changeeffectby: {
@@ -548,7 +548,7 @@ export default function toLeopard(
         case OpCode.looks_seteffectto: {
           const effectName = block.inputs.EFFECT.value.toLowerCase();
           satisfiesInputShape = "stack";
-          blockSource = `this.effects.${effectName} = ${inputToJS(block.inputs.VALUE)}`;
+          blockSource = `this.effects.${effectName} = ${inputToJS(block.inputs.VALUE, "number")}`;
           break;
         }
 
@@ -579,9 +579,9 @@ export default function toLeopard(
         case OpCode.looks_goforwardbackwardlayers:
           satisfiesInputShape = "stack";
           if (block.inputs.FORWARD_BACKWARD.value === "forward") {
-            blockSource = `this.moveAhead(${inputToJS(block.inputs.NUM)})`;
+            blockSource = `this.moveAhead(${inputToJS(block.inputs.NUM, "number")})`;
           } else {
-            blockSource = `this.moveBehind(${inputToJS(block.inputs.NUM)})`;
+            blockSource = `this.moveBehind(${inputToJS(block.inputs.NUM, "number")})`;
           }
           break;
 
@@ -638,7 +638,7 @@ export default function toLeopard(
 
         case OpCode.sound_setvolumeto:
           satisfiesInputShape = "stack";
-          blockSource = `this.audioEffects.volume = ${inputToJS(block.inputs.VOLUME)}`;
+          blockSource = `this.audioEffects.volume = ${inputToJS(block.inputs.VOLUME, "number")}`;
           break;
 
         case OpCode.sound_changevolumeby:
@@ -653,11 +653,11 @@ export default function toLeopard(
 
         case OpCode.sound_seteffectto: {
           satisfiesInputShape = "stack";
-          const value = inputToJS(block.inputs.VALUE);
+          const value = inputToJS(block.inputs.VALUE, "number");
           if (block.inputs.EFFECT.type === "soundEffect") {
             blockSource = `this.audioEffects.${block.inputs.EFFECT.value.toLowerCase()} = ${value}`;
           } else {
-            blockSource = `this.audioEffects[${inputToJS(block.inputs.EFFECT)}] = ${value}`;
+            blockSource = `this.audioEffects[${inputToJS(block.inputs.EFFECT, "any")}] = ${value}`;
           }
           break;
         }
@@ -668,7 +668,7 @@ export default function toLeopard(
           if (block.inputs.EFFECT.type === "soundEffect") {
             blockSource = increase(`this.audioEffects.${block.inputs.EFFECT.value.toLowerCase()}`, value, false);
           } else {
-            blockSource = increase(`this.audioEffects[${inputToJS(block.inputs.EFFECT)}]`, value, false);
+            blockSource = increase(`this.audioEffects[${inputToJS(block.inputs.EFFECT, "any")}]`, value, false);
           }
           break;
         }
@@ -695,13 +695,13 @@ export default function toLeopard(
 
         case OpCode.control_wait:
           satisfiesInputShape = "stack";
-          blockSource = `yield* this.wait(${inputToJS(block.inputs.DURATION)})`;
+          blockSource = `yield* this.wait(${inputToJS(block.inputs.DURATION, "number")})`;
           break;
 
         case OpCode.control_repeat:
           satisfiesInputShape = "stack";
-          blockSource = `for (let i = 0; i < (${inputToJS(block.inputs.TIMES)}); i++) {
-            ${inputToJS(block.inputs.SUBSTACK)};
+          blockSource = `for (let i = 0; i < (${inputToJS(block.inputs.TIMES, "number")}); i++) {
+            ${inputToJS(block.inputs.SUBSTACK, "any")};
             ${warp ? "" : "yield;"}
           }`;
           break;
@@ -709,7 +709,7 @@ export default function toLeopard(
         case OpCode.control_forever:
           satisfiesInputShape = "stack";
           blockSource = `while (true) {
-            ${inputToJS(block.inputs.SUBSTACK)};
+            ${inputToJS(block.inputs.SUBSTACK, "any")};
             ${warp ? "" : "yield;"}
           }`;
           break;
@@ -717,16 +717,16 @@ export default function toLeopard(
         case OpCode.control_if:
           satisfiesInputShape = "stack";
           blockSource = `if (${inputToJS(block.inputs.CONDITION, "boolean")}) {
-            ${inputToJS(block.inputs.SUBSTACK)}
+            ${inputToJS(block.inputs.SUBSTACK, "any")}
           }`;
           break;
 
         case OpCode.control_if_else:
           satisfiesInputShape = "stack";
           blockSource = `if (${inputToJS(block.inputs.CONDITION, "boolean")}) {
-            ${inputToJS(block.inputs.SUBSTACK)}
+            ${inputToJS(block.inputs.SUBSTACK, "any")}
           } else {
-            ${inputToJS(block.inputs.SUBSTACK2)}
+            ${inputToJS(block.inputs.SUBSTACK2, "any")}
           }`;
           break;
 
@@ -738,7 +738,7 @@ export default function toLeopard(
         case OpCode.control_repeat_until:
           satisfiesInputShape = "stack";
           blockSource = `while (!(${inputToJS(block.inputs.CONDITION, "boolean")})) {
-            ${inputToJS(block.inputs.SUBSTACK)}
+            ${inputToJS(block.inputs.SUBSTACK, "any")}
             ${warp ? "" : "yield;"}
           }`;
           break;
@@ -746,7 +746,7 @@ export default function toLeopard(
         case OpCode.control_while:
           satisfiesInputShape = "stack";
           blockSource = `while (${inputToJS(block.inputs.CONDITION, "boolean")}) {
-            ${inputToJS(block.inputs.SUBSTACK)}
+            ${inputToJS(block.inputs.SUBSTACK, "any")}
             ${warp ? "" : "yield;"}
           }`;
           break;
@@ -754,16 +754,16 @@ export default function toLeopard(
         case OpCode.control_for_each:
           satisfiesInputShape = "stack";
           blockSource = `for (${selectedVarSource} = 1; ${selectedVarSource} <= (${inputToJS(
-            block.inputs.VALUE
+            block.inputs.VALUE, "number"
           )}); ${selectedVarSource}++) {
-            ${inputToJS(block.inputs.SUBSTACK)}
+            ${inputToJS(block.inputs.SUBSTACK, "any")}
             ${warp ? "" : "yield;"}
           }`;
           break;
 
         case OpCode.control_all_at_once:
           satisfiesInputShape = "stack";
-          blockSource = inputToJS(block.inputs.SUBSTACK);
+          blockSource = inputToJS(block.inputs.SUBSTACK, "any");
           break;
 
         case OpCode.control_stop:
@@ -833,7 +833,7 @@ export default function toLeopard(
             const { r, g, b } = block.inputs.COLOR.value;
             blockSource = `this.touching(Color.rgb(${r}, ${g}, ${b}))`;
           } else {
-            blockSource = `this.touching(Color.num(${inputToJS(block.inputs.COLOR)}))`;
+            blockSource = `this.touching(Color.num(${inputToJS(block.inputs.COLOR, "number")}))`;
           }
           break;
 
@@ -845,14 +845,14 @@ export default function toLeopard(
             const { r, g, b } = block.inputs.COLOR.value;
             color1 = `Color.rgb(${r}, ${g}, ${b})`;
           } else {
-            color1 = `Color.num(${inputToJS(block.inputs.COLOR)})`;
+            color1 = `Color.num(${inputToJS(block.inputs.COLOR, "number")})`;
           }
 
           if (block.inputs.COLOR2.type === "color") {
             const { r, g, b } = block.inputs.COLOR2.value;
             color2 = `Color.rgb(${r}, ${g}, ${b})`;
           } else {
-            color2 = `Color.num(${inputToJS(block.inputs.COLOR2)})`;
+            color2 = `Color.num(${inputToJS(block.inputs.COLOR2, "number")})`;
           }
 
           satisfiesInputShape = "boolean";
@@ -1046,37 +1046,37 @@ export default function toLeopard(
             }
           }
           satisfiesInputShape = "number";
-          blockSource = `((${inputToJS(block.inputs.NUM1)}) + (${inputToJS(block.inputs.NUM2)}))`;
+          blockSource = `((${inputToJS(block.inputs.NUM1, "number")}) + (${inputToJS(block.inputs.NUM2, "number")}))`;
           break;
 
         case OpCode.operator_subtract:
           satisfiesInputShape = "number";
-          blockSource = `((${inputToJS(block.inputs.NUM1)}) - (${inputToJS(block.inputs.NUM2)}))`;
+          blockSource = `((${inputToJS(block.inputs.NUM1, "any")}) - (${inputToJS(block.inputs.NUM2, "any")}))`;
           break;
 
         case OpCode.operator_multiply:
           satisfiesInputShape = "number";
-          blockSource = `((${inputToJS(block.inputs.NUM1)}) * (${inputToJS(block.inputs.NUM2)}))`;
+          blockSource = `((${inputToJS(block.inputs.NUM1, "any")}) * (${inputToJS(block.inputs.NUM2, "any")}))`;
           break;
 
         case OpCode.operator_divide:
           satisfiesInputShape = "number";
-          blockSource = `((${inputToJS(block.inputs.NUM1)}) / (${inputToJS(block.inputs.NUM2)}))`;
+          blockSource = `((${inputToJS(block.inputs.NUM1, "any")}) / (${inputToJS(block.inputs.NUM2, "any")}))`;
           break;
 
         case OpCode.operator_random:
           satisfiesInputShape = "number";
-          blockSource = `this.random(${inputToJS(block.inputs.FROM)}, ${inputToJS(block.inputs.TO)})`;
+          blockSource = `this.random(${inputToJS(block.inputs.FROM, "any")}, ${inputToJS(block.inputs.TO, "any")})`;
           break;
 
         case OpCode.operator_gt:
           satisfiesInputShape = "boolean";
-          blockSource = `(this.compare((${inputToJS(block.inputs.OPERAND1)}), (${inputToJS(block.inputs.OPERAND2)})) > 0)`;
+          blockSource = `(this.compare((${inputToJS(block.inputs.OPERAND1, "any")}), (${inputToJS(block.inputs.OPERAND2, "any")})) > 0)`;
           break;
 
         case OpCode.operator_lt:
           satisfiesInputShape = "boolean";
-          blockSource = `(this.compare((${inputToJS(block.inputs.OPERAND1)}), (${inputToJS(block.inputs.OPERAND2)})) < 0)`;
+          blockSource = `(this.compare((${inputToJS(block.inputs.OPERAND1, "any")}), (${inputToJS(block.inputs.OPERAND2, "any")})) < 0)`;
           break;
 
         case OpCode.operator_equals:
@@ -1126,63 +1126,63 @@ export default function toLeopard(
 
         case OpCode.operator_contains:
           satisfiesInputShape = "boolean";
-          blockSource = `(${inputToJS(block.inputs.STRING1, "string")}).includes(${inputToJS(block.inputs.STRING2)})`;
+          blockSource = `(${inputToJS(block.inputs.STRING1, "string")}).includes(${inputToJS(block.inputs.STRING2, "any")})`;
           break;
 
         case OpCode.operator_mod:
           satisfiesInputShape = "number";
-          blockSource = `((${inputToJS(block.inputs.NUM1)}) % (${inputToJS(block.inputs.NUM2)}))`;
+          blockSource = `((${inputToJS(block.inputs.NUM1, "any")}) % (${inputToJS(block.inputs.NUM2, "any")}))`;
           break;
 
         case OpCode.operator_round:
           satisfiesInputShape = "number";
-          blockSource = `Math.round(${inputToJS(block.inputs.NUM)})`;
+          blockSource = `Math.round(${inputToJS(block.inputs.NUM, "any")})`;
           break;
 
         case OpCode.operator_mathop:
           satisfiesInputShape = "number";
           switch (block.inputs.OPERATOR.value) {
             case "abs":
-              blockSource = `Math.abs(${inputToJS(block.inputs.NUM)})`;
+              blockSource = `Math.abs(${inputToJS(block.inputs.NUM, "any")})`;
               break;
             case "floor":
-              blockSource = `Math.floor(${inputToJS(block.inputs.NUM)})`;
+              blockSource = `Math.floor(${inputToJS(block.inputs.NUM, "any")})`;
               break;
             case "ceiling":
-              blockSource = `Math.ceil(${inputToJS(block.inputs.NUM)})`;
+              blockSource = `Math.ceil(${inputToJS(block.inputs.NUM, "any")})`;
               break;
             case "sqrt":
-              blockSource = `Math.sqrt(${inputToJS(block.inputs.NUM)})`;
+              blockSource = `Math.sqrt(${inputToJS(block.inputs.NUM, "any")})`;
               break;
             case "sin":
-              blockSource = `Math.sin(this.degToRad(${inputToJS(block.inputs.NUM)}))`;
+              blockSource = `Math.sin(this.degToRad(${inputToJS(block.inputs.NUM, "any")}))`;
               break;
             case "cos":
-              blockSource = `Math.cos(this.degToRad(${inputToJS(block.inputs.NUM)}))`;
+              blockSource = `Math.cos(this.degToRad(${inputToJS(block.inputs.NUM, "any")}))`;
               break;
             case "tan":
-              blockSource = `Math.tan(this.degToRad(${inputToJS(block.inputs.NUM)}))`;
+              blockSource = `Math.tan(this.degToRad(${inputToJS(block.inputs.NUM, "any")}))`;
               break;
             case "asin":
-              blockSource = `this.radToDeg(Math.asin(${inputToJS(block.inputs.NUM)}))`;
+              blockSource = `this.radToDeg(Math.asin(${inputToJS(block.inputs.NUM, "any")}))`;
               break;
             case "acos":
-              blockSource = `this.radToDeg(Math.acos(${inputToJS(block.inputs.NUM)}))`;
+              blockSource = `this.radToDeg(Math.acos(${inputToJS(block.inputs.NUM, "any")}))`;
               break;
             case "atan":
-              blockSource = `this.radToDeg(Math.atan(${inputToJS(block.inputs.NUM)}))`;
+              blockSource = `this.radToDeg(Math.atan(${inputToJS(block.inputs.NUM, "any")}))`;
               break;
             case "ln":
-              blockSource = `Math.log(${inputToJS(block.inputs.NUM)})`;
+              blockSource = `Math.log(${inputToJS(block.inputs.NUM, "any")})`;
               break;
             case "log":
-              blockSource = `Math.log10(${inputToJS(block.inputs.NUM)})`;
+              blockSource = `Math.log10(${inputToJS(block.inputs.NUM, "any")})`;
               break;
             case "e ^":
-              blockSource = `(Math.E ** (${inputToJS(block.inputs.NUM)}))`;
+              blockSource = `(Math.E ** (${inputToJS(block.inputs.NUM, "any")}))`;
               break;
             case "10 ^":
-              blockSource = `(10 ** (${inputToJS(block.inputs.NUM)}))`;
+              blockSource = `(10 ** (${inputToJS(block.inputs.NUM, "any")}))`;
               break;
           }
           break;
@@ -1359,7 +1359,7 @@ export default function toLeopard(
             const { r, g, b } = block.inputs.COLOR.value;
             blockSource = `this.penColor = Color.rgb(${r}, ${g}, ${b})`;
           } else {
-            blockSource = `this.penColor = Color.num(${inputToJS(block.inputs.COLOR)})`;
+            blockSource = `this.penColor = Color.num(${inputToJS(block.inputs.COLOR, "number")})`;
           }
           break;
 
@@ -1376,7 +1376,7 @@ export default function toLeopard(
               blockSource = increase(`this.penColor.v`, block.inputs.VALUE, false);
               break;
             case "transparency":
-              blockSource = `this.penColor.a -= ((${inputToJS(block.inputs.VALUE)}) / 100)`;
+              blockSource = `this.penColor.a -= ((${inputToJS(block.inputs.VALUE, "any")}) / 100)`;
               break;
           }
           break;
@@ -1385,23 +1385,23 @@ export default function toLeopard(
           satisfiesInputShape = "stack";
           switch (block.inputs.colorParam.value) {
             case "color":
-              blockSource = `this.penColor.h = (${inputToJS(block.inputs.VALUE)})`;
+              blockSource = `this.penColor.h = (${inputToJS(block.inputs.VALUE, "number")})`;
               break;
             case "saturation":
-              blockSource = `this.penColor.s = (${inputToJS(block.inputs.VALUE)})`;
+              blockSource = `this.penColor.s = (${inputToJS(block.inputs.VALUE, "number")})`;
               break;
             case "brightness":
-              blockSource = `this.penColor.v = (${inputToJS(block.inputs.VALUE)})`;
+              blockSource = `this.penColor.v = (${inputToJS(block.inputs.VALUE, "number")})`;
               break;
             case "transparency":
-              blockSource = `this.penColor.a = (1 - ((${inputToJS(block.inputs.VALUE)}) / 100))`;
+              blockSource = `this.penColor.a = (1 - ((${inputToJS(block.inputs.VALUE, "any")}) / 100))`;
               break;
           }
           break;
 
         case OpCode.pen_setPenSizeTo:
           satisfiesInputShape = "stack";
-          blockSource = `this.penSize = (${inputToJS(block.inputs.SIZE)})`;
+          blockSource = `this.penSize = (${inputToJS(block.inputs.SIZE, "number")})`;
           break;
 
         case OpCode.pen_changePenSizeBy:
