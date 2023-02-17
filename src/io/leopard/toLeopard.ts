@@ -1051,7 +1051,17 @@ export default function toLeopard(
 
         case OpCode.operator_equals:
           satisfiesInputShape = "boolean";
-          blockSource = `(this.compare((${inputToJS(block.inputs.OPERAND1)}), (${inputToJS(block.inputs.OPERAND2)})) === 0)`;
+          if ((block.inputs.OPERAND1 as BlockInput.Any).type !== "block" && !isNaN(Number(block.inputs.OPERAND1.value))) {
+            blockSource = `(${Number(block.inputs.OPERAND1.value)} === (${inputToJS(block.inputs.OPERAND2, "number")}))`;
+          } else if ((block.inputs.OPERAND2 as BlockInput.Any).type !== "block" && !isNaN(Number(block.inputs.OPERAND2.value))) {
+            blockSource = `((${inputToJS(block.inputs.OPERAND1, "number")}) === ${Number(block.inputs.OPERAND2.value)})`;
+          } else if ((block.inputs.OPERAND1 as BlockInput.Any).type !== "block") {
+            blockSource = `(${JSON.stringify(block.inputs.OPERAND1.value)} === (${inputToJS(block.inputs.OPERAND2, "string")}))`;
+          } else if ((block.inputs.OPERAND2 as BlockInput.Any).type !== "block") {
+            blockSource = `((${inputToJS(block.inputs.OPERAND1, "string")}) === ${JSON.stringify(block.inputs.OPERAND2.value)})`;
+          } else {
+            blockSource = `(this.compare((${inputToJS(block.inputs.OPERAND1, "any")}), (${inputToJS(block.inputs.OPERAND2, "any")})) === 0)`;
+          }
           break;
 
         case OpCode.operator_and:
@@ -1385,6 +1395,10 @@ export default function toLeopard(
 
       if (desiredInputShape === "string") {
         return `(String(${blockSource}))`;
+      }
+
+      if (desiredInputShape === "number") {
+        return `(Number(${blockSource}))`;
       }
 
       if (desiredInputShape === "index") {
