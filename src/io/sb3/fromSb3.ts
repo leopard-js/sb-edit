@@ -8,7 +8,7 @@ import * as BlockInput from "../../BlockInput";
 import Costume from "../../Costume";
 import Project from "../../Project";
 import Sound from "../../Sound";
-import { Sprite, Stage, TargetOptions } from "../../Target";
+import Target, { Sprite, Stage, TargetOptions } from "../../Target";
 import { List, Variable } from "../../Data";
 import Script from "../../Script";
 
@@ -400,7 +400,7 @@ export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAsset: Ge
     };
   }
 
-  return new Project({
+  const project = new Project({
     stage: new Stage(await getTargetOptions(stage)),
     sprites: await Promise.all(
       json.targets
@@ -427,6 +427,70 @@ export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAsset: Ge
     videoOn: stage.videoState === "on",
     videoAlpha: stage.videoTransparency
   });
+
+  const targetToBlocks: Map<Target, Array<Block>> = new Map();
+  for (const target of [project.stage, ...project.sprites]) {
+    targetToBlocks.set(target, flattenBlocks(target.scripts.flatMap(script => script.blocks)));
+  }
+  const allBlocks = Array.from(targetToBlocks.values()).flat();
+
+  // Run an extra pass on variables (and lists). Only those which are actually
+  // referenced in blocks or monitors should be kept.
+  for (const target of [project.stage, ...project.sprites]) {
+    let relevantBlocks: Array<Block> = null;
+    if (target === project.stage) {
+      relevantBlocks = allBlocks;
+    } else {
+      relevantBlocks = targetToBlocks.get(target);
+    }
+
+    const usedVariableIds: Set<string> = new Set();
+    for (const block of relevantBlocks) {
+      let id: string = null;
+      if ((block.inputs as { VARIABLE: BlockInput.Variable }).VARIABLE) {
+        id = (block.inputs as { VARIABLE: BlockInput.Variable }).VARIABLE.value.id;
+      } else if ((block.inputs as { LIST: BlockInput.List }).LIST) {
+        id = (block.inputs as { LIST: BlockInput.List }).LIST.value.id;
+      } else {
+        continue;
+      }
+      usedVariableIds.add(id);
+    }
+
+    for (const varList of [target.variables, target.lists]) {
+      for (let i = 0, variable; variable = varList[i]; i++) {
+        if (variable.visible) {
+          continue;
+        }
+        if (usedVariableIds.has(variable.id)) {
+          continue;
+        }
+
+        varList.splice(i, 1);
+        i--;
+        continue;
+      }
+    }
+  }
+
+  return project;
+}
+
+function flattenBlocks(blocks: Array<Block>) {
+  return blocks.flatMap(block => [
+    block,
+    ...flattenBlocks(
+      Object.values(block.inputs).flatMap(input => {
+        if (input.type === "block") {
+          return [input.value];
+        } else if (input.type === "blocks") {
+          return input.value;
+        } else {
+          return [];
+        }
+      })
+    )
+  ]);
 }
 
 export default async function fromSb3(fileData: Parameters<typeof JSZip.loadAsync>[0]): Promise<Project> {
