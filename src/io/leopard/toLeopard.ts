@@ -174,7 +174,10 @@ export default function toLeopard(
     stageVariables.add(list.id);
   }
 
-  function staticBlockInputToLiteral(value: string | number | boolean | object, desiredInputShape?: InputShape): string {
+  function staticBlockInputToLiteral(
+    value: string | number | boolean | object,
+    desiredInputShape?: InputShape
+  ): string {
     const asNum = Number(value as string);
     if (!isNaN(asNum) && value !== "") {
       if (desiredInputShape === "index") {
@@ -259,7 +262,7 @@ export default function toLeopard(
 
     function increase(leftSide: string, input: BlockInput.Any, allowIncrementDecrement: Boolean) {
       let n;
-      if (input.type === "block" || (n = Number(input.value), isNaN(n))) {
+      if (input.type === "block" || ((n = Number(input.value)), isNaN(n))) {
         return `${leftSide} += (${inputToJS(input, "number")});`;
       }
 
@@ -276,7 +279,7 @@ export default function toLeopard(
 
     function decrease(leftSide: string, input: BlockInput.Any, allowIncrementDecrement: Boolean = true) {
       let n;
-      if (input.type === "block" || (n = Number(input.value), isNaN(n))) {
+      if (input.type === "block" || ((n = Number(input.value)), isNaN(n))) {
         return `${leftSide} -= (${inputToJS(input, "number")})`;
       }
 
@@ -384,11 +387,15 @@ export default function toLeopard(
           switch (block.inputs.TO.value) {
             case "_random_":
               blockSource = `yield* this.glide((${inputToJS(
-                block.inputs.SECS, "number"
+                block.inputs.SECS,
+                "number"
               )}), this.random(-240, 240), this.random(-180, 180))`;
               break;
             case "_mouse_":
-              blockSource = `yield* this.glide((${inputToJS(block.inputs.SECS, "number")}), this.mouse.x, this.mouse.y)`;
+              blockSource = `yield* this.glide((${inputToJS(
+                block.inputs.SECS,
+                "number"
+              )}), this.mouse.x, this.mouse.y)`;
               break;
             default: {
               const sprite = `(this.sprites[${JSON.stringify(targetNameMap[block.inputs.TO.value])}])`;
@@ -400,9 +407,10 @@ export default function toLeopard(
 
         case OpCode.motion_glidesecstoxy:
           satisfiesInputShape = "stack";
-          blockSource = `yield* this.glide((${inputToJS(block.inputs.SECS, "number")}), (${inputToJS(block.inputs.X, "number")}), (${inputToJS(
-            block.inputs.Y, "number"
-          )}))`;
+          blockSource = `yield* this.glide((${inputToJS(block.inputs.SECS, "number")}), (${inputToJS(
+            block.inputs.X,
+            "number"
+          )}), (${inputToJS(block.inputs.Y, "number")}))`;
           break;
 
         case OpCode.motion_pointindirection:
@@ -490,7 +498,10 @@ export default function toLeopard(
 
         case OpCode.looks_sayforsecs:
           satisfiesInputShape = "stack";
-          blockSource = `yield* this.sayAndWait((${inputToJS(block.inputs.MESSAGE, "string")}), (${inputToJS(block.inputs.SECS, "number")}))`;
+          blockSource = `yield* this.sayAndWait((${inputToJS(block.inputs.MESSAGE, "string")}), (${inputToJS(
+            block.inputs.SECS,
+            "number"
+          )}))`;
           break;
 
         case OpCode.looks_say:
@@ -500,7 +511,10 @@ export default function toLeopard(
 
         case OpCode.looks_thinkforsecs:
           satisfiesInputShape = "stack";
-          blockSource = `yield* this.thinkAndWait((${inputToJS(block.inputs.MESSAGE, "string")}), (${inputToJS(block.inputs.SECS, "number")}))`;
+          blockSource = `yield* this.thinkAndWait((${inputToJS(block.inputs.MESSAGE, "string")}), (${inputToJS(
+            block.inputs.SECS,
+            "number"
+          )}))`;
           break;
 
         case OpCode.looks_think:
@@ -754,7 +768,8 @@ export default function toLeopard(
         case OpCode.control_for_each:
           satisfiesInputShape = "stack";
           blockSource = `for (${selectedVarSource} = 1; ${selectedVarSource} <= (${inputToJS(
-            block.inputs.VALUE, "number"
+            block.inputs.VALUE,
+            "number"
           )}); ${selectedVarSource}++) {
             ${inputToJS(block.inputs.SUBSTACK, "any")}
             ${warp ? "" : "yield;"}
@@ -785,7 +800,9 @@ export default function toLeopard(
               blockSource = `this.createClone()`;
               break;
             default:
-              blockSource = `this.sprites[${JSON.stringify(targetNameMap[block.inputs.CLONE_OPTION.value])}].createClone()`;
+              blockSource = `this.sprites[${JSON.stringify(
+                targetNameMap[block.inputs.CLONE_OPTION.value]
+              )}].createClone()`;
               break;
           }
           break;
@@ -1032,15 +1049,22 @@ export default function toLeopard(
               if (Number(block.inputs.NUM2.value) === 1) {
                 blockSource = `(${inputToJS(block.inputs.NUM1, "number")})`;
               } else {
-                blockSource = `((${inputToJS(block.inputs.NUM1, "number")}) + ${(block.inputs.NUM2.value as number) - 1})`;
+                blockSource = `((${inputToJS(block.inputs.NUM1, "number")}) + ${(block.inputs.NUM2.value as number) -
+                  1})`;
               }
               break;
-            } else if ((block.inputs.NUM1 as BlockInput.Any).type !== "block" && !isNaN(Number(block.inputs.NUM1.value))) {
+            } else if (
+              (block.inputs.NUM1 as BlockInput.Any).type !== "block" &&
+              !isNaN(Number(block.inputs.NUM1.value))
+            ) {
               satisfiesInputShape = "index";
               if (Number(block.inputs.NUM1.value) === 1) {
                 blockSource = `(${inputToJS(block.inputs.NUM2, "number")})`;
               } else {
-                blockSource = `(${(block.inputs.NUM2.value as number) - 1} + ${inputToJS(block.inputs.NUM2, "number")})`;
+                blockSource = `(${(block.inputs.NUM2.value as number) - 1} + ${inputToJS(
+                  block.inputs.NUM2,
+                  "number"
+                )})`;
               }
               break;
             }
@@ -1071,37 +1095,68 @@ export default function toLeopard(
 
         case OpCode.operator_gt:
           satisfiesInputShape = "boolean";
-          blockSource = `(this.compare((${inputToJS(block.inputs.OPERAND1, "any")}), (${inputToJS(block.inputs.OPERAND2, "any")})) > 0)`;
+          blockSource = `(this.compare((${inputToJS(block.inputs.OPERAND1, "any")}), (${inputToJS(
+            block.inputs.OPERAND2,
+            "any"
+          )})) > 0)`;
           break;
 
         case OpCode.operator_lt:
           satisfiesInputShape = "boolean";
-          blockSource = `(this.compare((${inputToJS(block.inputs.OPERAND1, "any")}), (${inputToJS(block.inputs.OPERAND2, "any")})) < 0)`;
+          blockSource = `(this.compare((${inputToJS(block.inputs.OPERAND1, "any")}), (${inputToJS(
+            block.inputs.OPERAND2,
+            "any"
+          )})) < 0)`;
           break;
 
         case OpCode.operator_equals:
           satisfiesInputShape = "boolean";
-          if ((block.inputs.OPERAND1 as BlockInput.Any).type !== "block" && !isNaN(Number(block.inputs.OPERAND1.value))) {
-            blockSource = `(${Number(block.inputs.OPERAND1.value)} === (${inputToJS(block.inputs.OPERAND2, "number")}))`;
-          } else if ((block.inputs.OPERAND2 as BlockInput.Any).type !== "block" && !isNaN(Number(block.inputs.OPERAND2.value))) {
-            blockSource = `((${inputToJS(block.inputs.OPERAND1, "number")}) === ${Number(block.inputs.OPERAND2.value)})`;
+          if (
+            (block.inputs.OPERAND1 as BlockInput.Any).type !== "block" &&
+            !isNaN(Number(block.inputs.OPERAND1.value))
+          ) {
+            blockSource = `(${Number(block.inputs.OPERAND1.value)} === (${inputToJS(
+              block.inputs.OPERAND2,
+              "number"
+            )}))`;
+          } else if (
+            (block.inputs.OPERAND2 as BlockInput.Any).type !== "block" &&
+            !isNaN(Number(block.inputs.OPERAND2.value))
+          ) {
+            blockSource = `((${inputToJS(block.inputs.OPERAND1, "number")}) === ${Number(
+              block.inputs.OPERAND2.value
+            )})`;
           } else if ((block.inputs.OPERAND1 as BlockInput.Any).type !== "block") {
-            blockSource = `(${JSON.stringify(block.inputs.OPERAND1.value)} === (${inputToJS(block.inputs.OPERAND2, "string")}))`;
+            blockSource = `(${JSON.stringify(block.inputs.OPERAND1.value)} === (${inputToJS(
+              block.inputs.OPERAND2,
+              "string"
+            )}))`;
           } else if ((block.inputs.OPERAND2 as BlockInput.Any).type !== "block") {
-            blockSource = `((${inputToJS(block.inputs.OPERAND1, "string")}) === ${JSON.stringify(block.inputs.OPERAND2.value)})`;
+            blockSource = `((${inputToJS(block.inputs.OPERAND1, "string")}) === ${JSON.stringify(
+              block.inputs.OPERAND2.value
+            )})`;
           } else {
-            blockSource = `(this.compare((${inputToJS(block.inputs.OPERAND1, "any")}), (${inputToJS(block.inputs.OPERAND2, "any")})) === 0)`;
+            blockSource = `(this.compare((${inputToJS(block.inputs.OPERAND1, "any")}), (${inputToJS(
+              block.inputs.OPERAND2,
+              "any"
+            )})) === 0)`;
           }
           break;
 
         case OpCode.operator_and:
           satisfiesInputShape = "boolean";
-          blockSource = `((${inputToJS(block.inputs.OPERAND1, "boolean")}) && (${inputToJS(block.inputs.OPERAND2, "boolean")}))`;
+          blockSource = `((${inputToJS(block.inputs.OPERAND1, "boolean")}) && (${inputToJS(
+            block.inputs.OPERAND2,
+            "boolean"
+          )}))`;
           break;
 
         case OpCode.operator_or:
           satisfiesInputShape = "boolean";
-          blockSource = `((${inputToJS(block.inputs.OPERAND1, "boolean")}) || (${inputToJS(block.inputs.OPERAND2, "boolean")}))`;
+          blockSource = `((${inputToJS(block.inputs.OPERAND1, "boolean")}) || (${inputToJS(
+            block.inputs.OPERAND2,
+            "boolean"
+          )}))`;
           break;
 
         case OpCode.operator_not:
@@ -1111,12 +1166,18 @@ export default function toLeopard(
 
         case OpCode.operator_join:
           satisfiesInputShape = "string";
-          blockSource = `((${inputToJS(block.inputs.STRING1, "string")}) + (${inputToJS(block.inputs.STRING2, "string")}))`;
+          blockSource = `((${inputToJS(block.inputs.STRING1, "string")}) + (${inputToJS(
+            block.inputs.STRING2,
+            "string"
+          )}))`;
           break;
 
         case OpCode.operator_letter_of:
           satisfiesInputShape = "string";
-          blockSource = `(((${inputToJS(block.inputs.STRING, "string")})[${inputToJS(block.inputs.LETTER, "index")}]) ?? "")`;
+          blockSource = `(((${inputToJS(block.inputs.STRING, "string")})[${inputToJS(
+            block.inputs.LETTER,
+            "index"
+          )}]) ?? "")`;
           break;
 
         case OpCode.operator_length:
@@ -1126,7 +1187,10 @@ export default function toLeopard(
 
         case OpCode.operator_contains:
           satisfiesInputShape = "boolean";
-          blockSource = `(${inputToJS(block.inputs.STRING1, "string")}).includes(${inputToJS(block.inputs.STRING2, "any")})`;
+          blockSource = `(${inputToJS(block.inputs.STRING1, "string")}).includes(${inputToJS(
+            block.inputs.STRING2,
+            "any"
+          )})`;
           break;
 
         case OpCode.operator_mod:
@@ -1243,14 +1307,16 @@ export default function toLeopard(
         case OpCode.data_insertatlist:
           satisfiesInputShape = "stack";
           blockSource = `${selectedVarSource}.splice((${inputToJS(block.inputs.INDEX, "index")}), 0, (${inputToJS(
-            block.inputs.ITEM, "any"
+            block.inputs.ITEM,
+            "any"
           )}))`;
           break;
 
         case OpCode.data_replaceitemoflist:
           satisfiesInputShape = "stack";
           blockSource = `${selectedVarSource}.splice((${inputToJS(block.inputs.INDEX, "index")}), 1, (${inputToJS(
-            block.inputs.ITEM, "any"
+            block.inputs.ITEM,
+            "any"
           )}))`;
           break;
 
