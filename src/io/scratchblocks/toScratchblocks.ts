@@ -424,7 +424,7 @@ export default function toScratchblocks(
 
       // data -------------------------------------------------------- //
       case OpCode.data_variable:
-        return `(${block.inputs.VARIABLE.value} :: variables)`;
+        return `(${block.inputs.VARIABLE.value.name} :: variables)`;
       case OpCode.data_setvariableto:
         return `set ${i("VARIABLE")} to ${i("VALUE")}`;
       case OpCode.data_changevariableby:
@@ -434,7 +434,7 @@ export default function toScratchblocks(
       case OpCode.data_hidevariable:
         return `hide variable ${i("VARIABLE")}`;
       case OpCode.data_listcontents:
-        return `(${block.inputs.LIST.value} :: list)`;
+        return `(${block.inputs.LIST.value.name} :: list)`;
       case OpCode.data_addtolist:
         return `add ${i("ITEM")} to ${i("LIST")}`;
       case OpCode.data_deleteoflist:
