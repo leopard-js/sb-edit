@@ -431,7 +431,7 @@ export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAsset: Ge
   // Run an extra pass on variables (and lists). Only those which are actually
   // referenced in blocks or monitors should be kept.
   for (const target of [project.stage, ...project.sprites]) {
-    let relevantBlocks: Array<Block> = null;
+    let relevantBlocks: Block[] = null;
     if (target === project.stage) {
       relevantBlocks = [project.stage, ...project.sprites]
         .flatMap(target => target.blocks);

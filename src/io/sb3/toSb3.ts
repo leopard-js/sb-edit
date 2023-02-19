@@ -880,7 +880,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     // etc into the structures Scratch 3.0 expects.
 
     function mapToIdObject<Entry extends { id: string }, ReturnType>(
-      values: Array<Entry>,
+      values: Entry[],
       fn: (x: Entry) => ReturnType
     ): { [key: string]: ReturnType } {
       // Map an Array of objects with an "id` property
