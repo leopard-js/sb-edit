@@ -181,6 +181,13 @@ export default function toLeopard(
     value: string | number | boolean | object,
     desiredInputShape?: InputShape
   ): string {
+    // Short-circuit for string inputs. These must never return number syntax.
+    if (desiredInputShape === "string") {
+      return JSON.stringify(value);
+    }
+
+    // Other input shapes which static inputs may fulfill: number, index, any.
+    // These are all OK to return JavaScript number literals for.
     const asNum = Number(value as string);
     if (!isNaN(asNum) && value !== "") {
       if (desiredInputShape === "index") {
@@ -189,6 +196,7 @@ export default function toLeopard(
         return JSON.stringify(asNum);
       }
     }
+
     return JSON.stringify(value);
   }
 
