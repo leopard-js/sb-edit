@@ -137,7 +137,10 @@ export default function toLeopard(
       "rotationStyle",
       "moveAhead",
       "moveBehind",
+      "toNumber",
       "toBoolean",
+      "toString",
+      "stringIncludes",
       "compare"
     ]);
     for (const script of target.scripts) {
@@ -498,7 +501,7 @@ export default function toLeopard(
 
         case OpCode.looks_sayforsecs:
           satisfiesInputShape = "stack";
-          blockSource = `yield* this.sayAndWait((${inputToJS(block.inputs.MESSAGE, "string")}), (${inputToJS(
+          blockSource = `yield* this.sayAndWait((${inputToJS(block.inputs.MESSAGE, "any")}), (${inputToJS(
             block.inputs.SECS,
             "number"
           )}))`;
@@ -506,12 +509,12 @@ export default function toLeopard(
 
         case OpCode.looks_say:
           satisfiesInputShape = "stack";
-          blockSource = `this.say(${inputToJS(block.inputs.MESSAGE, "string")})`;
+          blockSource = `this.say(${inputToJS(block.inputs.MESSAGE, "any")})`;
           break;
 
         case OpCode.looks_thinkforsecs:
           satisfiesInputShape = "stack";
-          blockSource = `yield* this.thinkAndWait((${inputToJS(block.inputs.MESSAGE, "string")}), (${inputToJS(
+          blockSource = `yield* this.thinkAndWait((${inputToJS(block.inputs.MESSAGE, "any")}), (${inputToJS(
             block.inputs.SECS,
             "number"
           )}))`;
@@ -519,7 +522,7 @@ export default function toLeopard(
 
         case OpCode.looks_think:
           satisfiesInputShape = "stack";
-          blockSource = `this.think(${inputToJS(block.inputs.MESSAGE, "string")})`;
+          blockSource = `this.think(${inputToJS(block.inputs.MESSAGE, "any")})`;
           break;
 
         case OpCode.looks_switchcostumeto:
@@ -893,7 +896,7 @@ export default function toLeopard(
 
         case OpCode.sensing_askandwait:
           satisfiesInputShape = "stack";
-          blockSource = `yield* this.askAndWait(${inputToJS(block.inputs.QUESTION, "string")})`;
+          blockSource = `yield* this.askAndWait(${inputToJS(block.inputs.QUESTION, "any")})`;
           break;
 
         case OpCode.sensing_answer:
@@ -1187,9 +1190,9 @@ export default function toLeopard(
 
         case OpCode.operator_contains:
           satisfiesInputShape = "boolean";
-          blockSource = `(${inputToJS(block.inputs.STRING1, "string")}).includes(${inputToJS(
+          blockSource = `this.stringIncludes(${inputToJS(block.inputs.STRING1, "string")}, ${inputToJS(
             block.inputs.STRING2,
-            "any"
+            "string"
           )})`;
           break;
 
@@ -1332,10 +1335,10 @@ export default function toLeopard(
         case OpCode.data_itemnumoflist:
           if (desiredInputShape === "index") {
             satisfiesInputShape = "index";
-            blockSource = `(${selectedVarSource}.indexOf(${inputToJS(block.inputs.ITEM, "any")}))`;
+            blockSource = `this.indexInArray(${selectedVarSource}, ${inputToJS(block.inputs.ITEM, "any")})`;
           } else {
             satisfiesInputShape = "number";
-            blockSource = `(${selectedVarSource}.indexOf(${inputToJS(block.inputs.ITEM, "any")}) + 1)`;
+            blockSource = `(this.indexInArray(${selectedVarSource}, ${inputToJS(block.inputs.ITEM, "any")}) + 1)`;
           }
           break;
 
@@ -1346,7 +1349,7 @@ export default function toLeopard(
 
         case OpCode.data_listcontainsitem:
           satisfiesInputShape = "boolean";
-          blockSource = `${selectedVarSource}.includes(${inputToJS(block.inputs.ITEM, "any")})`;
+          blockSource = `this.arrayIncludes(${selectedVarSource}, ${inputToJS(block.inputs.ITEM, "any")})`;
           break;
 
         case OpCode.data_showlist:
@@ -1490,11 +1493,11 @@ export default function toLeopard(
       }
 
       if (desiredInputShape === "string") {
-        return `(String(${blockSource}))`;
+        return `(this.toString(${blockSource}))`;
       }
 
       if (desiredInputShape === "number") {
-        return `(Number(${blockSource}))`;
+        return `(this.toNumber(${blockSource}))`;
       }
 
       if (desiredInputShape === "index") {
