@@ -25,9 +25,21 @@ export default class Target {
   }
 
   public get blocks(): Block[] {
-    return this.scripts.flatMap(script => {
-      return script.blocks.flatMap(block => block.blocks);
-    });
+    return this.scripts.flatMap(script =>
+      script.blocks.flatMap(recursive));
+
+    function recursive(block: Block): Block[] {
+      return [block, ...Object.values(block.inputs).flatMap(input => {
+        switch (input.type) {
+          case "block":
+            return recursive(input.value);
+          case "blocks":
+            return input.value.flatMap(recursive);
+          default:
+            return [];
+        }
+      })];
+    }
   }
 
   public setName(name: string): void {

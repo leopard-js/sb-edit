@@ -978,18 +978,16 @@ export default function toLeopard(
       targetsToCheckForShowBlocks = [target];
     }
     for (const checkTarget of targetsToCheckForShowBlocks) {
-      for (const script of checkTarget.scripts) {
-        for (const block of script.blocks) {
-          if (block.opcode === OpCode.data_showvariable || block.opcode === OpCode.data_hidevariable) {
-            shownWatchers.add(
-              (block as BlockBase<OpCode.data_showvariable, { VARIABLE: BlockInput.Variable }>).inputs.VARIABLE.value.id
-            );
-          }
-          if (block.opcode === OpCode.data_showlist || block.opcode === OpCode.data_hidelist) {
-            shownWatchers.add(
-              (block as BlockBase<OpCode.data_showlist, { LIST: BlockInput.List }>).inputs.LIST.value.id
-            );
-          }
+      for (const block of checkTarget.blocks) {
+        if (block.opcode === OpCode.data_showvariable || block.opcode === OpCode.data_hidevariable) {
+          shownWatchers.add(
+            (block as BlockBase<OpCode.data_showvariable, { VARIABLE: BlockInput.Variable }>).inputs.VARIABLE.value.id
+          );
+        }
+        if (block.opcode === OpCode.data_showlist || block.opcode === OpCode.data_hidelist) {
+          shownWatchers.add(
+            (block as BlockBase<OpCode.data_showlist, { LIST: BlockInput.List }>).inputs.LIST.value.id
+          );
         }
       }
     }

@@ -428,20 +428,15 @@ export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAsset: Ge
     videoAlpha: stage.videoTransparency
   });
 
-  const targetToBlocks: Map<Target, Array<Block>> = new Map();
-  for (const target of [project.stage, ...project.sprites]) {
-    targetToBlocks.set(target, flattenBlocks(target.scripts.flatMap(script => script.blocks)));
-  }
-  const allBlocks = Array.from(targetToBlocks.values()).flat();
-
   // Run an extra pass on variables (and lists). Only those which are actually
   // referenced in blocks or monitors should be kept.
   for (const target of [project.stage, ...project.sprites]) {
     let relevantBlocks: Array<Block> = null;
     if (target === project.stage) {
-      relevantBlocks = allBlocks;
+      relevantBlocks = [project.stage, ...project.sprites]
+        .flatMap(target => target.blocks);
     } else {
-      relevantBlocks = targetToBlocks.get(target);
+      relevantBlocks = target.blocks;
     }
 
     const usedVariableIds: Set<string> = new Set();
@@ -474,23 +469,6 @@ export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAsset: Ge
   }
 
   return project;
-}
-
-function flattenBlocks(blocks: Array<Block>) {
-  return blocks.flatMap(block => [
-    block,
-    ...flattenBlocks(
-      Object.values(block.inputs).flatMap(input => {
-        if (input.type === "block") {
-          return [input.value];
-        } else if (input.type === "blocks") {
-          return input.value;
-        } else {
-          return [];
-        }
-      })
-    )
-  ]);
 }
 
 export default async function fromSb3(fileData: Parameters<typeof JSZip.loadAsync>[0]): Promise<Project> {
