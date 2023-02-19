@@ -91,19 +91,32 @@ export default function toLeopard(
   };
   options = { ...defaultOptions, ...options };
 
-  // Update all identifying names in the project to be unique
-  // Names changed first are less likely to be ugly
-  const uniqueName = uniqueNameGenerator();
+  // Sprite identifier must not conflict with module-level/global identifiers,
+  // imports and any others that are referenced in generated code.
+  //
+  // (Only classes and similar capitalized namespaces need to be listed here:
+  // generated sprite names will never conflict with identifiers whose first
+  // letter is lowercase.)
+  const uniqueSpriteName = uniqueNameGenerator([
+    'Color',
+    'Costume',
+    'Sound',
+    'Sprite',
+    'Trigger',
+    'Watcher',
+  ]);
 
   let targetNameMap = {};
   let customBlockArgNameMap: Map<Script, { [key: string]: string }> = new Map();
   let variableNameMap: { [id: string]: string } = {}; // ID to unique (Leopard) name
 
   for (const target of [project.stage, ...project.sprites]) {
-    const newTargetName = uniqueName(camelCase(target.name, true));
+    const newTargetName = uniqueSpriteName(camelCase(target.name, true));
     targetNameMap[target.name] = newTargetName;
     target.setName(newTargetName);
 
+    // Variables are uniquely named per-target. These are on an empty namespace
+    // so don't have any conflicts.
     let uniqueVariableName = uniqueNameGenerator();
 
     for (const { id, name } of [...target.lists, ...target.variables]) {
@@ -111,38 +124,114 @@ export default function toLeopard(
       variableNameMap[id] = newName;
     }
 
+    // Scripts are uniquely named per-target. These are on the sprite's main
+    // namespace, so must not conflict with properties and methods defined on
+    // all sprites/targets by Leopard.
+    //
+    // The list of reserved names is technically different between BaseSprite,
+    // Sprite, and Stage, but all three are considered together here, whatever
+    // kind of target will actually be getting script names here.
     const uniqueScriptName = uniqueNameGenerator([
+      // Essential data
+      "costumes",
+      "effectChain",
+      "effects",
+      "height",
+      "name",
+      "sounds",
+      "triggers",
+      "vars",
+      "watchers",
+      "width",
+
+      // Other objects
+      "andClones",
+      "clones",
       "stage",
+      "sprites",
+      "parent",
+
+      // Motion
       "direction",
+      "glide",
+      "goto",
+      "move",
+      "rotationStyle",
       "x",
       "y",
-      "penDown",
-      "penColor",
-      "vars",
+
+      // Looks
       "costumeNumber",
       "costume",
-      "mouse",
-      "timer",
-      "triggers",
-      "costumes",
-      "size",
-      "visible",
-      "penSize",
-      "askAndWait",
-      "answer",
-      "parent",
-      "clones",
-      "andClones",
-      "effects",
-      "rotationStyle",
       "moveAhead",
       "moveBehind",
+      "say",
+      "sayAndWait",
+      "size",
+      "think",
+      "thinkAndWait",
+      "visible",
+
+      // Sounds
+      "audioEffects",
+      "getSound",
+      "getSoundsPlayedByMe",
+      "playSoundUntilDone",
+      "startSound",
+      "stapAllOfMySounds",
+      "stopAllSounds",
+
+      // Control & events
+      "broadcast",
+      "broadcastAndWait",
+      "createClone",
+      "deleteThisClone",
+      "fireBackdropChanged",
+      "wait",
+      "warp",
+
+      // Opeartors - casting
       "toNumber",
       "toBoolean",
       "toString",
+      "compare",
+
+      // Operators - strings
       "stringIncludes",
-      "compare"
+
+      // Operators - numbers
+      "degToRad",
+      "degToScratch",
+      "radToDeg",
+      "radToScratch",
+      "random",
+      "scratchToDeg",
+      "scratchToRad",
+      "normalizeDeg",
+
+      // Sensing
+      "answer",
+      "askAndWait",
+      "colorTouching",
+      "keyPressed",
+      "loudness",
+      "mouse",
+      "restartTimer",
+      "timer",
+      "touching",
+
+      // Lists (arrays)
+      "arrayIncludes",
+      "indexInArray",
+
+      // Pen
+      "clearPen",
+      "penColor",
+      "penDown",
+      "penSize",
+      "stamp",
     ]);
+
     for (const script of target.scripts) {
       script.setName(uniqueScriptName(camelCase(script.name)));
 
