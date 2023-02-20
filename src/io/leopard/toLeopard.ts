@@ -1796,14 +1796,14 @@ export default function toLeopard(
                   ? "normal"
                   : { default: "normal", large: "large", slider: "slider" }[variable.mode]
               )},
-              step: ${JSON.stringify(variable.isDiscrete ? 1 : 0.01)},
-              min: ${JSON.stringify(variable.sliderMin)},
-              max: ${JSON.stringify(variable.sliderMax)},
               visible: ${JSON.stringify(variable.visible)},
               value: () => this.vars.${newName},
               ${
                 variable instanceof Variable && variable.mode === "slider"
-                  ? `setValue: (value) => { this.vars.${newName} = value; },\n`
+                  ? `setValue: (value) => { this.vars.${newName} = value; },
+                  step: ${JSON.stringify(variable.isDiscrete ? 1 : 0.01)},
+                  min: ${JSON.stringify(variable.sliderMin)},
+                  max: ${JSON.stringify(variable.sliderMax)},`
                   : ""
               }x: ${JSON.stringify(variable.x + 240)},
               y: ${JSON.stringify(180 - variable.y)},

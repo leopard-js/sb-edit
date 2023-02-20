@@ -115,6 +115,9 @@ export default class Stage extends StageBase {
       setValue: value => {
         this.vars.myVariable = value;
       },
+      step: 0.01,
+      min: 5.5,
+      max: 12,
       x: 249,
       y: 172
     });
