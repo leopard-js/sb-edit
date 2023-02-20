@@ -1327,7 +1327,7 @@ export default function toLeopard(
               blockSource = `Math.cos(this.degToRad(${inputToJS(block.inputs.NUM, "any")}))`;
               break;
             case "tan":
-              blockSource = `Math.tan(this.degToRad(${inputToJS(block.inputs.NUM, "any")}))`;
+              blockSource = `this.scratchTan(${inputToJS(block.inputs.NUM, "any")})`;
               break;
             case "asin":
               blockSource = `this.radToDeg(Math.asin(${inputToJS(block.inputs.NUM, "any")}))`;
