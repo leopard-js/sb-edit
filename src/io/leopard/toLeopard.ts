@@ -198,6 +198,7 @@ export default function toLeopard(
 
       // Operators - strings
       "stringIncludes",
+      "letterOf",
 
       // Operators - numbers
       "degToRad",
@@ -223,6 +224,7 @@ export default function toLeopard(
       // Lists (arrays)
       "arrayIncludes",
       "indexInArray",
+      "itemOf",
 
       // Pen
       "clearPen",
@@ -1274,10 +1276,10 @@ export default function toLeopard(
 
         case OpCode.operator_letter_of:
           satisfiesInputShape = "string";
-          blockSource = `(((${inputToJS(block.inputs.STRING, "string")})[${inputToJS(
+          blockSource = `this.letterOf(${inputToJS(block.inputs.STRING, "any")}, ${inputToJS(
             block.inputs.LETTER,
             "index"
-          )}]) ?? "")`;
+          )})`;
           break;
 
         case OpCode.operator_length:
@@ -1423,9 +1425,9 @@ export default function toLeopard(
         case OpCode.data_itemoflist:
           satisfiesInputShape = "any";
           if (block.inputs.INDEX.value === "last") {
-            blockSource = `(${selectedVarSource}[${selectedVarSource}.length - 1] ?? '')`;
+            blockSource = `this.itemOf(${selectedVarSource}, ${selectedVarSource}.length - 1)`;
           } else {
-            blockSource = `(${selectedVarSource}[${inputToJS(block.inputs.INDEX, "index")}] ?? '')`;
+            blockSource = `this.itemOf(${selectedVarSource}, ${inputToJS(block.inputs.INDEX, "index")})`;
           }
           break;
 
