@@ -1796,6 +1796,9 @@ export default function toLeopard(
                   ? "normal"
                   : { default: "normal", large: "large", slider: "slider" }[variable.mode]
               )},
+              step: ${JSON.stringify(variable.isDiscrete ? 1 : 0.01)},
+              min: ${JSON.stringify(variable.sliderMin)},
+              max: ${JSON.stringify(variable.sliderMax)},
               visible: ${JSON.stringify(variable.visible)},
               value: () => this.vars.${newName},
               ${
