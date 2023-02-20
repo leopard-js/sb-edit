@@ -8,8 +8,8 @@ import * as prettier from "prettier";
 import Target from "../../Target";
 import { List, Variable } from "../../Data";
 
-// Words which are invalid for any JavaScript identifier to be.
-// This is usually used as the basis for reserved words passed to uniqueNameGenerator.
+// Words which are invalid for any JavaScript identifier to be, when it isn't
+// on a namespace (like `this` or `this.vars`).
 //
 // This list may be more comprehensive than it needs to be in every case,
 // erring to avoid potential issues.
@@ -148,15 +148,13 @@ export default function toLeopard(
   options = { ...defaultOptions, ...options };
 
   // Sprite identifier must not conflict with module-level/global identifiers,
-  // imports and any others that are referenced in generated code. JavaScript
-  // reserved words are also included here (the sprite class identifier isn't
-  // on a namespace).
+  // imports and any others that are referenced in generated code.
   //
   // Only classes and similar capitalized namespaces need to be listed here:
   // generated sprite names will never conflict with identifiers whose first
-  // letter is lowercase.
+  // letter is lowercase. (This is also why JavaScript reserved words aren't
+  // listed here - they're all lowercase, so sprite names won't conflict.)
   const uniqueSpriteName = uniqueNameGenerator([
-    ...JS_RESERVED_WORDS,
     'Color',
     'Costume',
     'Sound',
