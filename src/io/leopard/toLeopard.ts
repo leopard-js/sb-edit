@@ -8,6 +8,62 @@ import * as prettier from "prettier";
 import Target from "../../Target";
 import { List, Variable } from "../../Data";
 
+// Words which are invalid for any JavaScript identifier to be.
+// This is usually used as the basis for reserved words passed to uniqueNameGenerator.
+//
+// This list may be more comprehensive than it needs to be in every case,
+// erring to avoid potential issues.
+const JS_RESERVED_WORDS = [
+  'arguments',
+  'await',
+  'break',
+  'case',
+  'catch',
+  'class',
+  'const',
+  'continue',
+  'debugger',
+  'default',
+  'delete',
+  'do',
+  'else',
+  'enum',
+  'eval',
+  'export',
+  'extends',
+  'false',
+  'finally',
+  'for',
+  'function',
+  'if',
+  'implements',
+  'import',
+  'in',
+  'instanceof',
+  'interface',
+  'let',
+  'new',
+  'null',
+  'package',
+  'private',
+  'protected',
+  'public',
+  'return',
+  'static',
+  'super',
+  'switch',
+  'this',
+  'throw',
+  'true',
+  'try',
+  'typeof',
+  'yield',
+  'var',
+  'void',
+  'while',
+  'with'
+];
+
 type InputShape = "any" | "index" | "number" | "string" | "boolean" | "stack";
 
 function uniqueNameGenerator(usedNames: string[] = []) {
@@ -92,12 +148,15 @@ export default function toLeopard(
   options = { ...defaultOptions, ...options };
 
   // Sprite identifier must not conflict with module-level/global identifiers,
-  // imports and any others that are referenced in generated code.
+  // imports and any others that are referenced in generated code. JavaScript
+  // reserved words are also included here (the sprite class identifier isn't
+  // on a namespace).
   //
-  // (Only classes and similar capitalized namespaces need to be listed here:
+  // Only classes and similar capitalized namespaces need to be listed here:
   // generated sprite names will never conflict with identifiers whose first
-  // letter is lowercase.)
+  // letter is lowercase.
   const uniqueSpriteName = uniqueNameGenerator([
+    ...JS_RESERVED_WORDS,
     'Color',
     'Costume',
     'Sound',
@@ -117,6 +176,9 @@ export default function toLeopard(
 
     // Variables are uniquely named per-target. These are on an empty namespace
     // so don't have any conflicts.
+    //
+    // Note: since variables are serialized as properties on an object (this.vars),
+    // these never conflict with reserved JavaScript words like "class" or "new".
     let uniqueVariableName = uniqueNameGenerator();
 
     for (const { id, name } of [...target.lists, ...target.variables]) {
@@ -131,6 +193,10 @@ export default function toLeopard(
     // The list of reserved names is technically different between BaseSprite,
     // Sprite, and Stage, but all three are considered together here, whatever
     // kind of target will actually be getting script names here.
+    //
+    // Note: since scripts are serialized as class methods, these never conflict
+    // with reserved JavaScript words like "class" or "new" (they're accessed
+    // with the same typeof syntax, e.g. this.whenGreenFlagClicked).
     const uniqueScriptName = uniqueNameGenerator([
       // Essential data
       "costumes",
@@ -240,7 +306,10 @@ export default function toLeopard(
       const argNameMap = {};
       customBlockArgNameMap.set(script, argNameMap);
 
-      const uniqueParamName = uniqueNameGenerator();
+      // Parameter names aren't defined on a namespace at all, so must not conflict
+      // with JavaScript reserved words.
+      const uniqueParamName = uniqueNameGenerator(JS_RESERVED_WORDS);
+
       for (const block of script.blocks) {
         if (block.opcode === OpCode.procedures_definition) {
           for (const argument of block.inputs.ARGUMENTS.value) {
