@@ -4,7 +4,6 @@ import Block from "../../Block";
 import * as BlockInput from "../../BlockInput";
 import { OpCode } from "../../OpCode";
 
-import * as path from "path";
 import * as prettier from "prettier";
 import Target from "../../Target";
 import { List, Variable } from "../../Data";
@@ -885,9 +884,16 @@ export default function toLeopard(
     if (isAbsolute) {
       return () => destination;
     } else {
-      return fromDirectory => encodeURI("./" + path.relative(fromDirectory, destination));
+      return ({ from }) => {
+        switch (from) {
+          case "index":
+            return "./" + destination;
+          case "target":
+            return "../" + destination;
+        }
+      };
     }
-  }
+  };
 
   const toLeopardJS = getPathsToRelativeOrAbsolute(options.leopardJSURL);
   const toLeopardCSS = getPathsToRelativeOrAbsolute(options.leopardCSSURL);
@@ -897,7 +903,7 @@ export default function toLeopard(
       <!DOCTYPE html>
       <html>
         <head>
-          <link rel="stylesheet" href="${toLeopardCSS("")}" />
+          <link rel="stylesheet" href="${toLeopardCSS({ from: "index" })}" />
         </head>
         <body>
           <button id="greenFlag">Green Flag</button>
@@ -920,7 +926,7 @@ export default function toLeopard(
       </html>
     `,
     "index.js": `
-      import { Project } from ${JSON.stringify(toLeopardJS(""))};
+      import { Project } from ${JSON.stringify(toLeopardJS({ from: "index" }))};
 
       ${[project.stage, ...project.sprites]
         .map(
@@ -1013,9 +1019,9 @@ export default function toLeopard(
     }
 
     files[`${target.name}/${target.name}.js`] = `
-      import { ${target.isStage ? "Stage as StageBase" : "Sprite"}, Trigger, Watcher, Costume, Color, Sound } from '${
-        toLeopardJS(target.name)
-      }';
+      import { ${
+        target.isStage ? "Stage as StageBase" : "Sprite"
+      }, Trigger, Watcher, Costume, Color, Sound } from '${toLeopardJS({ from: "target" })}';
 
       export default class ${target.name} extends ${target.isStage ? "StageBase" : "Sprite"} {
         constructor(...args) {
