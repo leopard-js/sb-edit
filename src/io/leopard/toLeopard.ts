@@ -161,6 +161,19 @@ export default function toLeopard(
     }
   }
 
+  // Cache a set of variables which are for the stage since whether or not a variable
+  // is local has to be known every time any variable block is converted. We check the
+  // stage because all non-stage variables are "for this sprite only" and because it's
+  // marginally quicker to iterate over a shorter set than a longer one [an assumption
+  // made about projects with primarily "for this sprite only" variables].
+  const stageVariables: Set<string> = new Set();
+  for (const variable of project.stage.variables) {
+    stageVariables.add(variable.id);
+  }
+  for (const list of project.stage.lists) {
+    stageVariables.add(list.id);
+  }
+
   function staticBlockInputToLiteral(value: string | number | boolean | object): string {
     const asNum = Number(value as string);
     if (!isNaN(asNum) && value !== "") {
@@ -269,17 +282,14 @@ export default function toLeopard(
       let selectedVarSource: string = null;
       let selectedWatcherSource: string = null;
       let varInputId: string = null;
-      let isSpriteVar: boolean = null;
       if ("VARIABLE" in block.inputs) {
         varInputId = (block.inputs.VARIABLE.value as { id: string }).id;
-        isSpriteVar = target.variables.some(({ id }) => id === varInputId);
       } else if ("LIST" in block.inputs) {
         varInputId = (block.inputs.LIST.value as { id: string }).id;
-        isSpriteVar = target.lists.some(({ id }) => id === varInputId);
       }
       if (varInputId) {
         const newName = variableNameMap[varInputId];
-        if (isSpriteVar) {
+        if (target === project.stage || !stageVariables.has(newName)) {
           selectedVarSource = `this.vars.${newName}`;
           selectedWatcherSource = `this.watchers.${newName}`;
         } else {
