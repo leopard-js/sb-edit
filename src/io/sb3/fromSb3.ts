@@ -433,8 +433,7 @@ export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAsset: Ge
   for (const target of [project.stage, ...project.sprites]) {
     let relevantBlocks: Block[] = null;
     if (target === project.stage) {
-      relevantBlocks = [project.stage, ...project.sprites]
-        .flatMap(target => target.blocks);
+      relevantBlocks = project.stage.blocks.concat(project.sprites.flatMap(sprite => sprite.blocks));
     } else {
       relevantBlocks = target.blocks;
     }
