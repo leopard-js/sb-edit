@@ -41,12 +41,18 @@ export interface Broadcast extends Base {
 
 export interface Variable extends Base {
   type: "variable";
-  value: string;
+  value: {
+    id: string;
+    name: string;
+  };
 }
 
 export interface List extends Base {
   type: "list";
-  value: string;
+  value: {
+    id: string;
+    name: string;
+  };
 }
 
 export interface Block extends Base {

@@ -8,7 +8,7 @@ import * as BlockInput from "../../BlockInput";
 import Costume from "../../Costume";
 import Project from "../../Project";
 import Sound from "../../Sound";
-import { Sprite, Stage, TargetOptions } from "../../Target";
+import Target, { Sprite, Stage, TargetOptions } from "../../Target";
 import { List, Variable } from "../../Data";
 import Script from "../../Script";
 
@@ -216,7 +216,7 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
                 type: "block",
                 value: new BlockBase({
                   opcode: OpCode.data_variable,
-                  inputs: { VARIABLE: { type: "variable", value: value[1] } },
+                  inputs: { VARIABLE: { type: "variable", value: { id: value[2], name: value[1] } } },
                   parent: blockId
                 }) as Block
               });
@@ -227,7 +227,7 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
                 type: "block",
                 value: new BlockBase({
                   opcode: OpCode.data_listcontents,
-                  inputs: { LIST: { type: "list", value: value[1] } },
+                  inputs: { LIST: { type: "list", value: { id: value[2], name: value[1] } } },
                   parent: blockId
                 }) as Block
               });
@@ -268,7 +268,11 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
       let result = {};
       for (const [fieldName, values] of Object.entries(fields)) {
         const type = sb3.fieldTypeMap[opcode][fieldName];
-        result[fieldName] = { type, value: values[0] };
+        if (fieldName === "VARIABLE" || fieldName === "LIST") {
+          result[fieldName] = { type, value: { id: values[1], name: values[0] } };
+        } else {
+          result[fieldName] = { type, value: values[0] };
+        }
       }
 
       return result;
@@ -396,7 +400,7 @@ export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAsset: Ge
     };
   }
 
-  return new Project({
+  const project = new Project({
     stage: new Stage(await getTargetOptions(stage)),
     sprites: await Promise.all(
       json.targets
@@ -423,6 +427,46 @@ export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAsset: Ge
     videoOn: stage.videoState === "on",
     videoAlpha: stage.videoTransparency
   });
+
+  // Run an extra pass on variables (and lists). Only those which are actually
+  // referenced in blocks or monitors should be kept.
+  for (const target of [project.stage, ...project.sprites]) {
+    let relevantBlocks: Block[] = null;
+    if (target === project.stage) {
+      relevantBlocks = target.blocks.concat(project.sprites.flatMap(sprite => sprite.blocks));
+    } else {
+      relevantBlocks = target.blocks;
+    }
+
+    const usedVariableIds: Set<string> = new Set();
+    for (const block of relevantBlocks) {
+      let id: string = null;
+      if ((block.inputs as { VARIABLE: BlockInput.Variable }).VARIABLE) {
+        id = (block.inputs as { VARIABLE: BlockInput.Variable }).VARIABLE.value.id;
+      } else if ((block.inputs as { LIST: BlockInput.List }).LIST) {
+        id = (block.inputs as { LIST: BlockInput.List }).LIST.value.id;
+      } else {
+        continue;
+      }
+      usedVariableIds.add(id);
+    }
+
+    for (const varList of [target.variables, target.lists]) {
+      for (let i = 0, variable; (variable = varList[i]); i++) {
+        if (variable.visible) {
+          continue;
+        }
+        if (usedVariableIds.has(variable.id)) {
+          continue;
+        }
+
+        varList.splice(i, 1);
+        i--;
+      }
+    }
+  }
+
+  return project;
 }
 
 export default async function fromSb3(fileData: Parameters<typeof JSZip.loadAsync>[0]): Promise<Project> {

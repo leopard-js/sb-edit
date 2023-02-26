@@ -168,7 +168,7 @@ export default class Stage extends StageBase {
     yield* this.askAndWait(this.loudness);
     yield* this.askAndWait(this.timer);
     yield* this.askAndWait(this.stage.costumeNumber);
-    yield* this.askAndWait(this.stage.vars[\\"CloudVar\\"]);
+    yield* this.askAndWait(this.stage.vars.CloudVar);
     yield* this.askAndWait(new Date().getDay() + 1);
     yield* this.askAndWait(
       ((new Date().getTime() - new Date(2000, 0, 1)) / 1000 / 60 +
