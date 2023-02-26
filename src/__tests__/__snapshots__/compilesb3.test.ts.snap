@@ -8,7 +8,7 @@ exports[`sb3 -> leopard 1`] = `
   Watcher,
   Costume,
   Color,
-  Sound
+  Sound,
 } from "https://unpkg.com/leopard@^1/dist/index.esm.js";
 
 export default class Abby extends Sprite {
@@ -19,14 +19,14 @@ export default class Abby extends Sprite {
       new Costume("abby-a", "./Abby/costumes/abby-a.svg", { x: 31, y: 100 }),
       new Costume("abby-b", "./Abby/costumes/abby-b.svg", { x: 31, y: 100 }),
       new Costume("abby-c", "./Abby/costumes/abby-c.svg", { x: 32, y: 100 }),
-      new Costume("abby-d", "./Abby/costumes/abby-d.svg", { x: 32, y: 101 })
+      new Costume("abby-d", "./Abby/costumes/abby-d.svg", { x: 32, y: 101 }),
     ];
 
     this.sounds = [new Sound("pop", "./Abby/sounds/pop.wav")];
 
     this.triggers = [
       new Trigger(Trigger.CLONE_START, this.startAsClone),
-      new Trigger(Trigger.KEY_PRESSED, { key: "any" }, this.whenKeyAnyPressed)
+      new Trigger(Trigger.KEY_PRESSED, { key: "any" }, this.whenKeyAnyPressed),
     ];
   }
 
@@ -62,7 +62,7 @@ export default class Abby extends Sprite {
   Watcher,
   Costume,
   Color,
-  Sound
+  Sound,
 } from "https://unpkg.com/leopard@^1/dist/index.esm.js";
 
 export default class Stage extends StageBase {
@@ -72,8 +72,8 @@ export default class Stage extends StageBase {
     this.costumes = [
       new Costume("backdrop1", "./Stage/costumes/backdrop1.svg", {
         x: 240,
-        y: 180
-      })
+        y: 180,
+      }),
     ];
 
     this.sounds = [new Sound("pop", "./Stage/sounds/pop.wav")];
@@ -100,7 +100,7 @@ export default class Stage extends StageBase {
         Trigger.TIMER_GREATER_THAN,
         { VALUE: () => this.toNumber(this.vars.myVariable) * 2 },
         this.whengreaterthan2
-      )
+      ),
     ];
 
     this.vars.myVariable = 0;
@@ -112,14 +112,14 @@ export default class Stage extends StageBase {
       style: "slider",
       visible: true,
       value: () => this.vars.myVariable,
-      setValue: value => {
+      setValue: (value) => {
         this.vars.myVariable = value;
       },
       step: 0.01,
       min: 5.5,
       max: 12,
       x: 249,
-      y: 172
+      y: 172,
     });
     this.watchers.CloudVar = new Watcher({
       label: "☁ cloud var",
@@ -127,7 +127,7 @@ export default class Stage extends StageBase {
       visible: false,
       value: () => this.vars.CloudVar,
       x: 248,
-      y: -55
+      y: -55,
     });
     this.watchers.testList = new Watcher({
       label: "test list",
@@ -137,7 +137,7 @@ export default class Stage extends StageBase {
       x: 249,
       y: 123,
       width: 134,
-      height: 171
+      height: 171,
     });
   }
 
@@ -293,7 +293,7 @@ export default class Stage extends StageBase {
 ",
   "index.js": "import {
   Project,
-  Sprite
+  Sprite,
 } from "https://unpkg.com/leopard@^1/dist/index.esm.js";
 
 import Stage from "./Stage/Stage.js";
@@ -310,12 +310,12 @@ const sprites = {
     costumeNumber: 1,
     size: 100,
     visible: true,
-    layerOrder: 1
-  })
+    layerOrder: 1,
+  }),
 };
 
 const project = new Project(stage, sprites, {
-  frameRate: 30 // Set to 60 to make your project run faster
+  frameRate: 30, // Set to 60 to make your project run faster
 });
 export default project;
 ",

@@ -321,16 +321,8 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     // ...where someId is the ID of the variable, and [4, 0] is the obscured
     // shadow block, as usual.
 
-    const {
-      block,
-      blockData,
-      initialBroadcastName,
-      customBlockDataMap,
-      initialValues,
-      inputEntries,
-      stage,
-      target
-    } = options;
+    const { block, blockData, initialBroadcastName, customBlockDataMap, initialValues, inputEntries, stage, target } =
+      options;
 
     const resultInputs: sb3.Block["inputs"] = {};
 

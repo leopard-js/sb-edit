@@ -9,9 +9,9 @@ interface ToScratchblocksOptions {
   indent: string;
 }
 
-export default function toScratchblocks(
-  options: Partial<ToScratchblocksOptions> = {}
-): { [targetName: string]: string } {
+export default function toScratchblocks(options: Partial<ToScratchblocksOptions> = {}): {
+  [targetName: string]: string;
+} {
   const project: Project = this;
 
   const defaultOptions: ToScratchblocksOptions = {

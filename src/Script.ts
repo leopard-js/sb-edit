@@ -28,10 +28,7 @@ export default class Script {
             .join("_");
           break;
         default:
-          this.name = this.blocks[0].opcode
-            .split("_")
-            .slice(1)
-            .join("_");
+          this.name = this.blocks[0].opcode.split("_").slice(1).join("_");
       }
     }
   }
