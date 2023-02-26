@@ -25,20 +25,31 @@ export default class Target {
   }
 
   public get blocks(): Block[] {
-    return this.scripts.flatMap(script =>
-      script.blocks.flatMap(recursive));
+    const collector = [];
 
-    function recursive(block: Block): Block[] {
-      return [block, ...Object.values(block.inputs).flatMap(input => {
+    for (const script of this.scripts) {
+      for (const block of script.blocks) {
+        recursive(block);
+      }
+    }
+
+    return collector;
+
+    function recursive(block: Block) {
+      collector.push(block);
+
+      for (const input of Object.values(block.inputs)) {
         switch (input.type) {
           case "block":
-            return recursive(input.value);
+            recursive(input.value);
+            break;
           case "blocks":
-            return input.value.flatMap(recursive);
-          default:
-            return [];
+            for (const block of input.value) {
+              recursive(block);
+            }
+            break;
         }
-      })];
+      }
     }
   }
 

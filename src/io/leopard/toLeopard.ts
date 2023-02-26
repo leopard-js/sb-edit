@@ -980,14 +980,10 @@ export default function toLeopard(
     for (const checkTarget of targetsToCheckForShowBlocks) {
       for (const block of checkTarget.blocks) {
         if (block.opcode === OpCode.data_showvariable || block.opcode === OpCode.data_hidevariable) {
-          shownWatchers.add(
-            (block as BlockBase<OpCode.data_showvariable, { VARIABLE: BlockInput.Variable }>).inputs.VARIABLE.value.id
-          );
+          shownWatchers.add(block.inputs.VARIABLE.value.id);
         }
         if (block.opcode === OpCode.data_showlist || block.opcode === OpCode.data_hidelist) {
-          shownWatchers.add(
-            (block as BlockBase<OpCode.data_showlist, { LIST: BlockInput.List }>).inputs.LIST.value.id
-          );
+          shownWatchers.add(block.inputs.LIST.value.id);
         }
       }
     }
@@ -1055,9 +1051,9 @@ export default function toLeopard(
             .join("\n")}
 
           ${[...target.variables, ...target.lists]
-            .map(variable => [variable, variableNameMap[variable.id]] as [Variable | List, string])
-            .filter(([variable]) => variable.visible || shownWatchers.has(variable.id))
-            .map(([variable, newName]) => {
+            .filter(variable => variable.visible || shownWatchers.has(variable.id))
+            .map(variable => {
+              const newName = variableNameMap[variable.id];
               return `this.watchers.${newName} = new Watcher({
               label: ${JSON.stringify((target.isStage ? "" : `${target.name}: `) + variable.name)},
               style: ${JSON.stringify(

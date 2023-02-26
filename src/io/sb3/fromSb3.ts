@@ -463,7 +463,6 @@ export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAsset: Ge
 
         varList.splice(i, 1);
         i--;
-        continue;
       }
     }
   }
