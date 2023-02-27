@@ -66,13 +66,13 @@ const JS_RESERVED_WORDS = [
 
 type InputShape = "any" | "index" | "number" | "string" | "boolean" | "stack";
 
-function uniqueNameGenerator(usedNames: string[] = []) {
-  usedNames = usedNames.slice();
+function uniqueNameGenerator(reservedNames: string[] | Set<string> = []) {
+  const usedNames: Set<string> = new Set(reservedNames);
   return uniqueName;
 
   function uniqueName(name): string {
-    if (!usedNames.includes(name)) {
-      usedNames.push(name);
+    if (!usedNames.has(name)) {
+      usedNames.add(name);
       return name;
     }
 
