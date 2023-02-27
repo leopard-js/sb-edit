@@ -16,6 +16,15 @@ module.exports = {
     "@typescript-eslint/camelcase": "off",
     "@typescript-eslint/no-use-before-define": "off",
     "@typescript-eslint/no-this-alias": "off",
+    "@typescript-eslint/ban-types": [
+      "error",
+      {
+        "types": {
+          "{}": false
+        },
+        "extendDefaults": true
+      }
+    ],
     "no-console": ["error", {"allow": ["warn", "error"]}]
   }
 };

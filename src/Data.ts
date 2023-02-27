@@ -3,10 +3,10 @@ import { generateId } from "./util/id";
 type ScalarValue = number | string | boolean;
 
 export class Variable {
-  public name: string;
-  public id: string;
+  public name!: string;
+  public id!: string;
 
-  public value: ScalarValue;
+  public value!: ScalarValue;
   public cloud = false;
 
   public visible = true;
@@ -34,7 +34,7 @@ export class Variable {
   }) {
     Object.assign(this, options);
 
-    if (!this.id) {
+    if (!options.id) {
       this.id = generateId();
     }
   }
@@ -45,16 +45,16 @@ export class Variable {
 }
 
 export class List {
-  public name: string;
-  public value: ScalarValue[];
+  public name!: string;
+  public value!: ScalarValue[];
 
   public visible = true;
   public x = 0;
   public y = 0;
-  public width: number = null;
-  public height: number = null;
+  public width: number | null = null;
+  public height: number | null = null;
 
-  public id: string;
+  public id!: string;
 
   constructor(options: {
     name: string;
@@ -70,7 +70,7 @@ export class List {
   }) {
     Object.assign(this, options);
 
-    if (!this.id) {
+    if (!options.id) {
       this.id = generateId();
     }
   }

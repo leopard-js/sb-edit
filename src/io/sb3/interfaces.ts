@@ -52,8 +52,30 @@ interface Mutation {
   children: Mutation[];
 }
 
-export interface Block {
-  opcode: OpCode;
+export interface ProceduresPrototypeMutation {
+  proccode: string;
+  argumentnames: string;
+  argumentids: string;
+  argumentdefaults: string;
+  warp: "true" | "false";
+}
+
+export interface ProceduresCallMutation {
+  proccode: string;
+  argumentnames: string;
+  argumentids: string;
+  argumentdefaults: string;
+  warp: "true" | "false";
+}
+
+type MutationFor<Op extends OpCode> = Op extends OpCode.procedures_prototype
+  ? ProceduresPrototypeMutation
+  : Op extends OpCode.procedures_call
+  ? ProceduresCallMutation
+  : Mutation | undefined;
+
+export interface Block<Op extends OpCode = OpCode> {
+  opcode: Op;
 
   next: string | null;
   parent: string | null;
@@ -65,7 +87,7 @@ export interface Block {
     [key: string]: BlockField;
   };
 
-  mutation?: Mutation;
+  mutation: MutationFor<Op>;
 
   shadow: boolean;
   topLevel: boolean;
@@ -99,7 +121,7 @@ export interface Target {
     [key: string]: string;
   };
   blocks: {
-    [key: string]: Block;
+    [key: string]: Block<OpCode>;
   };
   comments: {
     [key: string]: Comment;
@@ -138,8 +160,8 @@ interface MonitorBase {
     [key: string]: string;
   };
   spriteName: string;
-  width: number;
-  height: number;
+  width?: number | null;
+  height?: number | null;
   x: number;
   y: number;
   visible: boolean;

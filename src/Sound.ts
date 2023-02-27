@@ -6,31 +6,36 @@ export default class Sound {
   public name: string;
   public id: string;
 
-  public asset: any;
+  public asset: unknown;
 
   public md5: string;
   public ext: SoundDataFormat;
 
-  public sampleCount: number;
-  public sampleRate: number;
+  public sampleCount: number | null;
+  public sampleRate: number | null;
 
   constructor(options: {
     name: string;
     id?: string;
 
-    asset: any;
+    asset: unknown;
 
     md5: string;
     ext: SoundDataFormat;
 
-    sampleCount: number;
-    sampleRate: number;
+    sampleCount?: number | null;
+    sampleRate?: number | null;
   }) {
-    Object.assign(this, options);
+    this.name = options.name;
+    this.id = options.id ?? generateId();
 
-    if (!this.id) {
-      this.id = generateId();
-    }
+    this.asset = options.asset;
+
+    this.md5 = options.md5;
+    this.ext = options.ext;
+
+    this.sampleCount = options.sampleCount ?? null;
+    this.sampleRate = options.sampleRate ?? null;
   }
 
   public setName(name: string): void {

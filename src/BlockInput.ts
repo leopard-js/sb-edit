@@ -2,7 +2,7 @@ import _Block from "./Block";
 
 export interface Base {
   type: string;
-  value: any;
+  value: unknown;
 }
 
 export interface Number extends Base {
@@ -342,18 +342,19 @@ export type FieldAny =
   | MathopMenu
   | FrontBackMenu
   | ForwardBackwardMenu
-  | CostumeNumberName;
+  | CostumeNumberName
+  | Variable
+  | List;
 
-/* eslint-disable @typescript-eslint/ban-types */
 export type Any =
+  /* eslint-disable @typescript-eslint/ban-types */
   | Number
   | String
   | Boolean
+  /* eslint-enable @typescript-eslint/ban-types */
   | Angle
   | Color
   | Broadcast
-  | Variable
-  | List
   | Block
   | Blocks
   | CustomBlockArguments

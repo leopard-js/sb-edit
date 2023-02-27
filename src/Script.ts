@@ -4,8 +4,8 @@ import { OpCode } from "./OpCode";
 export default class Script {
   public x = 0;
   public y = 0;
-  public blocks: Block[];
-  public name: string = null;
+  public blocks!: Block[];
+  public name: string | null = null;
 
   constructor(options: { blocks: Block[]; x?: number; y?: number; name?: string }) {
     Object.assign(this, options);
@@ -33,7 +33,7 @@ export default class Script {
     }
   }
 
-  get hat(): Block {
+  get hat(): Block | null {
     if (this.blocks.length === 0) {
       return null;
     }

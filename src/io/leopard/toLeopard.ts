@@ -136,7 +136,7 @@ function uniqueNameGenerator(reservedNames: string[] | Set<string> = []) {
   const usedNames: Set<string> = new Set(reservedNames);
   return uniqueName;
 
-  function uniqueName(name): string {
+  function uniqueName(name: string): string {
     if (!usedNames.has(name)) {
       usedNames.add(name);
       return name;
@@ -222,7 +222,7 @@ export default function toLeopard(
   // listed here - they're all lowercase, so sprite names won't conflict.)
   const uniqueSpriteName = uniqueNameGenerator(["Color", "Costume", "Sound", "Sprite", "Trigger", "Watcher"]);
 
-  let targetNameMap = {};
+  let targetNameMap: Partial<Record<string, string>> = {};
   let customBlockArgNameMap: Map<Script, { [key: string]: string }> = new Map();
   let variableNameMap: { [id: string]: string } = {}; // ID to unique (Leopard) name
 
@@ -1932,7 +1932,7 @@ export default function toLeopard(
   // Scratch doesn't care much about "types" (like numbers vs strings), but
   // sometimes Javascript does. This function attempts to parse a Scratch
   // value and turn it into the most appropriate Javascript representation
-  function toOptimalJavascriptRepresentation(value): string {
+  function toOptimalJavascriptRepresentation(value: string | number | boolean): string {
     if (Array.isArray(value)) {
       return `[${value.map(toOptimalJavascriptRepresentation).join(", ")}]`;
     }

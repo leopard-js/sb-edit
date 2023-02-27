@@ -6,7 +6,7 @@ import Sound from "./Sound";
 import { List, Variable } from "./Data";
 
 export default class Target {
-  public name: string;
+  public name!: string;
   public costumes: Costume[] = [];
   public costumeNumber = 0;
   public sounds: Sound[] = [];
@@ -25,7 +25,7 @@ export default class Target {
   }
 
   public get blocks(): Block[] {
-    const collector = [];
+    const collector: Block[] = [];
 
     for (const script of this.scripts) {
       for (const block of script.blocks) {
@@ -57,19 +57,19 @@ export default class Target {
     this.name = name;
   }
 
-  public getCostume(name: string): Costume {
+  public getCostume(name: string): Costume | undefined {
     return this.costumes.find(costume => costume.name === name);
   }
 
-  public getSound(name: string): Sound {
+  public getSound(name: string): Sound | undefined {
     return this.sounds.find(sound => sound.name === name);
   }
 
-  public getVariable(name: string): Variable {
+  public getVariable(name: string): Variable | undefined {
     return this.variables.find(variable => variable.name === name);
   }
 
-  public getList(name: string): List {
+  public getList(name: string): List | undefined {
     return this.lists.find(list => list.name === name);
   }
 }
@@ -78,7 +78,7 @@ export type TargetOptions = Partial<Target> & { name: string };
 
 export class Stage extends Target {
   public name = "Stage";
-  public isStage: true = true;
+  public isStage = true as const;
 
   constructor(options: TargetOptions = { name: "Stage" }) {
     super(options);
@@ -105,6 +105,7 @@ export class Sprite extends Target {
   }
 
   public delete(): void {
+    if (!this.project) return;
     const index = this.project.sprites.indexOf(this);
     this.project.sprites.splice(index, 1);
   }

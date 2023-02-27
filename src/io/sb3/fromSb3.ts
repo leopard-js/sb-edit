@@ -20,10 +20,10 @@ interface AssetInfo {
   spriteName: string;
 }
 
-// "any" allows user to store the asset encoded however it's useful to them.
+// "unknown" allows user to store the asset encoded however it's useful to them.
 // sb-edit doesn't care, it just stores the asset as it's provided for easy
 // access later.
-type GetAsset = (info: AssetInfo) => Promise<any>;
+type GetAsset = (info: AssetInfo) => Promise<unknown>;
 
 function extractCostumes(target: sb3.Target, getAsset: GetAsset): Promise<Costume[]> {
   return Promise.all(
@@ -95,6 +95,7 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
       for (const [inputName, input] of Object.entries(inputs)) {
         const value = input[1];
         if (typeof value === "string") {
+          const block = blocks[value];
           const inputScript = blockWithNext(value, blockId);
           if (inputScript.length === 1 && blocks[value].shadow) {
             // Input contains a shadow block.
@@ -102,8 +103,8 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
             // We basically just want to copy the important
             // information from the shadow block down into
             // the block containing the shadow.
-            if (blocks[value].opcode === "procedures_prototype") {
-              const { mutation } = blocks[value];
+            if (block.opcode === "procedures_prototype") {
+              const mutation = (block as sb3.Block<OpCode.procedures_prototype>).mutation;
 
               // Split proccode (such as "letter %n of %s") into ["letter", "%n", "of", "%s"]
               let parts = (mutation.proccode as string).split(/((^|[^\\])%[nsb])/);
@@ -130,14 +131,16 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
                   case "%n":
                     return {
                       type: "numberOrString",
-                      name: argNames.shift(),
-                      defaultValue: optionalToNumber(argDefaults.shift())
+                      // TODO: remove non-null assertions
+                      name: argNames.shift()!,
+                      defaultValue: optionalToNumber(argDefaults.shift()!)
                     };
                   case "%b":
                     return {
                       type: "boolean",
-                      name: argNames.shift(),
-                      defaultValue: argDefaults.shift() === "true"
+                      // TODO: remove non-null assertions
+                      name: argNames.shift()!,
+                      defaultValue: argDefaults.shift()! === "true"
                     };
                   default:
                     return {
@@ -237,11 +240,14 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
       }
 
       if (block.opcode === OpCode.procedures_call) {
+        const mutation = (block as sb3.Block<OpCode.procedures_call>).mutation;
         result = {
-          PROCCODE: { type: "string", value: block.mutation.proccode },
+          PROCCODE: { type: "string", value: mutation.proccode },
           INPUTS: {
             type: "customBlockInputValues",
-            value: (JSON.parse(block.mutation.argumentids as string) as string[]).map(argumentid => {
+            // TODO: Scratch itself uses the argumentids of the corresponding procedures_prototype block.
+            // There may be some cases where they go out of sync!
+            value: (JSON.parse(mutation.argumentids as string) as string[]).map(argumentid => {
               let value = result[argumentid];
               if (value === undefined) {
                 // TODO: Find a way to determine type of missing input value
@@ -265,13 +271,17 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
     }
 
     function translateFields(fields: sb3.Block["fields"], opcode: OpCode): Block["inputs"] {
-      let result = {};
+      const fieldTypes = sb3.fieldTypeMap[opcode];
+      if (!fieldTypes) return {};
+
+      let result: Record<string, BlockInput.FieldAny> = {};
       for (const [fieldName, values] of Object.entries(fields)) {
-        const type = sb3.fieldTypeMap[opcode][fieldName];
+        const type = fieldTypes[fieldName];
+        // TODO: remove this type assertion and actually validate fields
         if (fieldName === "VARIABLE" || fieldName === "LIST") {
-          result[fieldName] = { type, value: { id: values[1], name: values[0] } };
+          result[fieldName] = { type, value: { id: values[1], name: values[0] } } as BlockInput.FieldAny;
         } else {
-          result[fieldName] = { type, value: values[0] };
+          result[fieldName] = { type, value: values[0] } as BlockInput.FieldAny;
         }
       }
 
@@ -279,14 +289,14 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
     }
   }
 
-  function blockWithNext(blockId: string, parentId: string = null): Block[] {
+  function blockWithNext(blockId: string, parentId: string | undefined = undefined): Block[] {
     const sb3Block = blocks[blockId];
     const block = new BlockBase({
       opcode: sb3Block.opcode,
       inputs: getBlockInputs(sb3Block, blockId),
       id: blockId,
       parent: parentId,
-      next: sb3Block.next
+      next: sb3Block.next ?? undefined
     }) as Block;
     let next: Block[] = [];
     if (sb3Block.next !== null) {
@@ -301,7 +311,7 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
 export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAsset: GetAsset }): Promise<Project> {
   function getVariables(target: sb3.Target): Variable[] {
     return Object.entries(target.variables).map(([id, [name, value, cloud = false]]) => {
-      let monitor = json.monitors.find(monitor => monitor.id === id) as sb3.VariableMonitor;
+      let monitor = json.monitors?.find(monitor => monitor.id === id) as sb3.VariableMonitor;
       if (!monitor) {
         // Sometimes .sb3 files are missing monitors. Fill in with reasonable defaults.
         monitor = {
@@ -339,7 +349,7 @@ export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAsset: Ge
 
   function getLists(target: sb3.Target): List[] {
     return Object.entries(target.lists).map(([id, [name, value]]) => {
-      let monitor = json.monitors.find(monitor => monitor.id === id) as sb3.ListMonitor;
+      let monitor = json.monitors?.find(monitor => monitor.id === id) as sb3.ListMonitor;
       if (!monitor) {
         // Sometimes .sb3 files are missing monitors. Fill in with reasonable defaults.
         monitor = {
@@ -363,8 +373,9 @@ export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAsset: Ge
         visible: monitor.visible,
         x: monitor.x,
         y: monitor.y,
-        width: monitor.width === 0 ? null : monitor.width,
-        height: monitor.height === 0 ? null : monitor.height
+        // set width and height to undefined if they're 0, null, or undefined
+        width: monitor.width || undefined,
+        height: monitor.height || undefined
       });
     });
   }

@@ -226,7 +226,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     inputEntries;
 
     initialValues: {
-      [key in keyof PassedInputs]: any;
+      [key in keyof PassedInputs]: unknown;
     };
   }
 

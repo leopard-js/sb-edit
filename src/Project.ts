@@ -43,7 +43,7 @@ export default class Project {
   public tempo = 60;
   public videoOn = false;
   public videoAlpha = 0.5;
-  public textToSpeechLanguage: TextToSpeechLanguage = null;
+  public textToSpeechLanguage: TextToSpeechLanguage | null = null;
 
   constructor(options: {
     stage?: Stage;

@@ -6,7 +6,7 @@ export default class Costume {
   public name: string;
   public id: string;
 
-  public asset: any;
+  public asset: unknown;
 
   public md5: string;
   public ext: CostumeDataFormat;
@@ -19,20 +19,26 @@ export default class Costume {
     name: string;
     id?: string;
 
-    asset: any;
+    asset: unknown;
 
     md5: string;
     ext: CostumeDataFormat;
 
     bitmapResolution: number;
-    centerX: number | null;
-    centerY: number | null;
+    centerX?: number | null;
+    centerY?: number | null;
   }) {
-    Object.assign(this, options);
+    this.name = options.name;
+    this.id = options.id ?? generateId();
 
-    if (!this.id) {
-      this.id = generateId();
-    }
+    this.asset = options.asset;
+
+    this.md5 = options.md5;
+    this.ext = options.ext;
+
+    this.bitmapResolution = options.bitmapResolution;
+    this.centerX = options.centerX ?? null;
+    this.centerY = options.centerY ?? null;
   }
 
   public setName(name: string): void {

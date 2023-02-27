@@ -4,25 +4,26 @@ import { generateId } from "./util/id";
 
 interface DefaultInput {
   type: BlockInput.Any["type"];
-  initial: any; // TODO: How to make this correspond to "type" above?
+  initial: unknown; // TODO: How to make this correspond to "type" above?
 }
 
 export class BlockBase<MyOpCode extends OpCode, MyInputs extends { [key: string]: BlockInput.Any }> {
+  // TODO: fix signature to be more specific in what's returned
   public static getDefaultInput(opcode: KnownBlock["opcode"], input: string): DefaultInput | void {
-    return KnownBlockInputMap[opcode][input];
+    return (KnownBlockInputMap as Record<string, Record<string, DefaultInput>>)[opcode][input];
   }
 
   public static isKnownBlock(opcode: OpCode): opcode is KnownBlock["opcode"] {
     return opcode in KnownBlockInputMap;
   }
 
-  public id: string;
+  public id!: string;
 
-  public opcode: MyOpCode;
-  public inputs: MyInputs;
+  public opcode!: MyOpCode;
+  public inputs!: MyInputs;
 
-  public parent: string = null;
-  public next: string = null;
+  public parent: string | null = null;
+  public next: string | null = null;
 
   constructor(options: {
     id?: string;
@@ -35,7 +36,7 @@ export class BlockBase<MyOpCode extends OpCode, MyInputs extends { [key: string]
   }) {
     Object.assign(this, options);
 
-    if (!this.id) {
+    if (!options.id) {
       this.id = generateId();
     }
   }
@@ -329,11 +330,7 @@ export type KnownBlock =
 // from the value of this mapping? I don't know enough ts-fu to risk doing so
 // in some way that seems to function as it's supposed to but actually isn't
 // carrying type information correctly.
-const KnownBlockInputMap: {
-  [key in KnownBlock["opcode"]]: {
-    [inputName: string]: DefaultInput;
-  };
-} = {
+const KnownBlockInputMap = {
   // Motion
   [OpCode.motion_movesteps]: {
     STEPS: { type: "number", initial: 10 }
@@ -872,6 +869,13 @@ const KnownBlockInputMap: {
   [OpCode.videoSensing_setVideoTransparency]: {
     TRANSPARENCY: { type: "number", initial: 50 }
   }
+} as const satisfies {
+  [key in KnownBlock["opcode"]]: {
+    [inputName: string]: {
+      type: BlockInput.Any["type"];
+      initial: unknown;
+    };
+  };
 };
 
 export type UnknownBlock = BlockBase<Exclude<OpCode, KnownBlock["opcode"]>, { [key: string]: BlockInput.Any }>;
