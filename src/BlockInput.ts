@@ -62,7 +62,7 @@ export interface Block extends Base {
 
 export interface Blocks extends Base {
   type: "blocks";
-  value: _Block[];
+  value: _Block[] | null;
 }
 
 export interface Costume extends Base {

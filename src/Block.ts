@@ -2,15 +2,16 @@ import * as BlockInput from "./BlockInput";
 import { OpCode } from "./OpCode";
 import { generateId } from "./util/id";
 
-interface DefaultInput {
-  type: BlockInput.Any["type"];
-  initial: unknown; // TODO: How to make this correspond to "type" above?
-}
+type DefaultInput<T extends BlockInput.Any = BlockInput.Any> =
+  // Needed to distribute over the union, so that `type` must belong to the same union branch as `value`.
+  // See https://www.typescriptlang.org/docs/handbook/release-notes/typescript-2-8.html#distributive-conditional-types
+  T extends BlockInput.Any ? { type: Readonly<T["type"]>; initial: Readonly<T["value"]> } : never;
 
 export class BlockBase<MyOpCode extends OpCode, MyInputs extends { [key: string]: BlockInput.Any }> {
   // TODO: fix signature to be more specific in what's returned
   public static getDefaultInput(opcode: KnownBlock["opcode"], input: string): DefaultInput | void {
-    return (KnownBlockInputMap as Record<string, Record<string, DefaultInput>>)[opcode][input];
+    if (!(opcode in KnownBlockInputMap)) return;
+    return KnownBlockInputMap[opcode][input as keyof (typeof KnownBlockInputMap)[typeof opcode]];
   }
 
   public static isKnownBlock(opcode: OpCode): opcode is KnownBlock["opcode"] {
@@ -57,8 +58,8 @@ export class BlockBase<MyOpCode extends OpCode, MyInputs extends { [key: string]
       this as Block,
       ...Object.values(this.inputs).flatMap(input => {
         if (input.type === "block") {
-          return input.value as BlockInput.Block["value"];
-        } else if (input.type === "blocks") {
+          return input.value;
+        } else if (input.type === "blocks" && input.value) {
           return input.value;
         } else {
           return [];
@@ -536,12 +537,12 @@ const KnownBlockInputMap = {
     SUBSTACK: { type: "blocks", initial: null }
   },
   [OpCode.control_for_each]: {
-    VARIABLE: { type: "variable", initial: "i" },
+    VARIABLE: { type: "variable", initial: { id: "i", name: "i" } },
     VALUE: { type: "number", initial: 10 },
     SUBSTACK: { type: "blocks", initial: null }
   },
   [OpCode.control_while]: {
-    CONDITION: { type: "boolean", initial: "false" },
+    CONDITION: { type: "boolean", initial: false },
     SUBSTACK: { type: "blocks", initial: null }
   },
 
@@ -550,11 +551,11 @@ const KnownBlockInputMap = {
     TOUCHINGOBJECTMENU: { type: "touchingTarget", initial: "_mouse_" }
   },
   [OpCode.sensing_touchingcolor]: {
-    COLOR: { type: "color", initial: "#9966ff" }
+    COLOR: { type: "color", initial: { r: 0x99, g: 0x66, b: 0xff } }
   },
   [OpCode.sensing_coloristouchingcolor]: {
-    COLOR: { type: "color", initial: "#9966ff" },
-    COLOR2: { type: "color", initial: "#ffab19" }
+    COLOR: { type: "color", initial: { r: 0x99, g: 0x66, b: 0xff } },
+    COLOR2: { type: "color", initial: { r: 0xff, g: 0xab, b: 0x19 } }
   },
   [OpCode.sensing_distanceto]: {
     DISTANCETOMENU: { type: "distanceToMenu", initial: "_mouse_" }
@@ -570,7 +571,7 @@ const KnownBlockInputMap = {
   [OpCode.sensing_mousex]: {},
   [OpCode.sensing_mousey]: {},
   [OpCode.sensing_setdragmode]: {
-    DRAG_MODE: { type: "dragModeMenu", initial: false }
+    DRAG_MODE: { type: "dragModeMenu", initial: "draggable" }
   },
   [OpCode.sensing_loudness]: {},
   [OpCode.sensing_loud]: {},
@@ -660,66 +661,66 @@ const KnownBlockInputMap = {
 
   // Data
   [OpCode.data_variable]: {
-    VARIABLE: { type: "variable", initial: "my variable" }
+    VARIABLE: { type: "variable", initial: { id: "NONEXISTENT_ID", name: "my variable" } }
   },
   [OpCode.data_setvariableto]: {
-    VARIABLE: { type: "variable", initial: "my variable" },
+    VARIABLE: { type: "variable", initial: { id: "NONEXISTENT_ID", name: "my variable" } },
     VALUE: { type: "string", initial: "0" }
   },
   [OpCode.data_changevariableby]: {
-    VARIABLE: { type: "variable", initial: "my variable" },
+    VARIABLE: { type: "variable", initial: { id: "NONEXISTENT_ID", name: "my variable" } },
     VALUE: { type: "number", initial: 1 }
   },
   [OpCode.data_showvariable]: {
-    VARIABLE: { type: "variable", initial: "my variable" }
+    VARIABLE: { type: "variable", initial: { id: "NONEXISTENT_ID", name: "my variable" } }
   },
   [OpCode.data_hidevariable]: {
-    VARIABLE: { type: "variable", initial: "my variable" }
+    VARIABLE: { type: "variable", initial: { id: "NONEXISTENT_ID", name: "my variable" } }
   },
   [OpCode.data_listcontents]: {
-    LIST: { type: "list", initial: "my list" }
+    LIST: { type: "list", initial: { id: "NONEXISTENT_ID", name: "my list" } }
   },
   [OpCode.data_addtolist]: {
     ITEM: { type: "string", initial: "thing" },
-    LIST: { type: "list", initial: "my list" }
+    LIST: { type: "list", initial: { id: "NONEXISTENT_ID", name: "my list" } }
   },
   [OpCode.data_deleteoflist]: {
     INDEX: { type: "number", initial: 1 },
-    LIST: { type: "list", initial: "my list" }
+    LIST: { type: "list", initial: { id: "NONEXISTENT_ID", name: "my list" } }
   },
   [OpCode.data_deletealloflist]: {
-    LIST: { type: "list", initial: "my list" }
+    LIST: { type: "list", initial: { id: "NONEXISTENT_ID", name: "my list" } }
   },
   [OpCode.data_insertatlist]: {
     ITEM: { type: "string", initial: "thing" },
     INDEX: { type: "number", initial: 1 },
-    LIST: { type: "list", initial: "my list" }
+    LIST: { type: "list", initial: { id: "NONEXISTENT_ID", name: "my list" } }
   },
   [OpCode.data_replaceitemoflist]: {
     INDEX: { type: "number", initial: 1 },
-    LIST: { type: "list", initial: "my list" },
+    LIST: { type: "list", initial: { id: "NONEXISTENT_ID", name: "my list" } },
     ITEM: { type: "string", initial: "thing" }
   },
   [OpCode.data_itemoflist]: {
     INDEX: { type: "number", initial: 1 },
-    LIST: { type: "list", initial: "my list" }
+    LIST: { type: "list", initial: { id: "NONEXISTENT_ID", name: "my list" } }
   },
   [OpCode.data_itemnumoflist]: {
     ITEM: { type: "string", initial: "thing" },
-    LIST: { type: "list", initial: "my list" }
+    LIST: { type: "list", initial: { id: "NONEXISTENT_ID", name: "my list" } }
   },
   [OpCode.data_lengthoflist]: {
-    LIST: { type: "list", initial: "my list" }
+    LIST: { type: "list", initial: { id: "NONEXISTENT_ID", name: "my list" } }
   },
   [OpCode.data_listcontainsitem]: {
-    LIST: { type: "list", initial: "my list" },
+    LIST: { type: "list", initial: { id: "NONEXISTENT_ID", name: "my list" } },
     ITEM: { type: "string", initial: "thing" }
   },
   [OpCode.data_showlist]: {
-    LIST: { type: "list", initial: "my list" }
+    LIST: { type: "list", initial: { id: "NONEXISTENT_ID", name: "my list" } }
   },
   [OpCode.data_hidelist]: {
-    LIST: { type: "list", initial: "my list" }
+    LIST: { type: "list", initial: { id: "NONEXISTENT_ID", name: "my list" } }
   },
 
   // Custom Blocks
@@ -729,15 +730,21 @@ const KnownBlockInputMap = {
       type: "customBlockArguments",
       initial: [
         { type: "label", name: "hello" },
-        { type: "numberOrString", name: "who" },
-        { type: "boolean", name: "casually" }
+        { type: "numberOrString", name: "who", defaultValue: "me" },
+        { type: "boolean", name: "casually", defaultValue: false }
       ]
     },
     WARP: { type: "boolean", initial: false }
   },
   [OpCode.procedures_call]: {
     PROCCODE: { type: "string", initial: "hello" },
-    INPUTS: { type: "customBlockInputValues", initial: ["world", true] }
+    INPUTS: {
+      type: "customBlockInputValues",
+      initial: [
+        { type: "string", value: "world" },
+        { type: "boolean", value: true }
+      ]
+    }
   },
   [OpCode.argument_reporter_string_number]: {
     VALUE: { type: "string", initial: "who" }
@@ -748,7 +755,7 @@ const KnownBlockInputMap = {
 
   // Extension: Music
   [OpCode.music_playDrumForBeats]: {
-    DRUM: { type: "musicDrum", initial: 1 },
+    DRUM: { type: "musicDrum", initial: "1" },
     BEATS: { type: "number", initial: 0.25 }
   },
   [OpCode.music_restForBeats]: {
@@ -759,7 +766,7 @@ const KnownBlockInputMap = {
     BEATS: { type: "number", initial: 0.25 }
   },
   [OpCode.music_setInstrument]: {
-    INSTRUMENT: { type: "musicInstrument", initial: 1 }
+    INSTRUMENT: { type: "musicInstrument", initial: "1" }
   },
   [OpCode.music_setTempo]: {
     TEMPO: { type: "number", initial: 60 }
@@ -783,7 +790,7 @@ const KnownBlockInputMap = {
   [OpCode.pen_penDown]: {},
   [OpCode.pen_penUp]: {},
   [OpCode.pen_setPenColorToColor]: {
-    COLOR: { type: "color", initial: "#9966ff" }
+    COLOR: { type: "color", initial: { r: 0x99, g: 0x66, b: 0xff } }
   },
   [OpCode.pen_changePenColorParamBy]: {
     colorParam: { type: "penColorParam", initial: "color" },
@@ -871,10 +878,7 @@ const KnownBlockInputMap = {
   }
 } as const satisfies {
   [key in KnownBlock["opcode"]]: {
-    [inputName: string]: {
-      type: BlockInput.Any["type"];
-      initial: unknown;
-    };
+    [inputName: string]: DefaultInput;
   };
 };
 
