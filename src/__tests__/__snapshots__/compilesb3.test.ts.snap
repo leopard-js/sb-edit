@@ -98,7 +98,7 @@ export default class Stage extends StageBase {
       ),
       new Trigger(
         Trigger.TIMER_GREATER_THAN,
-        { VALUE: () => this.vars.myVariable * 2 },
+        { VALUE: () => this.toNumber(this.vars.myVariable) * 2 },
         this.whengreaterthan2
       )
     ];

@@ -1237,22 +1237,22 @@ export default function toLeopard(
 
         case OpCode.operator_subtract:
           satisfiesInputShape = "number";
-          blockSource = `((${inputToJS(block.inputs.NUM1, "any")}) - (${inputToJS(block.inputs.NUM2, "any")}))`;
+          blockSource = `((${inputToJS(block.inputs.NUM1, "number")}) - (${inputToJS(block.inputs.NUM2, "number")}))`;
           break;
 
         case OpCode.operator_multiply:
           satisfiesInputShape = "number";
-          blockSource = `((${inputToJS(block.inputs.NUM1, "any")}) * (${inputToJS(block.inputs.NUM2, "any")}))`;
+          blockSource = `((${inputToJS(block.inputs.NUM1, "number")}) * (${inputToJS(block.inputs.NUM2, "number")}))`;
           break;
 
         case OpCode.operator_divide:
           satisfiesInputShape = "number";
-          blockSource = `((${inputToJS(block.inputs.NUM1, "any")}) / (${inputToJS(block.inputs.NUM2, "any")}))`;
+          blockSource = `((${inputToJS(block.inputs.NUM1, "number")}) / (${inputToJS(block.inputs.NUM2, "number")}))`;
           break;
 
         case OpCode.operator_random:
           satisfiesInputShape = "number";
-          blockSource = `this.random(${inputToJS(block.inputs.FROM, "any")}, ${inputToJS(block.inputs.TO, "any")})`;
+          blockSource = `this.random(${inputToJS(block.inputs.FROM, "number")}, ${inputToJS(block.inputs.TO, "number")})`;
           break;
 
         case OpCode.operator_gt:
@@ -1357,61 +1357,63 @@ export default function toLeopard(
 
         case OpCode.operator_mod:
           satisfiesInputShape = "number";
-          blockSource = `((${inputToJS(block.inputs.NUM1, "any")}) % (${inputToJS(block.inputs.NUM2, "any")}))`;
+          blockSource = `((${inputToJS(block.inputs.NUM1, "number")}) % (${inputToJS(block.inputs.NUM2, "number")}))`;
           break;
 
         case OpCode.operator_round:
           satisfiesInputShape = "number";
-          blockSource = `Math.round(${inputToJS(block.inputs.NUM, "any")})`;
+          blockSource = `Math.round(${inputToJS(block.inputs.NUM, "number")})`;
           break;
 
-        case OpCode.operator_mathop:
+        case OpCode.operator_mathop: {
+          const inputSource = inputToJS(block.inputs.NUM, "number");
           satisfiesInputShape = "number";
           switch (block.inputs.OPERATOR.value) {
             case "abs":
-              blockSource = `Math.abs(${inputToJS(block.inputs.NUM, "any")})`;
+              blockSource = `Math.abs(${inputSource})`;
               break;
             case "floor":
-              blockSource = `Math.floor(${inputToJS(block.inputs.NUM, "any")})`;
+              blockSource = `Math.floor(${inputSource})`;
               break;
             case "ceiling":
-              blockSource = `Math.ceil(${inputToJS(block.inputs.NUM, "any")})`;
+              blockSource = `Math.ceil(${inputSource})`;
               break;
             case "sqrt":
-              blockSource = `Math.sqrt(${inputToJS(block.inputs.NUM, "any")})`;
+              blockSource = `Math.sqrt(${inputSource})`;
               break;
             case "sin":
-              blockSource = `Math.sin(this.degToRad(${inputToJS(block.inputs.NUM, "any")}))`;
+              blockSource = `Math.sin(this.degToRad(${inputSource}))`;
               break;
             case "cos":
-              blockSource = `Math.cos(this.degToRad(${inputToJS(block.inputs.NUM, "any")}))`;
+              blockSource = `Math.cos(this.degToRad(${inputSource}))`;
               break;
             case "tan":
-              blockSource = `this.scratchTan(${inputToJS(block.inputs.NUM, "any")})`;
+              blockSource = `this.scratchTan(${inputSource})`;
               break;
             case "asin":
-              blockSource = `this.radToDeg(Math.asin(${inputToJS(block.inputs.NUM, "any")}))`;
+              blockSource = `this.radToDeg(Math.asin(${inputSource}))`;
               break;
             case "acos":
-              blockSource = `this.radToDeg(Math.acos(${inputToJS(block.inputs.NUM, "any")}))`;
+              blockSource = `this.radToDeg(Math.acos(${inputSource}))`;
               break;
             case "atan":
-              blockSource = `this.radToDeg(Math.atan(${inputToJS(block.inputs.NUM, "any")}))`;
+              blockSource = `this.radToDeg(Math.atan(${inputSource}))`;
               break;
             case "ln":
-              blockSource = `Math.log(${inputToJS(block.inputs.NUM, "any")})`;
+              blockSource = `Math.log(${inputSource})`;
               break;
             case "log":
-              blockSource = `Math.log10(${inputToJS(block.inputs.NUM, "any")})`;
+              blockSource = `Math.log10(${inputSource})`;
               break;
             case "e ^":
-              blockSource = `(Math.E ** (${inputToJS(block.inputs.NUM, "any")}))`;
+              blockSource = `(Math.E ** (${inputSource}))`;
               break;
             case "10 ^":
-              blockSource = `(10 ** (${inputToJS(block.inputs.NUM, "any")}))`;
+              blockSource = `(10 ** (${inputSource}))`;
               break;
           }
           break;
+        }
 
         case OpCode.data_variable:
           satisfiesInputShape = "any";
