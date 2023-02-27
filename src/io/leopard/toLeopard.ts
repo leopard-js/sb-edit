@@ -877,7 +877,7 @@ export default function toLeopard(
         case OpCode.control_repeat:
           satisfiesInputShape = "stack";
           blockSource = `for (let i = 0; i < (${inputToJS(block.inputs.TIMES, "number")}); i++) {
-            ${inputToJS(block.inputs.SUBSTACK, "any")};
+            ${inputToJS(block.inputs.SUBSTACK, "stack")};
             ${warp ? "" : "yield;"}
           }`;
           break;
@@ -885,7 +885,7 @@ export default function toLeopard(
         case OpCode.control_forever:
           satisfiesInputShape = "stack";
           blockSource = `while (true) {
-            ${inputToJS(block.inputs.SUBSTACK, "any")};
+            ${inputToJS(block.inputs.SUBSTACK, "stack")};
             ${warp ? "" : "yield;"}
           }`;
           break;
@@ -893,16 +893,16 @@ export default function toLeopard(
         case OpCode.control_if:
           satisfiesInputShape = "stack";
           blockSource = `if (${inputToJS(block.inputs.CONDITION, "boolean")}) {
-            ${inputToJS(block.inputs.SUBSTACK, "any")}
+            ${inputToJS(block.inputs.SUBSTACK, "stack")}
           }`;
           break;
 
         case OpCode.control_if_else:
           satisfiesInputShape = "stack";
           blockSource = `if (${inputToJS(block.inputs.CONDITION, "boolean")}) {
-            ${inputToJS(block.inputs.SUBSTACK, "any")}
+            ${inputToJS(block.inputs.SUBSTACK, "stack")}
           } else {
-            ${inputToJS(block.inputs.SUBSTACK2, "any")}
+            ${inputToJS(block.inputs.SUBSTACK2, "stack")}
           }`;
           break;
 
@@ -914,7 +914,7 @@ export default function toLeopard(
         case OpCode.control_repeat_until:
           satisfiesInputShape = "stack";
           blockSource = `while (!(${inputToJS(block.inputs.CONDITION, "boolean")})) {
-            ${inputToJS(block.inputs.SUBSTACK, "any")}
+            ${inputToJS(block.inputs.SUBSTACK, "stack")}
             ${warp ? "" : "yield;"}
           }`;
           break;
@@ -922,7 +922,7 @@ export default function toLeopard(
         case OpCode.control_while:
           satisfiesInputShape = "stack";
           blockSource = `while (${inputToJS(block.inputs.CONDITION, "boolean")}) {
-            ${inputToJS(block.inputs.SUBSTACK, "any")}
+            ${inputToJS(block.inputs.SUBSTACK, "stack")}
             ${warp ? "" : "yield;"}
           }`;
           break;
@@ -933,14 +933,14 @@ export default function toLeopard(
             block.inputs.VALUE,
             "number"
           )}); ${selectedVarSource}++) {
-            ${inputToJS(block.inputs.SUBSTACK, "any")}
+            ${inputToJS(block.inputs.SUBSTACK, "stack")}
             ${warp ? "" : "yield;"}
           }`;
           break;
 
         case OpCode.control_all_at_once:
           satisfiesInputShape = "stack";
-          blockSource = inputToJS(block.inputs.SUBSTACK, "any");
+          blockSource = inputToJS(block.inputs.SUBSTACK, "stack");
           break;
 
         case OpCode.control_stop:
