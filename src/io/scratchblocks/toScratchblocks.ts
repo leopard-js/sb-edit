@@ -1,28 +1,29 @@
 import Project from "../../Project";
 import Script from "../../Script";
 import Target from "../../Target";
-import Block from "../../Block";
+import Block, { KnownBlock } from "../../Block";
 import * as BlockInput from "../../BlockInput";
 import { OpCode } from "../../OpCode";
 
-interface ToScratchblocksOptions {
+export interface ToScratchblocksOptions {
   indent: string;
 }
 
-export default function toScratchblocks(options: Partial<ToScratchblocksOptions> = {}): {
+export default function toScratchblocks(
+  project: Project,
+  options: Partial<ToScratchblocksOptions> = {}
+): {
   [targetName: string]: string;
 } {
-  const project: Project = this;
-
   const defaultOptions: ToScratchblocksOptions = {
     indent: "\t"
   };
-  options = { ...defaultOptions, ...options };
+  const fullOptions = { ...defaultOptions, ...options };
 
   function indent(str: string): string {
     return str
       .split("\n")
-      .map(l => options.indent + l)
+      .map(l => fullOptions.indent + l)
       .join("\n");
   }
 
@@ -52,10 +53,12 @@ export default function toScratchblocks(options: Partial<ToScratchblocksOptions>
       case "currentMenu":
       case "greaterThanMenu": {
         const value =
-          {
-            PAN: "pan left/right",
-            DAYOFWEEK: "day of week"
-          }[inp.value] || (inp.value || "").toLowerCase();
+          inp.value === "PAN" || inp.value === "DAYOFWEEK"
+            ? {
+                PAN: "pan left/right",
+                DAYOFWEEK: "day of week"
+              }[inp.value]
+            : (inp.value || "").toLowerCase();
         return `[${escape(value)} v]`;
       }
 
@@ -110,7 +113,8 @@ export default function toScratchblocks(options: Partial<ToScratchblocksOptions>
         }
 
       case "color": {
-        const hex = (k: string): string => (inp.value || { r: 0, g: 0, b: 0 })[k].toString(16).padStart(2, "0");
+        const hex = (k: "r" | "g" | "b"): string =>
+          (inp.value || { r: 0, g: 0, b: 0 })[k].toString(16).padStart(2, "0");
         return `[#${hex("r") + hex("g") + hex("b")}]`;
       }
 
@@ -151,7 +155,11 @@ export default function toScratchblocks(options: Partial<ToScratchblocksOptions>
       throw new Error("expected target");
     }
 
-    const i = (key: string, ...args): string => input(block.inputs[key], target, ...args);
+    type BlockInputKeys<T> = T extends T ? keyof T : never;
+    const i = (key: BlockInputKeys<KnownBlock["inputs"]>, flag?: boolean): string =>
+      // TODO: type this function properly and remove this type assertion
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+      input((block.inputs as any)[key], target, flag);
     const operator = (op: string): string => `(${i("NUM1")} ${op} ${i("NUM2")})`;
     const boolop = (op: string, flag = false): string => {
       if (flag) {
@@ -517,7 +525,7 @@ export default function toScratchblocks(options: Partial<ToScratchblocksOptions>
       case OpCode.music_setInstrument:
         return `set instrument to ${i("INSTRUMENT")}`;
       case OpCode.music_midiSetInstrument:
-        return `set (old midi) instrument to ${i("INSTRUENT")} :: music`;
+        return `set (old midi) instrument to ${i("INSTRUMENT")} :: music`;
       case OpCode.music_setTempo:
         return `set tempo to ${i("TEMPO")}`;
       case OpCode.music_changeTempo:
