@@ -486,8 +486,8 @@ export default function toLeopard(
     return blockToJS(block);
 
     function increase(leftSide: string, input: BlockInput.Any, allowIncrementDecrement: Boolean) {
-      let n;
-      if (input.type === "block" || ((n = Number(input.value)), isNaN(n))) {
+      const n = parseNumber(input);
+      if (n === null) {
         return `${leftSide} += (${inputToJS(input, InputShape.Number)});`;
       }
 
@@ -503,8 +503,8 @@ export default function toLeopard(
     }
 
     function decrease(leftSide: string, input: BlockInput.Any, allowIncrementDecrement: Boolean = true) {
-      let n;
-      if (input.type === "block" || ((n = Number(input.value)), isNaN(n))) {
+      const n = parseNumber(input);
+      if (n === null) {
         return `${leftSide} -= (${inputToJS(input, InputShape.Number)})`;
       }
 
@@ -517,6 +517,23 @@ export default function toLeopard(
       } else if (n <= 0) {
         return `${leftSide} += ${JSON.stringify(-n)}`;
       }
+    }
+
+    function parseNumber(input: BlockInput.Any): number | null {
+      // Returns a number if the input was a primitive (static) value and was
+      // able to be parsed as a number; otherwise, returns null.
+
+      if (input.type === "block") {
+        return null;
+      }
+
+      const n = Number(input.value);
+
+      if (isNaN(n)) {
+        return null;
+      }
+
+      return n;
     }
 
     function inputToJS(input: BlockInput.Any, desiredInputShape: InputShape): string {
@@ -1272,36 +1289,75 @@ export default function toLeopard(
           break;
 
         case OpCode.operator_add:
-          if (desiredInputShape === "index") {
-            satisfiesInputShape = InputShape.Index;
-            if ((block.inputs.NUM2 as BlockInput.Any).type !== "block" && !isNaN(Number(block.inputs.NUM2.value))) {
-              if (Number(block.inputs.NUM2.value) === 1) {
+          if (desiredInputShape === InputShape.Index) {
+            // Attempt to fulfill a desired index input by subtracting 1 from either side
+            // of the block. If neither side can be parsed as a number (i.e. both inputs
+            // are filled with blocks), this clause just falls back to the normal number
+            // shape.
+            const num2 = parseNumber(block.inputs.NUM2);
+            if (typeof num2 === 'number') {
+              if (num2 === 1) {
+                satisfiesInputShape = InputShape.Index;
                 blockSource = `(${inputToJS(block.inputs.NUM1, InputShape.Number)})`;
+                break;
               } else {
-                blockSource = `((${inputToJS(block.inputs.NUM1, InputShape.Number)}) + ${(block.inputs.NUM2.value as number) -
-                  1})`;
+                satisfiesInputShape = InputShape.Index;
+                blockSource = `((${inputToJS(block.inputs.NUM1, InputShape.Number)}) + ${num2 - 1})`;
+                break;
               }
-            } else if (
-              (block.inputs.NUM1 as BlockInput.Any).type !== "block" &&
-              !isNaN(Number(block.inputs.NUM1.value))
-            ) {
-              satisfiesInputShape = InputShape.Index;
-              if (Number(block.inputs.NUM1.value) === 1) {
-                blockSource = `(${inputToJS(block.inputs.NUM2, InputShape.Number)})`;
-              } else {
-                blockSource = `(${(block.inputs.NUM2.value as number) - 1} + ${inputToJS(
-                  block.inputs.NUM2,
-                  InputShape.Number
-                )})`;
+            } else {
+              const num1 = parseNumber(block.inputs.NUM1);
+              if (typeof num1 === 'number') {
+                if (num1 === 1) {
+                  satisfiesInputShape = InputShape.Index;
+                  blockSource = `(${inputToJS(block.inputs.NUM2, InputShape.Number)})`;
+                  break;
+                } else {
+                  satisfiesInputShape = InputShape.Index;
+                  blockSource = `(${num1 - 1} + ${inputToJS(block.inputs.NUM2, InputShape.Number)})`;
+                  break;
+                }
               }
             }
-            break;
           }
+
           satisfiesInputShape = InputShape.Number;
           blockSource = `((${inputToJS(block.inputs.NUM1, InputShape.Number)}) + (${inputToJS(block.inputs.NUM2, InputShape.Number)}))`;
           break;
 
         case OpCode.operator_subtract:
+          if (desiredInputShape === InputShape.Index) {
+            // Do basically the same thing as the addition operator does, but with
+            // specifics for subtraction: increment the right-hand or decrement the
+            // left-hand.
+            const num2 = parseNumber(block.inputs.NUM2);
+            if (typeof num2 === 'number') {
+              if (num2 === -1) {
+                satisfiesInputShape = InputShape.Index;
+                blockSource = `(${inputToJS(block.inputs.NUM1, InputShape.Number)})`;
+                break;
+              } else {
+                satisfiesInputShape = InputShape.Index;
+                blockSource = `((${inputToJS(block.inputs.NUM1, InputShape.Number)}) - ${num2 + 1})`;
+                break;
+              }
+            } else {
+              const num1 = parseNumber(block.inputs.NUM1);
+              if (typeof num1 === 'number') {
+                if (num1 === 1) {
+                  // (1 - x) -> (0 - x) == (-x)
+                  satisfiesInputShape = InputShape.Index;
+                  blockSource = `(-${inputToJS(block.inputs.NUM2, InputShape.Number)})`;
+                  break;
+                } else {
+                  satisfiesInputShape = InputShape.Index;
+                  blockSource = `(${num1 - 1} + ${inputToJS(block.inputs.NUM2, InputShape.Number)})`;
+                  break;
+                }
+              }
+            }
+          }
+
           satisfiesInputShape = InputShape.Number;
           blockSource = `((${inputToJS(block.inputs.NUM1, InputShape.Number)}) - (${inputToJS(block.inputs.NUM2, InputShape.Number)}))`;
           break;
@@ -1337,39 +1393,52 @@ export default function toLeopard(
           )})) < 0)`;
           break;
 
-        case OpCode.operator_equals:
+        case OpCode.operator_equals: {
           satisfiesInputShape = InputShape.Boolean;
+
+          // If both sides are blocks, we can't make any assumptions about what kind of
+          // values are being compared.(*) Use the custom .compare() function to ensure
+          // compatibility with Scratch's equals block.
+          //
+          // (*) This is theoretically false, but we currently don't have a way to inspect
+          // the returned InputShape of a block input to see if both sides match up.
+
           if (
-            (block.inputs.OPERAND1 as BlockInput.Any).type !== "block" &&
-            !isNaN(Number(block.inputs.OPERAND1.value))
+            (block.inputs.OPERAND1 as BlockInput.Any).type === "block" &&
+            (block.inputs.OPERAND2 as BlockInput.Any).type === "block"
           ) {
-            blockSource = `(${Number(block.inputs.OPERAND1.value)} === (${inputToJS(
-              block.inputs.OPERAND2,
-              InputShape.Number
-            )}))`;
-          } else if (
-            (block.inputs.OPERAND2 as BlockInput.Any).type !== "block" &&
-            !isNaN(Number(block.inputs.OPERAND2.value))
-          ) {
-            blockSource = `((${inputToJS(block.inputs.OPERAND1, InputShape.Number)}) === ${Number(
-              block.inputs.OPERAND2.value
-            )})`;
-          } else if ((block.inputs.OPERAND1 as BlockInput.Any).type !== "block") {
-            blockSource = `(${JSON.stringify(block.inputs.OPERAND1.value)} === (${inputToJS(
-              block.inputs.OPERAND2,
-              InputShape.Any
-            )}))`;
-          } else if ((block.inputs.OPERAND2 as BlockInput.Any).type !== "block") {
-            blockSource = `((${inputToJS(block.inputs.OPERAND1, InputShape.Any)}) === ${JSON.stringify(
-              block.inputs.OPERAND2.value
-            )})`;
-          } else {
             blockSource = `(this.compare((${inputToJS(block.inputs.OPERAND1, InputShape.Any)}), (${inputToJS(
               block.inputs.OPERAND2,
               InputShape.Any
             )})) === 0)`;
+            break;
           }
+
+          // If both inputs were blocks, that was caught above - so from this point on,
+          // either the left- or right-hand side is definitely a primitive (or both).
+
+          const num1 = parseNumber(block.inputs.OPERAND1);
+          if (typeof num1 === "number") {
+            blockSource = `(${num1} === (${inputToJS(block.inputs.OPERAND2, InputShape.Number)}))`;
+            break;
+          }
+
+          const num2 = parseNumber(block.inputs.OPERAND2);
+          if (typeof num2 === "number") {
+            blockSource = `((${inputToJS(block.inputs.OPERAND1, InputShape.Number)}) === ${num2})`;
+            break;
+          }
+
+          // If neither side was parsed as a number, one side is definitely a string.
+          // Compare both sides as strings.
+
+          blockSource = `((${inputToJS(block.inputs.OPERAND1, InputShape.String)}) === (${inputToJS(
+            block.inputs.OPERAND2,
+            InputShape.String
+          )}))`;
+
           break;
+        }
 
         case OpCode.operator_and:
           satisfiesInputShape = InputShape.Boolean;
