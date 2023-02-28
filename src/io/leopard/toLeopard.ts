@@ -485,7 +485,7 @@ export default function toLeopard(
   function blockToJSWithContext(block: Block, target: Target, script?: Script): string {
     return blockToJS(block);
 
-    function increase(leftSide: string, input: BlockInput.Any, allowIncrementDecrement: Boolean) {
+    function increase(leftSide: string, input: BlockInput.Any, allowIncrementDecrement: boolean) {
       const n = parseNumber(input);
       if (n === null) {
         return `${leftSide} += (${inputToJS(input, InputShape.Number)});`;
@@ -502,7 +502,7 @@ export default function toLeopard(
       }
     }
 
-    function decrease(leftSide: string, input: BlockInput.Any, allowIncrementDecrement: Boolean = true) {
+    function decrease(leftSide: string, input: BlockInput.Any, allowIncrementDecrement: boolean) {
       const n = parseNumber(input);
       if (n === null) {
         return `${leftSide} -= (${inputToJS(input, InputShape.Number)})`;
