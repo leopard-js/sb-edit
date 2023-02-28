@@ -186,7 +186,7 @@ export default function toSb3(project: Project, options: Partial<ToSb3Options> =
       // Color primitive. Convert the {r, g, b} object into hex form.
       // TODO: remove type assertion and actually check if the value is an RGB literal
       const hex = (k: "r" | "g" | "b"): string =>
-        ((value as unknown as BlockInput.Color["value"]) || { r: 0, g: 0, b: 0 })[k].toString(16).padStart(2, "0");
+        ((value as BlockInput.Color["value"]) || { r: 0, g: 0, b: 0 })[k].toString(16).padStart(2, "0");
       shadowValue = [BIS.COLOR_PICKER_PRIMITIVE, "#" + hex("r") + hex("g") + hex("b")] as const;
     } else if (typeof primitiveOrOpCode === "number") {
       // Primitive shadow, can be stored in compressed form.
