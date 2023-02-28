@@ -8,11 +8,13 @@ import * as prettier from "prettier";
 import Target from "../../Target";
 import { List, Variable } from "../../Data";
 
-// Words which are invalid for any JavaScript identifier to be, when it isn't
-// on a namespace (like `this` or `this.vars`).
-//
-// This list may be more comprehensive than it needs to be in every case,
-// erring to avoid potential issues.
+/**
+ * Words which are invalid for any JavaScript identifier to be, when it isn't
+ * on a namespace (like `this` or `this.vars`).
+ *
+ * This list may be more comprehensive than it needs to be in every case,
+ * erring to avoid potential issues.
+ */
 const JS_RESERVED_WORDS = [
   "arguments",
   "await",
@@ -64,52 +66,66 @@ const JS_RESERVED_WORDS = [
   "with"
 ];
 
-// Input shapes are the basic attribute controlling which of a set of syntaxes
-// is returned for any given block (or primitive value). Provide an input shape
-// to inputToJS to specify what kind of value should be provided as the value
-// in that input. If the content of input does not match the desired shape, for
-// example because it is a block which returns a different type than desired,
-// it will be automatically cast to the correct type for use in the block.
+/**
+ * Input shapes are the basic attribute controlling which of a set of syntaxes
+ * is returned for any given block (or primitive value). Provide an input shape
+ * to inputToJS to specify what kind of value should be provided as the value
+ * in that input. If the content of input does not match the desired shape, for
+ * example because it is a block which returns a different type than desired,
+ * it will be automatically cast to the correct type for use in the block.
+ */
 enum InputShape {
-  // Generic shape indicating that any kind of input is acceptable. The input
-  // will never be cast, and may be null, undefined, or any JavaScript value.
+  /**
+   * Generic shape indicating that any kind of input is acceptable. The input
+   * will never be cast, and may be null, undefined, or any JavaScript value.
+   */
   Any = "any",
 
-  // Number input shape. If the input block isn't guaranteed to be a number,
-  // it is automatically wrapped with this.toNumber(), which has particular
-  // behavior to match Scratch.
+  /**
+   * Number input shape. If the input block isn't guaranteed to be a number,
+   * it is automatically wrapped with this.toNumber(), which has particular
+   * behavior to match Scratch.
+   */
   Number = "number",
 
-  // String input shape. If the input block isn't guaranteed to be a string,
-  // it is automatically wrapped with this.toString(), which is just a wrapper
-  // around the built-in String() op but is written so for consistency.
-  //
-  // The string input shape also guarantees that primitive values which could
-  // be statically converted to a number, e.g. the string "1.234", will NOT be
-  // converted.
+  /**
+   * String input shape. If the input block isn't guaranteed to be a string,
+   * it is automatically wrapped with this.toString(), which is just a wrapper
+   * around the built-in String() op but is written so for consistency.
+   *
+   * The string input shape also guarantees that primitive values which could
+   * be statically converted to a number, e.g. the string "1.234", will NOT be
+   * converted.
+   */
   String = "string",
 
-  // Boolean input shape. If the input block isn't guaranteed to be a boolean,
-  // it is automatically wrapped with this.toBoolean(), which has particular
-  // behavior to match Scratch. Note that Scratch doesn't have a concept of
-  // boolean primitives (no "true" or "false" blocks, nor a "switch" type
-  // control for directly inputting true/false as in Snap!).
+  /**
+   * Boolean input shape. If the input block isn't guaranteed to be a boolean,
+   * it is automatically wrapped with this.toBoolean(), which has particular
+   * behavior to match Scratch. Note that Scratch doesn't have a concept of
+   * boolean primitives (no "true" or "false" blocks, nor a "switch" type
+   * control for directly inputting true/false as in Snap!).
+   */
   Boolean = "boolean",
 
-  // Special "index" shape, representing an arbitrary number which has been
-  // decremented (decreased by 1). Scratch lists are 1-based while JavaScript
-  // arrays and strings are indexed starting from 0, so all indexes converted
-  // from Scratch must be decreased to match. The "index" shape allows number
-  // primitives to be statically decremented, and blocks which include a plus
-  // or minus operator to automtaically "absorb" the following decrement.
+  /**
+   * Special "index" shape, representing an arbitrary number which has been
+   * decremented (decreased by 1). Scratch lists are 1-based while JavaScript
+   * arrays and strings are indexed starting from 0, so all indexes converted
+   * from Scratch must be decreased to match. The "index" shape allows number
+   * primitives to be statically decremented, and blocks which include a plus
+   * or minus operator to automtaically "absorb" the following decrement.
+   */
   Index = "index",
 
-  // "Stack" block, referring to blocks which can be put one after another and
-  // together represent a sequence of steps. Stack inputs may be empty and
-  // otherwise are one or more blocks. In JavaScript, there's no fundamental
-  // difference between a "function" for reporting values and a "command" for
-  // applying effects, so no additional syntax is required to cast any given
-  // input value to a stack.
+  /**
+   * "Stack" block, referring to blocks which can be put one after another and
+   * together represent a sequence of steps. Stack inputs may be empty and
+   * otherwise are one or more blocks. In JavaScript, there's no fundamental
+   * difference between a "function" for reporting values and a "command" for
+   * applying effects, so no additional syntax is required to cast any given
+   * input value to a stack.
+   */
   Stack = "stack"
 }
 
