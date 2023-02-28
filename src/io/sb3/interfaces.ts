@@ -331,14 +331,7 @@ export type BlockInputValue = Readonly<
 // (which could imply special handling for the other INPUT_BLOCK_* values,
 // when none such is required and whose values are never specified in this
 // mapping).
-export const inputPrimitiveOrShadowMap: {
-  // Custom procedure blocks should be serialized separately from how normal
-  // blocks are, since most of their data is stored on a "mutation" field not
-  // accounted for here.
-  [opcode in Exclude<KnownBlock["opcode"], ProcedureBlock["opcode"]>]: {
-    [fieldName: string]: number | OpCode;
-  };
-} = {
+export const inputPrimitiveOrShadowMap = {
   [OpCode.motion_movesteps]: { STEPS: BIS.MATH_NUM_PRIMITIVE },
   [OpCode.motion_turnright]: { DEGREES: BIS.MATH_NUM_PRIMITIVE },
   [OpCode.motion_turnleft]: { DEGREES: BIS.MATH_NUM_PRIMITIVE },
@@ -524,4 +517,11 @@ export const inputPrimitiveOrShadowMap: {
   [OpCode.data_hidelist]: {},
   [OpCode.argument_reporter_boolean]: {},
   [OpCode.argument_reporter_string_number]: {}
+} as const satisfies {
+  // Custom procedure blocks should be serialized separately from how normal
+  // blocks are, since most of their data is stored on a "mutation" field not
+  // accounted for here.
+  [opcode in Exclude<KnownBlock["opcode"], ProcedureBlock["opcode"]>]: {
+    [fieldName: string]: number | OpCode;
+  };
 };

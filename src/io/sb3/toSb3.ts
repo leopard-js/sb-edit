@@ -4,7 +4,6 @@ import Target, { Sprite, Stage } from "../../Target";
 import * as BlockInput from "../../BlockInput";
 import * as sb3 from "./interfaces";
 import { OpCode } from "../../OpCode";
-import { prop } from "../../util/ts-util";
 
 const BIS = sb3.BlockInputStatus;
 
@@ -506,13 +505,10 @@ export default function toSb3(project: Project, options: Partial<ToSb3Options> =
           for (const arg of args) {
             const shadowId = arg.id + "-prototype-shadow";
             blockData[shadowId] = {
-              opcode: prop(
-                {
-                  boolean: OpCode.argument_reporter_boolean,
-                  numberOrString: OpCode.argument_reporter_string_number
-                },
-                arg.type
-              ),
+              opcode: {
+                boolean: OpCode.argument_reporter_boolean,
+                numberOrString: OpCode.argument_reporter_string_number
+              }[arg.type],
 
               next: null,
               parent: prototypeId,
@@ -617,7 +613,7 @@ export default function toSb3(project: Project, options: Partial<ToSb3Options> =
         }
 
         default: {
-          const inputEntries = prop(sb3.inputPrimitiveOrShadowMap, block.opcode);
+          const inputEntries = sb3.inputPrimitiveOrShadowMap[block.opcode];
 
           const initialValues: Record<string, Readonly<BlockInput.Any["value"]>> = {};
           for (const key of Object.keys(inputEntries)) {
@@ -843,13 +839,10 @@ export default function toSb3(project: Project, options: Partial<ToSb3Options> =
           id,
           name,
           type,
-          default: prop(
-            {
-              boolean: "false",
-              numberOrString: ""
-            },
-            type
-          )
+          default: {
+            boolean: "false",
+            numberOrString: ""
+          }[type]
         });
       }
 
