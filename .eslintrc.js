@@ -29,6 +29,6 @@ module.exports = {
     "no-console": ["error", {"allow": ["warn", "error"]}]
   },
   parserOptions: {
-    'project': './tsconfig.json'
+    'project': ['./tsconfig.json', './src/__tests__/tsconfig.json']
 },
 };
