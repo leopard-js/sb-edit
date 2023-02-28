@@ -14,6 +14,9 @@ import { List, Variable } from "../../Data";
  *
  * This list may be more comprehensive than it needs to be in every case,
  * erring to avoid potential issues.
+ *
+ * Mostly pulled from MDN:
+ * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Lexical_grammar#reserved_words
  */
 const JS_RESERVED_WORDS = [
   "arguments",
