@@ -96,7 +96,7 @@ export interface Block<Op extends OpCode = OpCode> {
   y?: number;
 }
 
-export type BlockField = string[];
+export type BlockField = Readonly<[string, string | null] | [string]>;
 
 interface Comment {
   blockId: string;
@@ -138,7 +138,7 @@ export interface Stage extends Target {
   tempo: number;
   videoTransparency: number;
   videoState: "on" | "off";
-  textToSpeechLanguage: TextToSpeechLanguage;
+  textToSpeechLanguage: TextToSpeechLanguage | null;
 }
 
 export interface Sprite extends Target {
@@ -293,12 +293,13 @@ export import BIS = BlockInputStatus;
 
 export const BooleanOrSubstackInputStatus = BIS.INPUT_BLOCK_NO_SHADOW;
 
-export type BlockInput =
+export type BlockInput = Readonly<
   | [BIS.INPUT_SAME_BLOCK_SHADOW, BlockInputValue]
   | [BIS.INPUT_BLOCK_NO_SHADOW, BlockInputValue]
-  | [BIS.INPUT_DIFF_BLOCK_SHADOW, BlockInputValue, BlockInputValue];
+  | [BIS.INPUT_DIFF_BLOCK_SHADOW, BlockInputValue, BlockInputValue]
+>;
 
-export type BlockInputValue =
+export type BlockInputValue = Readonly<
   | string // Block ID
   | [BIS.MATH_NUM_PRIMITIVE, number | string]
   | [BIS.POSITIVE_NUM_PRIMITIVE, number | string]
@@ -309,7 +310,8 @@ export type BlockInputValue =
   | [BIS.TEXT_PRIMITIVE, string]
   | [BIS.BROADCAST_PRIMITIVE, string, string]
   | [BIS.VAR_PRIMITIVE, string, string]
-  | [BIS.LIST_PRIMITIVE, string, string];
+  | [BIS.LIST_PRIMITIVE, string, string]
+>;
 
 // Most values in this mapping are taken from scratch-gui/src/lib/make-
 // toolbox-xml.js. They're used so that the primitive/opcode values of

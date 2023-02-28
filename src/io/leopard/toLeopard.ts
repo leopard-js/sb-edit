@@ -1932,7 +1932,7 @@ export default function toLeopard(
   // Scratch doesn't care much about "types" (like numbers vs strings), but
   // sometimes Javascript does. This function attempts to parse a Scratch
   // value and turn it into the most appropriate Javascript representation
-  function toOptimalJavascriptRepresentation(value: string | number | boolean): string {
+  function toOptimalJavascriptRepresentation(value: string | number | boolean | (string | number | boolean)[]): string {
     if (Array.isArray(value)) {
       return `[${value.map(toOptimalJavascriptRepresentation).join(", ")}]`;
     }

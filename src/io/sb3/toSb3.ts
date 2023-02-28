@@ -48,13 +48,13 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     stage: Stage;
     target: Target;
 
-    fieldEntries;
+    fieldEntries: (typeof sb3.fieldTypeMap)[OpCode];
   }
 
   function serializeInputsToFields(
     inputs: { [key: string]: BlockInput.Any },
     options: SerializeInputsToFieldsOptions
-  ): { [key: string]: string[] } {
+  ): sb3.Block["fields"] {
     // Serialize provided inputs into a "fields" mapping that can be stored
     // on a serialized block.
     //
@@ -84,17 +84,18 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
 
     const { fieldEntries, stage, target } = options;
 
-    const fields = {};
+    const fields: sb3.Block["fields"] = {};
 
     if (!fieldEntries) {
       return fields;
     }
 
     for (const key of Object.keys(fieldEntries)) {
-      const input = inputs[key];
+      // TODO: remove type assertion
+      const input = inputs[key] as BlockInput.FieldAny | BlockInput.Variable | BlockInput.List;
       // Fields are stored as a plain [value, id?] pair.
       let valueOrName;
-      let id: string;
+      let id: string | null;
       switch (input.type) {
         case "variable":
         case "list":
@@ -120,7 +121,10 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     shadowId: string;
   }
 
-  function serializeInputShadow(value: string | number, options: SerializeInputShadowOptions): sb3.BlockInputValue {
+  function serializeInputShadow(
+    value: string | number,
+    options: SerializeInputShadowOptions
+  ): sb3.BlockInputValue | null {
     // Serialize the shadow block representing a provided value and type.
     //
     // To gather an understanding of what shadow blocks are used for, have
@@ -177,21 +181,23 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
       // the broadcast name and its ID. We just reuse the name for its ID;
       // after all, the name is the unique identifier sb-edit uses to refer to
       // the broadcast.
-      shadowValue = [BIS.BROADCAST_PRIMITIVE, value, value];
+      shadowValue = [BIS.BROADCAST_PRIMITIVE, value as string, value as string] as const;
     } else if (primitiveOrOpCode === BIS.COLOR_PICKER_PRIMITIVE) {
       // Color primitive. Convert the {r, g, b} object into hex form.
-      const hex = (k: string): string => (value || { r: 0, g: 0, b: 0 })[k].toString(16).padStart(2, "0");
-      shadowValue = [BIS.COLOR_PICKER_PRIMITIVE, "#" + hex("r") + hex("g") + hex("b")];
+      // TODO: remove type assertion and actually check if the value is an RGB literal
+      const hex = (k: "r" | "g" | "b"): string =>
+        ((value as unknown as BlockInput.Color["value"]) || { r: 0, g: 0, b: 0 })[k].toString(16).padStart(2, "0");
+      shadowValue = [BIS.COLOR_PICKER_PRIMITIVE, "#" + hex("r") + hex("g") + hex("b")] as const;
     } else if (typeof primitiveOrOpCode === "number") {
       // Primitive shadow, can be stored in compressed form.
-      shadowValue = [primitiveOrOpCode, value];
+      shadowValue = [primitiveOrOpCode, String(value)] as const;
     } else {
       // Note: Only 1-field shadow blocks are supported.
       const shadowOpCode = primitiveOrOpCode;
       const fieldEntries = sb3.fieldTypeMap[shadowOpCode];
       if (fieldEntries) {
         const fieldKey = Object.keys(fieldEntries)[0];
-        const fields = { [fieldKey]: [value as string] };
+        const fields = { [fieldKey]: [value as string] as const };
 
         blockData[shadowId] = {
           opcode: shadowOpCode,
@@ -201,6 +207,8 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
 
           fields,
           inputs: {},
+
+          mutation: undefined,
 
           shadow: true,
           topLevel: false
@@ -223,7 +231,9 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     customBlockDataMap: CustomBlockDataMap;
 
     block: Block;
-    inputEntries;
+    inputEntries: {
+      [fieldName: string]: number | OpCode;
+    };
 
     initialValues: {
       [key in keyof PassedInputs]: unknown;
@@ -329,7 +339,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     for (const [key, entry] of Object.entries(inputEntries)) {
       const input = inputs[key];
       if (entry === sb3.BooleanOrSubstackInputStatus) {
-        let blockId: string;
+        let blockId: string | null = null;
 
         if (input) {
           const options = {
@@ -439,7 +449,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     inputs: sb3.Block["inputs"];
     fields: sb3.Block["fields"];
     mutation?: sb3.Block["mutation"];
-  } {
+  } | null {
     // Serialize a block's inputs, returning the data which should be stored on
     // the serialized block, as well as any associated blockData.
     //
@@ -508,6 +518,8 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
                 VALUE: [arg.name]
               },
 
+              mutation: undefined,
+
               shadow: true,
               topLevel: false
             };
@@ -563,9 +575,9 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
             warp: JSON.stringify(warp) as "true" | "false"
           };
 
-          const inputEntries = {};
-          const constructedInputs = {};
-          const initialValues = {};
+          const inputEntries: Record<string, sb3.BlockInputStatus> = {};
+          const constructedInputs: Record<string, BlockInput.Any> = {};
+          const initialValues: Record<string, unknown> = {};
           for (let i = 0; i < args.length; i++) {
             const { type, id } = args[i];
             switch (type) {
@@ -603,7 +615,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
         default: {
           const inputEntries = prop(sb3.inputPrimitiveOrShadowMap, block.opcode);
 
-          const initialValues = {};
+          const initialValues: Record<string, unknown> = {};
           for (const key of Object.keys(inputEntries)) {
             const defaultInput = BlockBase.getDefaultInput(block.opcode, key);
             if (defaultInput) {
@@ -748,7 +760,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
 
     const { blockData } = options;
 
-    let previousBlockId: string;
+    let previousBlockId: string | null = null;
     let firstBlockId: string | null = null;
 
     for (const block of blocks) {
@@ -879,7 +891,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
       // (e.g [{id: 1, prop: "val"}, ...])
       // into an object whose keys are the `id` property,
       // and whose values are the passed objects transformed by `fn`.
-      const ret = {};
+      const ret: Record<string, ReturnType> = {};
       for (const object of values) {
         ret[object.id] = fn(object);
       }
@@ -923,8 +935,8 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
         dataFormat: sound.ext,
         assetId: sound.md5,
         md5ext: sound.md5 + "." + sound.ext,
-        sampleCount: sound.sampleCount,
-        rate: sound.sampleRate
+        sampleCount: sound.sampleCount ?? undefined,
+        rate: sound.sampleRate ?? undefined
       })),
 
       costumes: target.costumes.map(costume => ({
@@ -933,8 +945,8 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
         md5ext: costume.md5 + "." + costume.ext,
         bitmapResolution: costume.bitmapResolution,
         dataFormat: costume.ext,
-        rotationCenterX: costume.centerX,
-        rotationCenterY: costume.centerY
+        rotationCenterX: costume.centerX ?? undefined,
+        rotationCenterY: costume.centerY ?? undefined
       })),
 
       variables: mapToIdObject(target.variables, ({ name, value, cloud }) => {
@@ -991,7 +1003,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
 
     broadcasts: sb3.Target["broadcasts"];
     tempo: number;
-    textToSpeechLanguage: TextToSpeechLanguage;
+    textToSpeechLanguage: TextToSpeechLanguage | null;
     videoState: "on" | "off";
     videoTransparency: number;
   }
@@ -1025,7 +1037,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     // mapping of (name -> name), to be stored on the stage. (toSb3 uses a
     // broadcast's name as its ID.)
     let lowestName;
-    const broadcasts = {};
+    const broadcasts: Record<string, string> = {};
     for (const target of [project.stage, ...project.sprites]) {
       for (const block of target.blocks) {
         if (
@@ -1040,7 +1052,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
 
           if (broadcastInput.type === "broadcast") {
             const currentName = broadcastInput.value;
-            if (currentName < lowestName || !lowestName) {
+            if (typeof lowestName === "undefined" || currentName < lowestName) {
               lowestName = currentName;
             }
             broadcasts[currentName] = currentName;

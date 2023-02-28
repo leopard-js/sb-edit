@@ -44,6 +44,7 @@ export default class Target {
             recursive(input.value);
             break;
           case "blocks":
+            if (!input.value) break;
             for (const block of input.value) {
               recursive(block);
             }

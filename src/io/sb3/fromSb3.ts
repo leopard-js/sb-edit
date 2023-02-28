@@ -86,8 +86,9 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
     };
 
     function translateInputs(inputs: sb3.Block["inputs"]): Block["inputs"] {
-      let result = {};
+      let result: Partial<Record<string, BlockInput.Any>> = {};
 
+      // TODO: do we really need to create a new object every time?
       const addInput = (name: string, value: BlockInput.Any): void => {
         result = { ...result, [name]: value };
       };
@@ -178,7 +179,7 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
             }
           }
         } else if (value === null) {
-          addInput(inputName, { type: "string", value: null });
+          throw new Error("Got null input value");
         } else {
           const BIS = sb3.BlockInputStatus;
           switch (value[0]) {
@@ -247,14 +248,16 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
             type: "customBlockInputValues",
             // TODO: Scratch itself uses the argumentids of the corresponding procedures_prototype block.
             // There may be some cases where they go out of sync!
-            value: (JSON.parse(mutation.argumentids as string) as string[]).map(argumentid => {
-              let value = result[argumentid];
+            value: (JSON.parse(mutation.argumentids) as string[]).map(argumentid => {
+              let value = result[argumentid] as Exclude<BlockInput.Any, BlockInput.CustomBlockInputValues> | undefined;
               if (value === undefined) {
                 // TODO: Find a way to determine type of missing input value
                 // (Caused by things like boolean procedure_call inputs that
                 // were never filled at any time.)
-                return { type: "string", value: null };
+                return { type: "boolean", value: false };
               }
+              // Auto-coerce number inputs into numbers
+              // TODO: this may lose data!
               if (typeof value.value === "string") {
                 const asNum = Number(value.value);
                 if (!isNaN(asNum)) {
@@ -415,7 +418,7 @@ export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAsset: Ge
     stage: new Stage(await getTargetOptions(stage)),
     sprites: await Promise.all(
       json.targets
-        .filter(target => !target.isStage)
+        .filter((target): target is sb3.Sprite => !target.isStage)
         .map(
           async (spriteData: sb3.Sprite) =>
             new Sprite({
@@ -442,7 +445,7 @@ export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAsset: Ge
   // Run an extra pass on variables (and lists). Only those which are actually
   // referenced in blocks or monitors should be kept.
   for (const target of [project.stage, ...project.sprites]) {
-    let relevantBlocks: Block[] = null;
+    let relevantBlocks: Block[];
     if (target === project.stage) {
       relevantBlocks = target.blocks.concat(project.sprites.flatMap(sprite => sprite.blocks));
     } else {
@@ -451,7 +454,7 @@ export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAsset: Ge
 
     const usedVariableIds: Set<string> = new Set();
     for (const block of relevantBlocks) {
-      let id: string = null;
+      let id: string | null = null;
       if ((block.inputs as { VARIABLE: BlockInput.Variable }).VARIABLE) {
         id = (block.inputs as { VARIABLE: BlockInput.Variable }).VARIABLE.value.id;
       } else if ((block.inputs as { LIST: BlockInput.List }).LIST) {
@@ -483,7 +486,7 @@ export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAsset: Ge
 export default async function fromSb3(fileData: Parameters<typeof JSZip.loadAsync>[0]): Promise<Project> {
   const inZip = await JSZip.loadAsync(fileData);
   const json = await inZip.file("project.json").async("text");
-  const getAsset = async ({ md5, ext }): Promise<ArrayBuffer> => {
+  const getAsset = async ({ md5, ext }: { md5: string; ext: string }): Promise<ArrayBuffer> => {
     return inZip.file(`${md5}.${ext}`).async("arraybuffer");
   };
   return fromSb3JSON(JSON.parse(json), { getAsset });
