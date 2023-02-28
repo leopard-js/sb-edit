@@ -621,7 +621,10 @@ export default function toLeopard(
 
         case OpCode.motion_gotoxy:
           satisfiesInputShape = InputShape.Stack;
-          blockSource = `this.goto((${inputToJS(block.inputs.X, InputShape.Number)}), (${inputToJS(block.inputs.Y, InputShape.Number)}))`;
+          blockSource = `this.goto((${inputToJS(block.inputs.X, InputShape.Number)}), (${inputToJS(
+            block.inputs.Y,
+            InputShape.Number
+          )}))`;
           break;
 
         case OpCode.motion_glideto: {
@@ -925,7 +928,11 @@ export default function toLeopard(
           if (block.inputs.EFFECT.type === "soundEffect") {
             blockSource = increase(`this.audioEffects.${block.inputs.EFFECT.value.toLowerCase()}`, value, false);
           } else {
-            blockSource = increase(`this.audioEffects[${inputToJS(block.inputs.EFFECT, InputShape.Any)}]`, value, false);
+            blockSource = increase(
+              `this.audioEffects[${inputToJS(block.inputs.EFFECT, InputShape.Any)}]`,
+              value,
+              false
+            );
           }
           break;
         }
@@ -1295,7 +1302,7 @@ export default function toLeopard(
             // are filled with blocks), this clause just falls back to the normal number
             // shape.
             const num2 = parseNumber(block.inputs.NUM2);
-            if (typeof num2 === 'number') {
+            if (typeof num2 === "number") {
               if (num2 === 1) {
                 satisfiesInputShape = InputShape.Index;
                 blockSource = `(${inputToJS(block.inputs.NUM1, InputShape.Number)})`;
@@ -1307,7 +1314,7 @@ export default function toLeopard(
               }
             } else {
               const num1 = parseNumber(block.inputs.NUM1);
-              if (typeof num1 === 'number') {
+              if (typeof num1 === "number") {
                 if (num1 === 1) {
                   satisfiesInputShape = InputShape.Index;
                   blockSource = `(${inputToJS(block.inputs.NUM2, InputShape.Number)})`;
@@ -1322,7 +1329,10 @@ export default function toLeopard(
           }
 
           satisfiesInputShape = InputShape.Number;
-          blockSource = `((${inputToJS(block.inputs.NUM1, InputShape.Number)}) + (${inputToJS(block.inputs.NUM2, InputShape.Number)}))`;
+          blockSource = `((${inputToJS(block.inputs.NUM1, InputShape.Number)}) + (${inputToJS(
+            block.inputs.NUM2,
+            InputShape.Number
+          )}))`;
           break;
 
         case OpCode.operator_subtract:
@@ -1331,7 +1341,7 @@ export default function toLeopard(
             // specifics for subtraction: increment the right-hand or decrement the
             // left-hand.
             const num2 = parseNumber(block.inputs.NUM2);
-            if (typeof num2 === 'number') {
+            if (typeof num2 === "number") {
               if (num2 === -1) {
                 satisfiesInputShape = InputShape.Index;
                 blockSource = `(${inputToJS(block.inputs.NUM1, InputShape.Number)})`;
@@ -1343,7 +1353,7 @@ export default function toLeopard(
               }
             } else {
               const num1 = parseNumber(block.inputs.NUM1);
-              if (typeof num1 === 'number') {
+              if (typeof num1 === "number") {
                 if (num1 === 1) {
                   // (1 - x) -> (0 - x) == (-x)
                   satisfiesInputShape = InputShape.Index;
@@ -1359,22 +1369,34 @@ export default function toLeopard(
           }
 
           satisfiesInputShape = InputShape.Number;
-          blockSource = `((${inputToJS(block.inputs.NUM1, InputShape.Number)}) - (${inputToJS(block.inputs.NUM2, InputShape.Number)}))`;
+          blockSource = `((${inputToJS(block.inputs.NUM1, InputShape.Number)}) - (${inputToJS(
+            block.inputs.NUM2,
+            InputShape.Number
+          )}))`;
           break;
 
         case OpCode.operator_multiply:
           satisfiesInputShape = InputShape.Number;
-          blockSource = `((${inputToJS(block.inputs.NUM1, InputShape.Number)}) * (${inputToJS(block.inputs.NUM2, InputShape.Number)}))`;
+          blockSource = `((${inputToJS(block.inputs.NUM1, InputShape.Number)}) * (${inputToJS(
+            block.inputs.NUM2,
+            InputShape.Number
+          )}))`;
           break;
 
         case OpCode.operator_divide:
           satisfiesInputShape = InputShape.Number;
-          blockSource = `((${inputToJS(block.inputs.NUM1, InputShape.Number)}) / (${inputToJS(block.inputs.NUM2, InputShape.Number)}))`;
+          blockSource = `((${inputToJS(block.inputs.NUM1, InputShape.Number)}) / (${inputToJS(
+            block.inputs.NUM2,
+            InputShape.Number
+          )}))`;
           break;
 
         case OpCode.operator_random:
           satisfiesInputShape = InputShape.Number;
-          blockSource = `this.random(${inputToJS(block.inputs.FROM, InputShape.Number)}, ${inputToJS(block.inputs.TO, InputShape.Number)})`;
+          blockSource = `this.random(${inputToJS(block.inputs.FROM, InputShape.Number)}, ${inputToJS(
+            block.inputs.TO,
+            InputShape.Number
+          )})`;
           break;
 
         case OpCode.operator_gt:
@@ -1492,7 +1514,10 @@ export default function toLeopard(
 
         case OpCode.operator_mod:
           satisfiesInputShape = InputShape.Number;
-          blockSource = `((${inputToJS(block.inputs.NUM1, InputShape.Number)}) % (${inputToJS(block.inputs.NUM2, InputShape.Number)}))`;
+          blockSource = `((${inputToJS(block.inputs.NUM1, InputShape.Number)}) % (${inputToJS(
+            block.inputs.NUM2,
+            InputShape.Number
+          )}))`;
           break;
 
         case OpCode.operator_round:
@@ -1634,7 +1659,10 @@ export default function toLeopard(
             blockSource = `this.indexInArray(${selectedVarSource}, ${inputToJS(block.inputs.ITEM, InputShape.Any)})`;
           } else {
             satisfiesInputShape = InputShape.Number;
-            blockSource = `(this.indexInArray(${selectedVarSource}, ${inputToJS(block.inputs.ITEM, InputShape.Any)}) + 1)`;
+            blockSource = `(this.indexInArray(${selectedVarSource}, ${inputToJS(
+              block.inputs.ITEM,
+              InputShape.Any
+            )}) + 1)`;
           }
           break;
 
