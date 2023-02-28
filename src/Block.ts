@@ -102,7 +102,10 @@ export type MotionBlock =
   | BlockBase<OpCode.motion_setrotationstyle, { STYLE: BlockInput.RotationStyle }>
   | BlockBase<OpCode.motion_xposition, {}>
   | BlockBase<OpCode.motion_yposition, {}>
-  | BlockBase<OpCode.motion_direction, {}>;
+  | BlockBase<OpCode.motion_direction, {}>
+  | BlockBase<OpCode.motion_scroll_right, { DISTANCE: BlockInput.Number }>
+  | BlockBase<OpCode.motion_scroll_up, { DISTANCE: BlockInput.Number }>
+  | BlockBase<OpCode.motion_align_scene, { ALIGNMENT: BlockInput.ScrollAlignment }>;
 
 export type LooksBlock =
   | BlockBase<OpCode.looks_sayforsecs, { MESSAGE: BlockInput.String; SECS: BlockInput.Number }>
@@ -275,8 +278,8 @@ export type PenBlock =
   | BlockBase<OpCode.pen_penDown, {}>
   | BlockBase<OpCode.pen_penUp, {}>
   | BlockBase<OpCode.pen_setPenColorToColor, { COLOR: BlockInput.Color }>
-  | BlockBase<OpCode.pen_changePenColorParamBy, { colorParam: BlockInput.PenColorParam; VALUE: BlockInput.Number }>
-  | BlockBase<OpCode.pen_setPenColorParamTo, { colorParam: BlockInput.PenColorParam; VALUE: BlockInput.Number }>
+  | BlockBase<OpCode.pen_changePenColorParamBy, { COLOR_PARAM: BlockInput.PenColorParam; VALUE: BlockInput.Number }>
+  | BlockBase<OpCode.pen_setPenColorParamTo, { COLOR_PARAM: BlockInput.PenColorParam; VALUE: BlockInput.Number }>
   | BlockBase<OpCode.pen_changePenSizeBy, { SIZE: BlockInput.Number }>
   | BlockBase<OpCode.pen_setPenSizeTo, { SIZE: BlockInput.Number }>
   // Deprecated:
@@ -383,6 +386,15 @@ const KnownBlockInputMap = {
   [OpCode.motion_xposition]: {},
   [OpCode.motion_yposition]: {},
   [OpCode.motion_direction]: {},
+  [OpCode.motion_scroll_right]: {
+    DISTANCE: { type: "number", initial: 10 }
+  },
+  [OpCode.motion_scroll_up]: {
+    DISTANCE: { type: "number", initial: 10 }
+  },
+  [OpCode.motion_align_scene]: {
+    ALIGNMENT: { type: "scrollAlignment", initial: "middle" }
+  },
 
   // Looks
   [OpCode.looks_sayforsecs]: {
@@ -793,11 +805,11 @@ const KnownBlockInputMap = {
     COLOR: { type: "color", initial: { r: 0x99, g: 0x66, b: 0xff } }
   },
   [OpCode.pen_changePenColorParamBy]: {
-    colorParam: { type: "penColorParam", initial: "color" },
+    COLOR_PARAM: { type: "penColorParam", initial: "color" },
     VALUE: { type: "number", initial: 10 }
   },
   [OpCode.pen_setPenColorParamTo]: {
-    colorParam: { type: "penColorParam", initial: "color" },
+    COLOR_PARAM: { type: "penColorParam", initial: "color" },
     VALUE: { type: "number", initial: 50 }
   },
   [OpCode.pen_changePenSizeBy]: {

@@ -1761,7 +1761,7 @@ export default function toLeopard(
 
         case OpCode.pen_changePenColorParamBy:
           satisfiesInputShape = InputShape.Stack;
-          switch (block.inputs.colorParam.value) {
+          switch (block.inputs.COLOR_PARAM.value) {
             case "color":
               blockSource = increase(`this.penColor.h`, block.inputs.VALUE, false);
               break;
@@ -1779,7 +1779,7 @@ export default function toLeopard(
 
         case OpCode.pen_setPenColorParamTo:
           satisfiesInputShape = InputShape.Stack;
-          switch (block.inputs.colorParam.value) {
+          switch (block.inputs.COLOR_PARAM.value) {
             case "color":
               blockSource = `this.penColor.h = (${inputToJS(block.inputs.VALUE, InputShape.Number)})`;
               break;
