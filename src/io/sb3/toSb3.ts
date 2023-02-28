@@ -392,7 +392,7 @@ export default function toSb3(project: Project, options: Partial<ToSb3Options> =
           blockData,
           parentId: block.id,
           shadowId: block.id + "-" + key,
-          primitiveOrOpCode: entry as number | OpCode
+          primitiveOrOpCode: entry
         });
 
         if (input.type === "block") {
@@ -837,7 +837,7 @@ export default function toSb3(project: Project, options: Partial<ToSb3Options> =
           continue;
         }
 
-        const id = block.id + "-argument-" + i;
+        const id = `${block.id}-argument-${i}`;
 
         args.push({
           id,

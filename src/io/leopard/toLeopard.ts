@@ -1916,7 +1916,7 @@ export default function toLeopard(
                 visible: sprite.visible,
                 layerOrder: sprite.layerOrder
               })
-                .map(([key, value]) => `${key}:${value}`)
+                .map(([key, value]) => `${key}:${value.toString()}`)
                 .join(",")}})`
           )
           .join(",\n")}

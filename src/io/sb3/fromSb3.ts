@@ -108,12 +108,12 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
               const mutation = (block as sb3.Block<OpCode.procedures_prototype>).mutation;
 
               // Split proccode (such as "letter %n of %s") into ["letter", "%n", "of", "%s"]
-              let parts = (mutation.proccode as string).split(/((^|[^\\])%[nsb])/);
+              let parts = mutation.proccode.split(/((^|[^\\])%[nsb])/);
               parts = parts.map(str => str.trim());
               parts = parts.filter(str => str !== "");
 
-              const argNames: string[] = JSON.parse(mutation.argumentnames as string);
-              const argDefaults: string[] = JSON.parse(mutation.argumentdefaults as string);
+              const argNames = JSON.parse(mutation.argumentnames) as string[];
+              const argDefaults = JSON.parse(mutation.argumentdefaults) as string[];
 
               const args: BlockInput.CustomBlockArgument[] = parts.map(part => {
                 const optionalToNumber = (value: string | number): string | number => {
@@ -151,7 +151,7 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
                 }
               });
 
-              addInput("PROCCODE", { type: "string", value: mutation.proccode as string });
+              addInput("PROCCODE", { type: "string", value: mutation.proccode });
               addInput("ARGUMENTS", { type: "customBlockArguments", value: args });
               addInput("WARP", { type: "boolean", value: mutation.warp === "true" });
             } else {
@@ -491,5 +491,5 @@ export default async function fromSb3(fileData: Parameters<typeof JSZip.loadAsyn
   const getAsset = async ({ md5, ext }: { md5: string; ext: string }): Promise<ArrayBuffer> => {
     return inZip.file(`${md5}.${ext}`).async("arraybuffer");
   };
-  return fromSb3JSON(JSON.parse(json), { getAsset });
+  return fromSb3JSON(JSON.parse(json) as sb3.ProjectJSON, { getAsset });
 }
