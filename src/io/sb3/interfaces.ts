@@ -294,9 +294,9 @@ export import BIS = BlockInputStatus;
 export const BooleanOrSubstackInputStatus = BIS.INPUT_BLOCK_NO_SHADOW;
 
 export type BlockInput = Readonly<
-  | [BIS.INPUT_SAME_BLOCK_SHADOW, BlockInputValue]
-  | [BIS.INPUT_BLOCK_NO_SHADOW, BlockInputValue]
-  | [BIS.INPUT_DIFF_BLOCK_SHADOW, BlockInputValue, BlockInputValue]
+  | [BIS.INPUT_SAME_BLOCK_SHADOW, BlockInputValue | null]
+  | [BIS.INPUT_BLOCK_NO_SHADOW, BlockInputValue | null]
+  | [BIS.INPUT_DIFF_BLOCK_SHADOW, BlockInputValue | null, BlockInputValue]
 >;
 
 export type BlockInputValue = Readonly<

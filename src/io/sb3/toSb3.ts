@@ -8,7 +8,7 @@ import { prop } from "../../util/ts-util";
 
 const BIS = sb3.BlockInputStatus;
 
-interface ToSb3Options {
+export interface ToSb3Options {
   warn: (message: string) => void;
 }
 
@@ -16,7 +16,7 @@ interface ToSb3Output {
   json: string;
 }
 
-export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output {
+export default function toSb3(project: Project, options: Partial<ToSb3Options> = {}): ToSb3Output {
   // Serialize a project. Returns an object containing the text to be stored
   // in the caller's project.json output file. toSb3 should be bound or applied
   // so that 'this' refers to the Project object to be serialized.
@@ -122,7 +122,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
   }
 
   function serializeInputShadow(
-    value: string | number,
+    value: Readonly<BlockInput.Any["value"]>,
     options: SerializeInputShadowOptions
   ): sb3.BlockInputValue | null {
     // Serialize the shadow block representing a provided value and type.
@@ -236,7 +236,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
     };
 
     initialValues: {
-      [key in keyof PassedInputs]: unknown;
+      [key in keyof PassedInputs]: Readonly<BlockInput.Any["value"]>;
     };
   }
 
@@ -353,7 +353,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
 
           switch (input.type) {
             case "blocks":
-              blockId = serializeBlockStack(input.value, options);
+              if (input.value !== null) blockId = serializeBlockStack(input.value, options);
               break;
             case "block":
               blockId = serializeBlock(input.value, options);
@@ -401,12 +401,12 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
           switch (input.value.opcode) {
             case OpCode.data_variable: {
               const { id: variableId, name: variableName } = input.value.inputs.VARIABLE.value;
-              obscuringBlockValue = [BIS.VAR_PRIMITIVE, variableName, variableId];
+              obscuringBlockValue = [BIS.VAR_PRIMITIVE, variableName, variableId] as const;
               break;
             }
             case OpCode.data_listcontents: {
               const { id: listId, name: listName } = input.value.inputs.LIST.value;
-              obscuringBlockValue = [BIS.LIST_PRIMITIVE, listName, listId];
+              obscuringBlockValue = [BIS.LIST_PRIMITIVE, listName, listId] as const;
               break;
             }
             default: {
@@ -422,7 +422,11 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
             }
           }
 
-          resultInputs[key] = [BIS.INPUT_DIFF_BLOCK_SHADOW, obscuringBlockValue, shadowValue];
+          if (shadowValue) {
+            resultInputs[key] = [BIS.INPUT_DIFF_BLOCK_SHADOW, obscuringBlockValue, shadowValue];
+          } else {
+            resultInputs[key] = [BIS.INPUT_BLOCK_NO_SHADOW, obscuringBlockValue];
+          }
         } else {
           resultInputs[key] = [BIS.INPUT_SAME_BLOCK_SHADOW, shadowValue];
         }
@@ -577,7 +581,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
 
           const inputEntries: Record<string, sb3.BlockInputStatus> = {};
           const constructedInputs: Record<string, BlockInput.Any> = {};
-          const initialValues: Record<string, unknown> = {};
+          const initialValues: Record<string, BlockInput.Any["value"]> = {};
           for (let i = 0; i < args.length; i++) {
             const { type, id } = args[i];
             switch (type) {
@@ -615,7 +619,7 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
         default: {
           const inputEntries = prop(sb3.inputPrimitiveOrShadowMap, block.opcode);
 
-          const initialValues: Record<string, unknown> = {};
+          const initialValues: Record<string, Readonly<BlockInput.Any["value"]>> = {};
           for (const key of Object.keys(inputEntries)) {
             const defaultInput = BlockBase.getDefaultInput(block.opcode, key);
             if (defaultInput) {
@@ -1089,6 +1093,6 @@ export default function toSb3(options: Partial<ToSb3Options> = {}): ToSb3Output 
   }
 
   return {
-    json: JSON.stringify(serializeProject(this))
+    json: JSON.stringify(serializeProject(project))
   };
 }

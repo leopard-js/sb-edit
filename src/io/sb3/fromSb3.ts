@@ -179,7 +179,9 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
             }
           }
         } else if (value === null) {
-          throw new Error("Got null input value");
+          // TODO: use our block data to figure out what's supposed to be here!
+          // Null boolean inputs should be false, null block stacks should be null
+          continue;
         } else {
           const BIS = sb3.BlockInputStatus;
           switch (value[0]) {
