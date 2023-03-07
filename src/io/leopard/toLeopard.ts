@@ -8,10 +8,137 @@ import * as prettier from "prettier";
 import Target from "../../Target";
 import { List, Variable } from "../../Data";
 
-function uniqueNameGenerator(usedNames: string[] = []) {
+/**
+ * Words which are invalid for any JavaScript identifier to be, when it isn't
+ * on a namespace (like `this` or `this.vars`).
+ *
+ * This list may be more comprehensive than it needs to be in every case,
+ * erring to avoid potential issues.
+ *
+ * Mostly pulled from MDN:
+ * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Lexical_grammar#reserved_words
+ */
+const JS_RESERVED_WORDS = [
+  "arguments",
+  "await",
+  "break",
+  "case",
+  "catch",
+  "class",
+  "const",
+  "continue",
+  "debugger",
+  "default",
+  "delete",
+  "do",
+  "else",
+  "enum",
+  "eval",
+  "export",
+  "extends",
+  "false",
+  "finally",
+  "for",
+  "function",
+  "if",
+  "implements",
+  "import",
+  "in",
+  "instanceof",
+  "interface",
+  "let",
+  "new",
+  "null",
+  "package",
+  "private",
+  "protected",
+  "public",
+  "return",
+  "static",
+  "super",
+  "switch",
+  "this",
+  "throw",
+  "true",
+  "try",
+  "typeof",
+  "yield",
+  "var",
+  "void",
+  "while",
+  "with"
+];
+
+/**
+ * Input shapes are the basic attribute controlling which of a set of syntaxes
+ * is returned for any given block (or primitive value). Provide an input shape
+ * to inputToJS to specify what kind of value should be provided as the value
+ * in that input. If the content of input does not match the desired shape, for
+ * example because it is a block which returns a different type than desired,
+ * it will be automatically cast to the correct type for use in the block.
+ */
+enum InputShape {
+  /**
+   * Generic shape indicating that any kind of input is acceptable. The input
+   * will never be cast, and may be null, undefined, or any JavaScript value.
+   */
+  Any = "any",
+
+  /**
+   * Number input shape. If the input block isn't guaranteed to be a number,
+   * it is automatically wrapped with this.toNumber(), which has particular
+   * behavior to match Scratch.
+   */
+  Number = "number",
+
+  /**
+   * String input shape. If the input block isn't guaranteed to be a string,
+   * it is automatically wrapped with this.toString(), which is just a wrapper
+   * around the built-in String() op but is written so for consistency.
+   *
+   * The string input shape also guarantees that primitive values which could
+   * be statically converted to a number, e.g. the string "1.234", will NOT be
+   * converted.
+   */
+  String = "string",
+
+  /**
+   * Boolean input shape. If the input block isn't guaranteed to be a boolean,
+   * it is automatically wrapped with this.toBoolean(), which has particular
+   * behavior to match Scratch. Note that Scratch doesn't have a concept of
+   * boolean primitives (no "true" or "false" blocks, nor a "switch" type
+   * control for directly inputting true/false as in Snap!).
+   */
+  Boolean = "boolean",
+
+  /**
+   * Special "index" shape, representing an arbitrary number which has been
+   * decremented (decreased by 1). Scratch lists are 1-based while JavaScript
+   * arrays and strings are indexed starting from 0, so all indexes converted
+   * from Scratch must be decreased to match. The "index" shape allows number
+   * primitives to be statically decremented, and blocks which include a plus
+   * or minus operator to automtaically "absorb" the following decrement.
+   */
+  Index = "index",
+
+  /**
+   * "Stack" block, referring to blocks which can be put one after another and
+   * together represent a sequence of steps. Stack inputs may be empty and
+   * otherwise are one or more blocks. In JavaScript, there's no fundamental
+   * difference between a "function" for reporting values and a "command" for
+   * applying effects, so no additional syntax is required to cast any given
+   * input value to a stack.
+   */
+  Stack = "stack"
+}
+
+function uniqueNameGenerator(reservedNames: string[] | Set<string> = []) {
+  const usedNames: Set<string> = new Set(reservedNames);
+  return uniqueName;
+
   function uniqueName(name): string {
-    if (!usedNames.includes(name)) {
-      usedNames.push(name);
+    if (!usedNames.has(name)) {
+      usedNames.add(name);
       return name;
     }
 
@@ -21,13 +148,6 @@ function uniqueNameGenerator(usedNames: string[] = []) {
     }
     return uniqueName(name.slice(0, numResult.index) + (parseInt(numResult[0], 10) + 1));
   }
-
-  // Creates hybrid function/object
-  uniqueName.usedNames = usedNames;
-  uniqueName.branch = function() {
-    return uniqueNameGenerator(this.usedNames);
-  };
-  return uniqueName;
 }
 
 function camelCase(name: string, upper = false): string {
@@ -93,60 +213,160 @@ export default function toLeopard(
   };
   options = { ...defaultOptions, ...options };
 
-  // Update all identifying names in the project to be unique
-  // Names changed first are less likely to be ugly
-  const uniqueName = uniqueNameGenerator();
+  // Sprite identifier must not conflict with module-level/global identifiers,
+  // imports and any others that are referenced in generated code.
+  //
+  // Only classes and similar capitalized namespaces need to be listed here:
+  // generated sprite names will never conflict with identifiers whose first
+  // letter is lowercase. (This is also why JavaScript reserved words aren't
+  // listed here - they're all lowercase, so sprite names won't conflict.)
+  const uniqueSpriteName = uniqueNameGenerator(["Color", "Costume", "Sound", "Sprite", "Trigger", "Watcher"]);
 
   let targetNameMap = {};
   let customBlockArgNameMap: Map<Script, { [key: string]: string }> = new Map();
   let variableNameMap: { [id: string]: string } = {}; // ID to unique (Leopard) name
 
   for (const target of [project.stage, ...project.sprites]) {
-    const newTargetName = uniqueName(camelCase(target.name, true));
+    const newTargetName = uniqueSpriteName(camelCase(target.name, true));
     targetNameMap[target.name] = newTargetName;
     target.setName(newTargetName);
 
-    let uniqueVariableName = uniqueName.branch();
+    // Variables are uniquely named per-target. These are on an empty namespace
+    // so don't have any conflicts.
+    //
+    // Note: since variables are serialized as properties on an object (this.vars),
+    // these never conflict with reserved JavaScript words like "class" or "new".
+    let uniqueVariableName = uniqueNameGenerator();
 
     for (const { id, name } of [...target.lists, ...target.variables]) {
       const newName = uniqueVariableName(camelCase(name));
       variableNameMap[id] = newName;
     }
 
+    // Scripts are uniquely named per-target. These are on the sprite's main
+    // namespace, so must not conflict with properties and methods defined on
+    // all sprites/targets by Leopard.
+    //
+    // The list of reserved names is technically different between BaseSprite,
+    // Sprite, and Stage, but all three are considered together here, whatever
+    // kind of target will actually be getting script names here.
+    //
+    // Note: since scripts are serialized as class methods, these never conflict
+    // with reserved JavaScript words like "class" or "new" (they're accessed
+    // with the same typeof syntax, e.g. this.whenGreenFlagClicked).
     const uniqueScriptName = uniqueNameGenerator([
+      // Essential data
+      "costumes",
+      "effectChain",
+      "effects",
+      "height",
+      "name",
+      "sounds",
+      "triggers",
+      "vars",
+      "watchers",
+      "width",
+
+      // Other objects
+      "andClones",
+      "clones",
       "stage",
+      "sprites",
+      "parent",
+
+      // Motion
       "direction",
+      "glide",
+      "goto",
+      "move",
+      "rotationStyle",
       "x",
       "y",
-      "penDown",
-      "penColor",
-      "vars",
+
+      // Looks
       "costumeNumber",
       "costume",
-      "mouse",
-      "timer",
-      "triggers",
-      "costumes",
-      "size",
-      "visible",
-      "penSize",
-      "askAndWait",
-      "answer",
-      "parent",
-      "clones",
-      "andClones",
-      "effects",
-      "rotationStyle",
       "moveAhead",
-      "moveBehind"
+      "moveBehind",
+      "say",
+      "sayAndWait",
+      "size",
+      "think",
+      "thinkAndWait",
+      "visible",
+
+      // Sounds
+      "audioEffects",
+      "getSound",
+      "getSoundsPlayedByMe",
+      "playSoundUntilDone",
+      "startSound",
+      "stapAllOfMySounds",
+      "stopAllSounds",
+
+      // Control & events
+      "broadcast",
+      "broadcastAndWait",
+      "createClone",
+      "deleteThisClone",
+      "fireBackdropChanged",
+      "wait",
+      "warp",
+
+      // Opeartors - casting
+      "toNumber",
+      "toBoolean",
+      "toString",
+      "compare",
+
+      // Operators - strings
+      "stringIncludes",
+      "letterOf",
+
+      // Operators - numbers
+      "degToRad",
+      "degToScratch",
+      "radToDeg",
+      "radToScratch",
+      "random",
+      "scratchToDeg",
+      "scratchToRad",
+      "normalizeDeg",
+
+      // Sensing
+      "answer",
+      "askAndWait",
+      "colorTouching",
+      "keyPressed",
+      "loudness",
+      "mouse",
+      "restartTimer",
+      "timer",
+      "touching",
+
+      // Lists (arrays)
+      "arrayIncludes",
+      "indexInArray",
+      "itemOf",
+
+      // Pen
+      "clearPen",
+      "penColor",
+      "penDown",
+      "penSize",
+      "stamp"
     ]);
+
     for (const script of target.scripts) {
       script.setName(uniqueScriptName(camelCase(script.name)));
 
       const argNameMap = {};
       customBlockArgNameMap.set(script, argNameMap);
 
-      const uniqueParamName = uniqueName.branch();
+      // Parameter names aren't defined on a namespace at all, so must not conflict
+      // with JavaScript reserved words.
+      const uniqueParamName = uniqueNameGenerator(JS_RESERVED_WORDS);
+
       for (const block of script.blocks) {
         if (block.opcode === OpCode.procedures_definition) {
           for (const argument of block.inputs.ARGUMENTS.value) {
@@ -174,11 +394,26 @@ export default function toLeopard(
     stageVariables.add(list.id);
   }
 
-  function staticBlockInputToLiteral(value: string | number | boolean | object): string {
+  function staticBlockInputToLiteral(
+    value: string | number | boolean | object,
+    desiredInputShape?: InputShape
+  ): string {
+    // Short-circuit for string inputs. These must never return number syntax.
+    if (desiredInputShape === "string") {
+      return JSON.stringify(value);
+    }
+
+    // Other input shapes which static inputs may fulfill: number, index, any.
+    // These are all OK to return JavaScript number literals for.
     const asNum = Number(value as string);
     if (!isNaN(asNum) && value !== "") {
-      return JSON.stringify(asNum);
+      if (desiredInputShape === "index") {
+        return JSON.stringify(asNum - 1);
+      } else {
+        return JSON.stringify(asNum);
+      }
     }
+
     return JSON.stringify(value);
   }
 
@@ -219,7 +454,7 @@ export default function toLeopard(
         const value =
           valueInput.type === "block"
             ? `() => ${blockToJSWithContext(valueInput.value, target)}`
-            : staticBlockInputToLiteral(valueInput.value);
+            : staticBlockInputToLiteral(valueInput.value, InputShape.Number);
         return triggerInitStr(`${hat.inputs.WHENGREATERTHANMENU.value}_GREATER_THAN`, {
           VALUE: value
         });
@@ -253,7 +488,58 @@ export default function toLeopard(
   function blockToJSWithContext(block: Block, target: Target, script?: Script): string {
     return blockToJS(block);
 
-    function inputToJS(input: BlockInput.Any): string {
+    function increase(leftSide: string, input: BlockInput.Any, allowIncrementDecrement: boolean) {
+      const n = parseNumber(input);
+      if (n === null) {
+        return `${leftSide} += (${inputToJS(input, InputShape.Number)});`;
+      }
+
+      if (allowIncrementDecrement && n === 1) {
+        return `${leftSide}++;`;
+      } else if (allowIncrementDecrement && n === -1) {
+        return `${leftSide}--;`;
+      } else if (n >= 0) {
+        return `${leftSide} += ${JSON.stringify(n)};`;
+      } else if (n < 0) {
+        return `${leftSide} -= ${JSON.stringify(-n)};`;
+      }
+    }
+
+    function decrease(leftSide: string, input: BlockInput.Any, allowIncrementDecrement: boolean) {
+      const n = parseNumber(input);
+      if (n === null) {
+        return `${leftSide} -= (${inputToJS(input, InputShape.Number)})`;
+      }
+
+      if (allowIncrementDecrement && n === 1) {
+        return `${leftSide}--`;
+      } else if (allowIncrementDecrement && n === -1) {
+        return `${leftSide}++`;
+      } else if (n > 0) {
+        return `${leftSide} -= ${JSON.stringify(n)}`;
+      } else if (n <= 0) {
+        return `${leftSide} += ${JSON.stringify(-n)}`;
+      }
+    }
+
+    function parseNumber(input: BlockInput.Any): number | null {
+      // Returns a number if the input was a primitive (static) value and was
+      // able to be parsed as a number; otherwise, returns null.
+
+      if (input.type === "block") {
+        return null;
+      }
+
+      const n = Number(input.value);
+
+      if (isNaN(n)) {
+        return null;
+      }
+
+      return n;
+    }
+
+    function inputToJS(input: BlockInput.Any, desiredInputShape: InputShape): string {
       // TODO: Right now, inputs can be completely undefined if imported from
       // the .sb3 format (because sb3 is weird). This little check will replace
       // undefined inputs with the value `null`. In theory, this should
@@ -264,16 +550,16 @@ export default function toLeopard(
 
       switch (input.type) {
         case "block":
-          return blockToJS(input.value as Block);
+          return blockToJS(input.value as Block, desiredInputShape);
         case "blocks":
           return input.value.map(block => blockToJS(block as Block)).join(";\n");
         default: {
-          return staticBlockInputToLiteral(input.value);
+          return staticBlockInputToLiteral(input.value, desiredInputShape);
         }
       }
     }
 
-    function blockToJS(block: Block): string {
+    function blockToJS(block: Block, desiredInputShape?: InputShape): string {
       const warp =
         script && script.hat && script.hat.opcode === OpCode.procedures_definition && script.hat.inputs.WARP.value;
 
@@ -300,272 +586,527 @@ export default function toLeopard(
 
       const stage = "this" + (target.isStage ? "" : ".stage");
 
+      let satisfiesInputShape: InputShape = null;
+      let blockSource: string = null;
+
       switch (block.opcode) {
         case OpCode.motion_movesteps:
-          return `this.move(${inputToJS(block.inputs.STEPS)})`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `this.move(${inputToJS(block.inputs.STEPS, InputShape.Number)})`;
+          break;
+
         case OpCode.motion_turnright:
-          return `this.direction += (${inputToJS(block.inputs.DEGREES)})`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = increase(`this.direction`, block.inputs.DEGREES, false);
+          break;
+
         case OpCode.motion_turnleft:
-          return `this.direction -= (${inputToJS(block.inputs.DEGREES)})`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = decrease(`this.direction`, block.inputs.DEGREES, false);
+          break;
+
         case OpCode.motion_goto:
+          satisfiesInputShape = InputShape.Stack;
           switch (block.inputs.TO.value) {
             case "_random_":
-              return `this.goto(this.random(-240, 240), this.random(-180, 180))`;
+              blockSource = `this.goto(this.random(-240, 240), this.random(-180, 180))`;
+              break;
             case "_mouse_":
-              return `this.goto(this.mouse.x, this.mouse.y)`;
+              blockSource = `this.goto(this.mouse.x, this.mouse.y)`;
+              break;
             default: {
               const sprite = `(this.sprites[${JSON.stringify(targetNameMap[block.inputs.TO.value])}])`;
-              return `this.goto(${sprite}.x, ${sprite}.y)`;
+              blockSource = `this.goto(${sprite}.x, ${sprite}.y)`;
+              break;
             }
-          }
-        case OpCode.motion_gotoxy:
-          return `this.goto((${inputToJS(block.inputs.X)}), (${inputToJS(block.inputs.Y)}))`;
-        case OpCode.motion_glideto:
-          switch (block.inputs.TO.value) {
-            case "_random_":
-              return `yield* this.glide((${inputToJS(
-                block.inputs.SECS
-              )}), this.random(-240, 240), this.random(-180, 180))`;
-            case "_mouse_":
-              return `yield* this.glide((${inputToJS(block.inputs.SECS)}), this.mouse.x, this.mouse.y)`;
-            default: {
-              const sprite = `(this.sprites[${JSON.stringify(targetNameMap[block.inputs.TO.value])}])`;
-              return `yield* this.glide((${inputToJS(block.inputs.SECS)}), ${sprite}.x, ${sprite}.y)`;
-            }
-          }
-        case OpCode.motion_glidesecstoxy:
-          return `yield* this.glide((${inputToJS(block.inputs.SECS)}), (${inputToJS(block.inputs.X)}), (${inputToJS(
-            block.inputs.Y
-          )}))`;
-        case OpCode.motion_pointindirection:
-          return `this.direction = (${inputToJS(block.inputs.DIRECTION)})`;
-        case OpCode.motion_pointtowards:
-          switch (block.inputs.TOWARDS.value) {
-            case "_mouse_":
-              return `this.direction = this.radToScratch(Math.atan2(this.mouse.y - this.y, this.mouse.x - this.x))`;
-            default: {
-              const sprite = `(this.sprites[${JSON.stringify(targetNameMap[block.inputs.TOWARDS.value])}])`;
-              return `this.direction = this.radToScratch(Math.atan2(${sprite}.y - this.y, ${sprite}.x - this.x))`;
-            }
-          }
-        case OpCode.motion_changexby:
-          return `this.x += (${inputToJS(block.inputs.DX)})`;
-        case OpCode.motion_setx:
-          return `this.x = (${inputToJS(block.inputs.X)})`;
-        case OpCode.motion_changeyby:
-          return `this.y += (${inputToJS(block.inputs.DY)})`;
-        case OpCode.motion_sety:
-          return `this.y = (${inputToJS(block.inputs.Y)})`;
-        case OpCode.motion_setrotationstyle:
-          switch (block.inputs.STYLE.value) {
-            case "left-right":
-              return `this.rotationStyle = Sprite.RotationStyle.LEFT_RIGHT`;
-            case "don't rotate":
-              return `this.rotationStyle = Sprite.RotationStyle.DONT_ROTATE`;
-            case "all around":
-              return `this.rotationStyle = Sprite.RotationStyle.ALL_AROUND`;
           }
           break;
+
+        case OpCode.motion_gotoxy:
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `this.goto((${inputToJS(block.inputs.X, InputShape.Number)}), (${inputToJS(
+            block.inputs.Y,
+            InputShape.Number
+          )}))`;
+          break;
+
+        case OpCode.motion_glideto: {
+          const secs = inputToJS(block.inputs.SECS, InputShape.Number);
+          satisfiesInputShape = InputShape.Stack;
+
+          switch (block.inputs.TO.value) {
+            case "_random_":
+              blockSource = `yield* this.glide(${secs}, this.random(-240, 240), this.random(-180, 180))`;
+              break;
+            case "_mouse_":
+              blockSource = `yield* this.glide(${secs}, this.mouse.x, this.mouse.y)`;
+              break;
+            default: {
+              const sprite = `(this.sprites[${JSON.stringify(targetNameMap[block.inputs.TO.value])}])`;
+              blockSource = `yield* this.glide(${secs}, ${sprite}.x, ${sprite}.y)`;
+              break;
+            }
+          }
+          break;
+        }
+
+        case OpCode.motion_glidesecstoxy:
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `yield* this.glide((${inputToJS(block.inputs.SECS, InputShape.Number)}), (${inputToJS(
+            block.inputs.X,
+            InputShape.Number
+          )}), (${inputToJS(block.inputs.Y, InputShape.Number)}))`;
+          break;
+
+        case OpCode.motion_pointindirection:
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `this.direction = (${inputToJS(block.inputs.DIRECTION, InputShape.Number)})`;
+          break;
+
+        case OpCode.motion_pointtowards: {
+          let coords: string;
+
+          switch (block.inputs.TOWARDS.value) {
+            case "_mouse_":
+              coords = `this.mouse`;
+              break;
+            default: {
+              coords = `this.sprites[${JSON.stringify(targetNameMap[block.inputs.TOWARDS.value])}]`;
+              break;
+            }
+          }
+
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `this.direction = this.radToScratch(Math.atan2(${coords}.y - this.y, ${coords}.x - this.x))`;
+          break;
+        }
+
+        case OpCode.motion_changexby:
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = increase(`this.x`, block.inputs.DX, false);
+          break;
+
+        case OpCode.motion_setx:
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `this.x = (${inputToJS(block.inputs.X, InputShape.Number)})`;
+          break;
+
+        case OpCode.motion_changeyby:
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = increase(`this.y`, block.inputs.DY, false);
+          break;
+
+        case OpCode.motion_sety:
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `this.y = (${inputToJS(block.inputs.Y, InputShape.Number)})`;
+          break;
+
+        case OpCode.motion_setrotationstyle:
+          satisfiesInputShape = InputShape.Stack;
+          switch (block.inputs.STYLE.value) {
+            case "left-right":
+              blockSource = `this.rotationStyle = Sprite.RotationStyle.LEFT_RIGHT`;
+              break;
+            case "don't rotate":
+              blockSource = `this.rotationStyle = Sprite.RotationStyle.DONT_ROTATE`;
+              break;
+            case "all around":
+              blockSource = `this.rotationStyle = Sprite.RotationStyle.ALL_AROUND`;
+              break;
+          }
+          break;
+
         case OpCode.motion_xposition:
-          return `this.x`;
+          satisfiesInputShape = InputShape.Number;
+          blockSource = `this.x`;
+          break;
+
         case OpCode.motion_yposition:
-          return `this.y`;
+          satisfiesInputShape = InputShape.Number;
+          blockSource = `this.y`;
+          break;
+
         case OpCode.motion_direction:
-          return `this.direction`;
+          satisfiesInputShape = InputShape.Number;
+          blockSource = `this.direction`;
+          break;
+
         // Obsolete no-op blocks:
         case OpCode.motion_scroll_right:
         case OpCode.motion_scroll_up:
         case OpCode.motion_align_scene:
-          return ``;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = ``;
+          break;
+
         case OpCode.motion_xscroll:
         case OpCode.motion_yscroll:
-          return `undefined`; // Compatibility with Scratch 3.0 \:)/
+          satisfiesInputShape = InputShape.Any;
+          blockSource = `undefined`; // Compatibility with Scratch 3.0 \:)/
+          break;
+
         case OpCode.looks_sayforsecs:
-          return `yield* this.sayAndWait((${inputToJS(block.inputs.MESSAGE)}), (${inputToJS(block.inputs.SECS)}))`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `yield* this.sayAndWait((${inputToJS(block.inputs.MESSAGE, InputShape.Any)}), (${inputToJS(
+            block.inputs.SECS,
+            InputShape.Number
+          )}))`;
+          break;
+
         case OpCode.looks_say:
-          return `this.say(${inputToJS(block.inputs.MESSAGE)})`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `this.say(${inputToJS(block.inputs.MESSAGE, InputShape.Any)})`;
+          break;
+
         case OpCode.looks_thinkforsecs:
-          return `yield* this.thinkAndWait((${inputToJS(block.inputs.MESSAGE)}), (${inputToJS(block.inputs.SECS)}))`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `yield* this.thinkAndWait((${inputToJS(block.inputs.MESSAGE, InputShape.Any)}), (${inputToJS(
+            block.inputs.SECS,
+            InputShape.Number
+          )}))`;
+          break;
+
         case OpCode.looks_think:
-          return `this.think(${inputToJS(block.inputs.MESSAGE)})`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `this.think(${inputToJS(block.inputs.MESSAGE, InputShape.Any)})`;
+          break;
+
         case OpCode.looks_switchcostumeto:
-          return `this.costume = (${inputToJS(block.inputs.COSTUME)})`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `this.costume = (${inputToJS(block.inputs.COSTUME, InputShape.Any)})`;
+          break;
+
         case OpCode.looks_nextcostume:
-          return `this.costumeNumber += 1`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `this.costumeNumber++`;
+          break;
+
         case OpCode.looks_switchbackdropto:
-          return `${stage}.costume = (${inputToJS(block.inputs.BACKDROP)})`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `${stage}.costume = (${inputToJS(block.inputs.BACKDROP, InputShape.Any)})`;
+          break;
+
         case OpCode.looks_nextbackdrop:
-          return `${stage}.costumeNumber += 1`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `${stage}.costumeNumber++`;
+          break;
+
         case OpCode.looks_changesizeby:
-          return `this.size += (${inputToJS(block.inputs.CHANGE)})`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = increase(`this.size`, block.inputs.CHANGE, false);
+          break;
+
         case OpCode.looks_setsizeto:
-          return `this.size = (${inputToJS(block.inputs.SIZE)})`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `this.size = (${inputToJS(block.inputs.SIZE, InputShape.Number)})`;
+          break;
+
         case OpCode.looks_changeeffectby: {
           const effectName = block.inputs.EFFECT.value.toLowerCase();
-          return `this.effects.${effectName} += ${inputToJS(block.inputs.CHANGE)}`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = increase(`this.effects.${effectName}`, block.inputs.CHANGE, false);
+          break;
         }
+
         case OpCode.looks_seteffectto: {
           const effectName = block.inputs.EFFECT.value.toLowerCase();
-          return `this.effects.${effectName} = ${inputToJS(block.inputs.VALUE)}`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `this.effects.${effectName} = ${inputToJS(block.inputs.VALUE, InputShape.Number)}`;
+          break;
         }
+
         case OpCode.looks_cleargraphiceffects:
-          return `this.effects.clear()`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `this.effects.clear()`;
+          break;
+
         case OpCode.looks_show:
-          return `this.visible = true`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `this.visible = true`;
+          break;
+
         case OpCode.looks_hide:
-          return `this.visible = false`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `this.visible = false`;
+          break;
+
         case OpCode.looks_gotofrontback:
+          satisfiesInputShape = InputShape.Stack;
           if (block.inputs.FRONT_BACK.value === "front") {
-            return `this.moveAhead()`;
+            blockSource = `this.moveAhead()`;
           } else {
-            return `this.moveBehind()`;
+            blockSource = `this.moveBehind()`;
           }
+          break;
+
         case OpCode.looks_goforwardbackwardlayers:
+          satisfiesInputShape = InputShape.Stack;
           if (block.inputs.FORWARD_BACKWARD.value === "forward") {
-            return `this.moveAhead(${inputToJS(block.inputs.NUM)})`;
+            blockSource = `this.moveAhead(${inputToJS(block.inputs.NUM, InputShape.Number)})`;
           } else {
-            return `this.moveBehind(${inputToJS(block.inputs.NUM)})`;
+            blockSource = `this.moveBehind(${inputToJS(block.inputs.NUM, InputShape.Number)})`;
           }
+          break;
+
         // Obsolete no-op blocks:
         case OpCode.looks_hideallsprites:
         case OpCode.looks_changestretchby:
         case OpCode.looks_setstretchto:
-          return ``;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = ``;
+          break;
+
         case OpCode.looks_costumenumbername:
           switch (block.inputs.NUMBER_NAME.value) {
             case "name":
-              return `this.costume.name`;
+              satisfiesInputShape = InputShape.String;
+              blockSource = `this.costume.name`;
+              break;
             case "number":
             default:
-              return `this.costumeNumber`;
+              satisfiesInputShape = InputShape.Number;
+              blockSource = `this.costumeNumber`;
+              break;
           }
+          break;
+
         case OpCode.looks_backdropnumbername:
           switch (block.inputs.NUMBER_NAME.value) {
             case "name":
-              return `${stage}.costume.name`;
+              satisfiesInputShape = InputShape.String;
+              blockSource = `${stage}.costume.name`;
+              break;
             case "number":
             default:
-              return `${stage}.costumeNumber`;
+              satisfiesInputShape = InputShape.Number;
+              blockSource = `${stage}.costumeNumber`;
+              break;
           }
+          break;
+
         case OpCode.looks_size:
-          return `this.size`;
+          satisfiesInputShape = InputShape.Number;
+          blockSource = `this.size`;
+          break;
+
         case OpCode.sound_playuntildone:
-          return `yield* this.playSoundUntilDone(${inputToJS(block.inputs.SOUND_MENU)})`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `yield* this.playSoundUntilDone(${inputToJS(block.inputs.SOUND_MENU, InputShape.Any)})`;
+          break;
+
         case OpCode.sound_play:
-          return `yield* this.startSound(${inputToJS(block.inputs.SOUND_MENU)})`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `yield* this.startSound(${inputToJS(block.inputs.SOUND_MENU, InputShape.Any)})`;
+          break;
+
         case OpCode.sound_setvolumeto:
-          return `this.audioEffects.volume = ${inputToJS(block.inputs.VOLUME)}`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `this.audioEffects.volume = ${inputToJS(block.inputs.VOLUME, InputShape.Number)}`;
+          break;
+
         case OpCode.sound_changevolumeby:
-          return `this.audioEffects.volume += ${inputToJS(block.inputs.VOLUME)}`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = increase(`this.audioEffects.volume`, block.inputs.VOLUME, false);
+          break;
+
         case OpCode.sound_volume:
-          return `this.audioEffects.volume`;
+          satisfiesInputShape = InputShape.Number;
+          blockSource = `this.audioEffects.volume`;
+          break;
+
         case OpCode.sound_seteffectto: {
-          const value = inputToJS(block.inputs.VALUE);
+          satisfiesInputShape = InputShape.Stack;
+          const value = inputToJS(block.inputs.VALUE, InputShape.Number);
           if (block.inputs.EFFECT.type === "soundEffect") {
-            return `this.audioEffects.${block.inputs.EFFECT.value.toLowerCase()} = ${value}`;
+            blockSource = `this.audioEffects.${block.inputs.EFFECT.value.toLowerCase()} = ${value}`;
           } else {
-            return `this.audioEffects[${inputToJS(block.inputs.EFFECT)}] = ${value}`;
+            blockSource = `this.audioEffects[${inputToJS(block.inputs.EFFECT, InputShape.Any)}] = ${value}`;
           }
+          break;
         }
+
         case OpCode.sound_changeeffectby: {
-          const value = inputToJS(block.inputs.VALUE);
+          satisfiesInputShape = InputShape.Stack;
+          const value = block.inputs.VALUE;
           if (block.inputs.EFFECT.type === "soundEffect") {
-            return `this.audioEffects.${block.inputs.EFFECT.value.toLowerCase()} += ${value}`;
+            blockSource = increase(`this.audioEffects.${block.inputs.EFFECT.value.toLowerCase()}`, value, false);
           } else {
-            return `this.audioEffects[${inputToJS(block.inputs.EFFECT)}] += ${value}`;
+            blockSource = increase(
+              `this.audioEffects[${inputToJS(block.inputs.EFFECT, InputShape.Any)}]`,
+              value,
+              false
+            );
           }
+          break;
         }
+
         case OpCode.sound_cleareffects:
-          return `this.audioEffects.clear()`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `this.audioEffects.clear()`;
+          break;
+
         case OpCode.sound_stopallsounds:
-          return `this.stopAllSounds()`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `this.stopAllSounds()`;
+          break;
+
         case OpCode.event_broadcast:
-          return `this.broadcast(${inputToJS(block.inputs.BROADCAST_INPUT)})`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `this.broadcast(${inputToJS(block.inputs.BROADCAST_INPUT, InputShape.String)})`;
+          break;
+
         case OpCode.event_broadcastandwait:
-          return `yield* this.broadcastAndWait(${inputToJS(block.inputs.BROADCAST_INPUT)})`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `yield* this.broadcastAndWait(${inputToJS(block.inputs.BROADCAST_INPUT, InputShape.String)})`;
+          break;
+
         case OpCode.control_wait:
-          return `yield* this.wait(${inputToJS(block.inputs.DURATION)})`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `yield* this.wait(${inputToJS(block.inputs.DURATION, InputShape.Number)})`;
+          break;
+
         case OpCode.control_repeat:
-          return `for (let i = 0; i < (${inputToJS(block.inputs.TIMES)}); i++) {
-            ${inputToJS(block.inputs.SUBSTACK)};
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `for (let i = 0; i < (${inputToJS(block.inputs.TIMES, InputShape.Number)}); i++) {
+            ${inputToJS(block.inputs.SUBSTACK, InputShape.Stack)};
             ${warp ? "" : "yield;"}
           }`;
+          break;
+
         case OpCode.control_forever:
-          return `while (true) {
-            ${inputToJS(block.inputs.SUBSTACK)};
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `while (true) {
+            ${inputToJS(block.inputs.SUBSTACK, InputShape.Stack)};
             ${warp ? "" : "yield;"}
           }`;
+          break;
+
         case OpCode.control_if:
-          return `if (${inputToJS(block.inputs.CONDITION)}) {
-            ${inputToJS(block.inputs.SUBSTACK)}
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `if (${inputToJS(block.inputs.CONDITION, InputShape.Boolean)}) {
+            ${inputToJS(block.inputs.SUBSTACK, InputShape.Stack)}
           }`;
+          break;
+
         case OpCode.control_if_else:
-          return `if (${inputToJS(block.inputs.CONDITION)}) {
-            ${inputToJS(block.inputs.SUBSTACK)}
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `if (${inputToJS(block.inputs.CONDITION, InputShape.Boolean)}) {
+            ${inputToJS(block.inputs.SUBSTACK, InputShape.Stack)}
           } else {
-            ${inputToJS(block.inputs.SUBSTACK2)}
+            ${inputToJS(block.inputs.SUBSTACK2, InputShape.Stack)}
           }`;
+          break;
+
         case OpCode.control_wait_until:
-          return `while (!(${inputToJS(block.inputs.CONDITION)})) { yield; }`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `while (!(${inputToJS(block.inputs.CONDITION, InputShape.Boolean)})) { yield; }`;
+          break;
+
         case OpCode.control_repeat_until:
-          return `while (!(${inputToJS(block.inputs.CONDITION)})) {
-            ${inputToJS(block.inputs.SUBSTACK)}
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `while (!(${inputToJS(block.inputs.CONDITION, InputShape.Boolean)})) {
+            ${inputToJS(block.inputs.SUBSTACK, InputShape.Stack)}
             ${warp ? "" : "yield;"}
           }`;
+          break;
+
         case OpCode.control_while:
-          return `while (${inputToJS(block.inputs.CONDITION)}) {
-            ${inputToJS(block.inputs.SUBSTACK)}
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `while (${inputToJS(block.inputs.CONDITION, InputShape.Boolean)}) {
+            ${inputToJS(block.inputs.SUBSTACK, InputShape.Stack)}
             ${warp ? "" : "yield;"}
           }`;
+          break;
+
         case OpCode.control_for_each:
-          return `for (${selectedVarSource} = 1; ${selectedVarSource} <= (${inputToJS(
-            block.inputs.VALUE
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `for (${selectedVarSource} = 1; ${selectedVarSource} <= (${inputToJS(
+            block.inputs.VALUE,
+            InputShape.Number
           )}); ${selectedVarSource}++) {
-            ${inputToJS(block.inputs.SUBSTACK)}
+            ${inputToJS(block.inputs.SUBSTACK, InputShape.Stack)}
             ${warp ? "" : "yield;"}
           }`;
+          break;
+
         case OpCode.control_all_at_once:
-          return inputToJS(block.inputs.SUBSTACK);
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = inputToJS(block.inputs.SUBSTACK, InputShape.Stack);
+          break;
+
         case OpCode.control_stop:
+          satisfiesInputShape = InputShape.Stack;
           switch (block.inputs.STOP_OPTION.value) {
             case "this script":
-              return `return;`;
+              blockSource = `return;`;
+              break;
             default:
-              return `/* TODO: Implement stop ${block.inputs.STOP_OPTION.value} */ null`;
+              blockSource = `/* TODO: Implement stop ${block.inputs.STOP_OPTION.value} */ null`;
+              break;
           }
+          break;
+
         case OpCode.control_create_clone_of:
+          satisfiesInputShape = InputShape.Stack;
           switch (block.inputs.CLONE_OPTION.value) {
             case "_myself_":
-              return `this.createClone()`;
+              blockSource = `this.createClone()`;
+              break;
             default:
-              return `this.sprites[${JSON.stringify(targetNameMap[block.inputs.CLONE_OPTION.value])}].createClone()`;
+              blockSource = `this.sprites[${JSON.stringify(
+                targetNameMap[block.inputs.CLONE_OPTION.value]
+              )}].createClone()`;
+              break;
           }
+          break;
+
         case OpCode.control_delete_this_clone:
-          return `this.deleteThisClone()`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `this.deleteThisClone()`;
+          break;
+
         case OpCode.control_get_counter:
-          return `${stage}.__counter`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `${stage}.__counter`;
+          break;
+
         case OpCode.control_incr_counter:
-          return `${stage}.__counter++`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `${stage}.__counter++`;
+          break;
+
         case OpCode.control_clear_counter:
-          return `${stage}.__counter = 0`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `${stage}.__counter = 0`;
+          break;
+
         case OpCode.sensing_touchingobject:
+          satisfiesInputShape = InputShape.Boolean;
           switch (block.inputs.TOUCHINGOBJECTMENU.value) {
             case "_mouse_":
-              return `this.touching("mouse")`;
+              blockSource = `this.touching("mouse")`;
+              break;
             case "_edge_":
-              return `this.touching("edge")`;
+              blockSource = `this.touching("edge")`;
+              break;
             default:
-              return `this.touching(this.sprites[${JSON.stringify(
+              blockSource = `this.touching(this.sprites[${JSON.stringify(
                 targetNameMap[block.inputs.TOUCHINGOBJECTMENU.value]
               )}].andClones())`;
+              break;
           }
+          break;
+
         case OpCode.sensing_touchingcolor:
+          satisfiesInputShape = InputShape.Boolean;
           if (block.inputs.COLOR.type === "color") {
             const { r, g, b } = block.inputs.COLOR.value;
-            return `this.touching(Color.rgb(${r}, ${g}, ${b}))`;
+            blockSource = `this.touching(Color.rgb(${r}, ${g}, ${b}))`;
           } else {
-            return `this.touching(Color.num(${inputToJS(block.inputs.COLOR)}))`;
+            blockSource = `this.touching(Color.num(${inputToJS(block.inputs.COLOR, InputShape.Number)}))`;
           }
+          break;
+
         case OpCode.sensing_coloristouchingcolor: {
           let color1: string;
           let color2: string;
@@ -574,67 +1115,110 @@ export default function toLeopard(
             const { r, g, b } = block.inputs.COLOR.value;
             color1 = `Color.rgb(${r}, ${g}, ${b})`;
           } else {
-            color1 = `Color.num(${inputToJS(block.inputs.COLOR)})`;
+            color1 = `Color.num(${inputToJS(block.inputs.COLOR, InputShape.Number)})`;
           }
 
           if (block.inputs.COLOR2.type === "color") {
             const { r, g, b } = block.inputs.COLOR2.value;
             color2 = `Color.rgb(${r}, ${g}, ${b})`;
           } else {
-            color2 = `Color.num(${inputToJS(block.inputs.COLOR2)})`;
+            color2 = `Color.num(${inputToJS(block.inputs.COLOR2, InputShape.Number)})`;
           }
 
-          return `this.colorTouching((${color1}), (${color2}))`;
+          satisfiesInputShape = InputShape.Boolean;
+          blockSource = `this.colorTouching((${color1}), (${color2}))`;
+          break;
         }
-        case OpCode.sensing_distanceto:
+
+        case OpCode.sensing_distanceto: {
+          let coords: string;
+
           switch (block.inputs.DISTANCETOMENU.value) {
             case "_mouse_":
-              return `(Math.hypot(this.mouse.x - this.x, this.mouse.y - this.y))`;
-            default: {
-              const sprite = `this.sprites[${JSON.stringify(targetNameMap[block.inputs.DISTANCETOMENU.value])}]`;
-              return `(Math.hypot(${sprite}.x - this.x, ${sprite}.y - this.y))`;
-            }
+              coords = `this.mouse`;
+              break;
+            default:
+              coords = `this.sprites[${JSON.stringify(targetNameMap[block.inputs.DISTANCETOMENU.value])}]`;
+              break;
           }
+
+          satisfiesInputShape = InputShape.Number;
+          blockSource = `(Math.hypot(${coords}.x - this.x, ${coords}.y - this.y))`;
+          break;
+        }
+
         case OpCode.sensing_askandwait:
-          return `yield* this.askAndWait(${inputToJS(block.inputs.QUESTION)})`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `yield* this.askAndWait(${inputToJS(block.inputs.QUESTION, InputShape.Any)})`;
+          break;
+
         case OpCode.sensing_answer:
-          return `this.answer`;
+          satisfiesInputShape = InputShape.String;
+          blockSource = `this.answer`;
+          break;
+
         case OpCode.sensing_keypressed:
-          return `this.keyPressed(${inputToJS(block.inputs.KEY_OPTION)})`;
+          satisfiesInputShape = InputShape.Boolean;
+          blockSource = `this.keyPressed(${inputToJS(block.inputs.KEY_OPTION, InputShape.String)})`;
+          break;
+
         case OpCode.sensing_mousedown:
-          return `this.mouse.down`;
+          satisfiesInputShape = InputShape.Boolean;
+          blockSource = `this.mouse.down`;
+          break;
         case OpCode.sensing_mousex:
-          return `this.mouse.x`;
+          satisfiesInputShape = InputShape.Number;
+          blockSource = `this.mouse.x`;
+          break;
+
         case OpCode.sensing_mousey:
-          return `this.mouse.y`;
+          satisfiesInputShape = InputShape.Number;
+          blockSource = `this.mouse.y`;
+          break;
+
         case OpCode.sensing_loudness:
-          return `this.loudness`;
+          satisfiesInputShape = InputShape.Number;
+          blockSource = `this.loudness`;
+          break;
+
         case OpCode.sensing_timer:
-          return `this.timer`;
+          satisfiesInputShape = InputShape.Number;
+          blockSource = `this.timer`;
+          break;
+
         case OpCode.sensing_resettimer:
-          return `this.restartTimer()`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `this.restartTimer()`;
+          break;
+
         case OpCode.sensing_of: {
           let propName: string;
           switch (block.inputs.PROPERTY.value) {
             case "x position":
               propName = "x";
+              satisfiesInputShape = InputShape.Number;
               break;
             case "y position":
               propName = "y";
+              satisfiesInputShape = InputShape.Number;
               break;
             case "direction":
               propName = "direction";
+              satisfiesInputShape = InputShape.Number;
               break;
             case "costume #":
             case "backdrop #":
               propName = "costumeNumber";
+              satisfiesInputShape = InputShape.Number;
               break;
             case "costume name":
             case "backdrop name":
               propName = "costume.name";
+              satisfiesInputShape = InputShape.String;
               break;
             case "size":
               propName = "size";
+              satisfiesInputShape = InputShape.Number;
               break;
             case "volume":
               propName = null;
@@ -648,12 +1232,14 @@ export default function toLeopard(
               const variable = varOwner.variables.find(variable => variable.name === block.inputs.PROPERTY.value);
               const newName = variableNameMap[variable.id];
               propName = `vars.${newName}`;
+              satisfiesInputShape = InputShape.Any;
               break;
             }
           }
 
           if (propName === null) {
-            return `/* Cannot access property ${block.inputs.PROPERTY.value} of target */ null`;
+            blockSource = `/* Cannot access property ${block.inputs.PROPERTY.value} of target */ null`;
+            break;
           }
 
           let targetObj: string;
@@ -663,149 +1249,449 @@ export default function toLeopard(
             targetObj = `this.sprites[${JSON.stringify(targetNameMap[block.inputs.OBJECT.value])}]`;
           }
 
-          return `${targetObj}.${propName}`;
+          blockSource = `${targetObj}.${propName}`;
+          break;
         }
+
         case OpCode.sensing_current:
+          satisfiesInputShape = InputShape.Number;
           switch (block.inputs.CURRENTMENU.value) {
             case "YEAR":
-              return `(new Date().getFullYear())`;
+              blockSource = `(new Date().getFullYear())`;
+              break;
             case "MONTH":
-              return `(new Date().getMonth() + 1)`;
+              blockSource = `(new Date().getMonth() + 1)`;
+              break;
             case "DATE":
-              return `(new Date().getDate())`;
+              blockSource = `(new Date().getDate())`;
+              break;
             case "DAYOFWEEK":
-              return `(new Date().getDay() + 1)`;
+              blockSource = `(new Date().getDay() + 1)`;
+              break;
             case "HOUR":
-              return `(new Date().getHours())`;
+              blockSource = `(new Date().getHours())`;
+              break;
             case "MINUTE":
-              return `(new Date().getMinutes())`;
+              blockSource = `(new Date().getMinutes())`;
+              break;
             case "SECOND":
-              return `(new Date().getSeconds())`;
+              blockSource = `(new Date().getSeconds())`;
+              break;
             default:
-              return `('')`;
-          }
-        case OpCode.sensing_dayssince2000:
-          return `(((new Date().getTime() - new Date(2000, 0, 1)) / 1000 / 60 + new Date().getTimezoneOffset()) / 60 / 24)`;
-        case OpCode.sensing_username:
-          return `(/* no username */ "")`;
-        case OpCode.sensing_userid:
-          return `undefined`; // Obsolete no-op block.
-        case OpCode.operator_add:
-          return `((${inputToJS(block.inputs.NUM1)}) + (${inputToJS(block.inputs.NUM2)}))`;
-        case OpCode.operator_subtract:
-          return `((${inputToJS(block.inputs.NUM1)}) - (${inputToJS(block.inputs.NUM2)}))`;
-        case OpCode.operator_multiply:
-          return `((${inputToJS(block.inputs.NUM1)}) * (${inputToJS(block.inputs.NUM2)}))`;
-        case OpCode.operator_divide:
-          return `((${inputToJS(block.inputs.NUM1)}) / (${inputToJS(block.inputs.NUM2)}))`;
-        case OpCode.operator_random:
-          return `this.random(${inputToJS(block.inputs.FROM)}, ${inputToJS(block.inputs.TO)})`;
-        case OpCode.operator_gt:
-          return `((${inputToJS(block.inputs.OPERAND1)}) > (${inputToJS(block.inputs.OPERAND2)}))`;
-        case OpCode.operator_lt:
-          return `((${inputToJS(block.inputs.OPERAND1)}) < (${inputToJS(block.inputs.OPERAND2)}))`;
-        case OpCode.operator_equals:
-          return `((${inputToJS(block.inputs.OPERAND1)}) == (${inputToJS(block.inputs.OPERAND2)}))`;
-        case OpCode.operator_and:
-          return `((${inputToJS(block.inputs.OPERAND1)}) && (${inputToJS(block.inputs.OPERAND2)}))`;
-        case OpCode.operator_or:
-          return `((${inputToJS(block.inputs.OPERAND1)}) || (${inputToJS(block.inputs.OPERAND2)}))`;
-        case OpCode.operator_not:
-          return `(!(${inputToJS(block.inputs.OPERAND)}))`;
-        case OpCode.operator_join:
-          return `("" + (${inputToJS(block.inputs.STRING1)}) + (${inputToJS(block.inputs.STRING2)}))`;
-        case OpCode.operator_letter_of:
-          return `(String(${inputToJS(block.inputs.STRING)})[(${inputToJS(block.inputs.LETTER)}) - 1])`;
-        case OpCode.operator_length:
-          return `(${inputToJS(block.inputs.STRING)}).length`;
-        case OpCode.operator_contains:
-          return `(${inputToJS(block.inputs.STRING1)}).includes(${inputToJS(block.inputs.STRING2)})`;
-        case OpCode.operator_mod:
-          return `((${inputToJS(block.inputs.NUM1)}) % (${inputToJS(block.inputs.NUM2)}))`;
-        case OpCode.operator_round:
-          return `Math.round(${inputToJS(block.inputs.NUM)})`;
-        case OpCode.operator_mathop:
-          switch (block.inputs.OPERATOR.value) {
-            case "abs":
-              return `Math.abs(${inputToJS(block.inputs.NUM)})`;
-            case "floor":
-              return `Math.floor(${inputToJS(block.inputs.NUM)})`;
-            case "ceiling":
-              return `Math.ceil(${inputToJS(block.inputs.NUM)})`;
-            case "sqrt":
-              return `Math.sqrt(${inputToJS(block.inputs.NUM)})`;
-            case "sin":
-              return `Math.sin(this.degToRad(${inputToJS(block.inputs.NUM)}))`;
-            case "cos":
-              return `Math.cos(this.degToRad(${inputToJS(block.inputs.NUM)}))`;
-            case "tan":
-              return `Math.tan(this.degToRad(${inputToJS(block.inputs.NUM)}))`;
-            case "asin":
-              return `this.radToDeg(Math.asin(${inputToJS(block.inputs.NUM)}))`;
-            case "acos":
-              return `this.radToDeg(Math.acos(${inputToJS(block.inputs.NUM)}))`;
-            case "atan":
-              return `this.radToDeg(Math.atan(${inputToJS(block.inputs.NUM)}))`;
-            case "ln":
-              return `Math.log(${inputToJS(block.inputs.NUM)})`;
-            case "log":
-              return `Math.log10(${inputToJS(block.inputs.NUM)})`;
-            case "e ^":
-              return `(Math.E ** (${inputToJS(block.inputs.NUM)}))`;
-            case "10 ^":
-              return `(10 ** (${inputToJS(block.inputs.NUM)}))`;
+              blockSource = `('')`;
+              break;
           }
           break;
+
+        case OpCode.sensing_dayssince2000:
+          satisfiesInputShape = InputShape.Number;
+          blockSource = `(((new Date().getTime() - new Date(2000, 0, 1)) / 1000 / 60 + new Date().getTimezoneOffset()) / 60 / 24)`;
+          break;
+
+        case OpCode.sensing_username:
+          satisfiesInputShape = InputShape.String;
+          blockSource = `(/* no username */ "")`;
+          break;
+
+        case OpCode.sensing_userid:
+          satisfiesInputShape = InputShape.Any;
+          blockSource = `undefined`; // Obsolete no-op block.
+          break;
+
+        case OpCode.operator_add:
+          if (desiredInputShape === InputShape.Index) {
+            // Attempt to fulfill a desired index input by subtracting 1 from either side
+            // of the block. If neither side can be parsed as a number (i.e. both inputs
+            // are filled with blocks), this clause just falls back to the normal number
+            // shape.
+            const num2 = parseNumber(block.inputs.NUM2);
+            if (typeof num2 === "number") {
+              if (num2 === 1) {
+                satisfiesInputShape = InputShape.Index;
+                blockSource = `(${inputToJS(block.inputs.NUM1, InputShape.Number)})`;
+                break;
+              } else {
+                satisfiesInputShape = InputShape.Index;
+                blockSource = `((${inputToJS(block.inputs.NUM1, InputShape.Number)}) + ${num2 - 1})`;
+                break;
+              }
+            } else {
+              const num1 = parseNumber(block.inputs.NUM1);
+              if (typeof num1 === "number") {
+                if (num1 === 1) {
+                  satisfiesInputShape = InputShape.Index;
+                  blockSource = `(${inputToJS(block.inputs.NUM2, InputShape.Number)})`;
+                  break;
+                } else {
+                  satisfiesInputShape = InputShape.Index;
+                  blockSource = `(${num1 - 1} + ${inputToJS(block.inputs.NUM2, InputShape.Number)})`;
+                  break;
+                }
+              }
+            }
+          }
+
+          satisfiesInputShape = InputShape.Number;
+          blockSource = `((${inputToJS(block.inputs.NUM1, InputShape.Number)}) + (${inputToJS(
+            block.inputs.NUM2,
+            InputShape.Number
+          )}))`;
+          break;
+
+        case OpCode.operator_subtract:
+          if (desiredInputShape === InputShape.Index) {
+            // Do basically the same thing as the addition operator does, but with
+            // specifics for subtraction: increment the right-hand or decrement the
+            // left-hand.
+            const num2 = parseNumber(block.inputs.NUM2);
+            if (typeof num2 === "number") {
+              if (num2 === -1) {
+                satisfiesInputShape = InputShape.Index;
+                blockSource = `(${inputToJS(block.inputs.NUM1, InputShape.Number)})`;
+                break;
+              } else {
+                satisfiesInputShape = InputShape.Index;
+                blockSource = `((${inputToJS(block.inputs.NUM1, InputShape.Number)}) - ${num2 + 1})`;
+                break;
+              }
+            } else {
+              const num1 = parseNumber(block.inputs.NUM1);
+              if (typeof num1 === "number") {
+                if (num1 === 1) {
+                  // (1 - x) -> (0 - x) == (-x)
+                  satisfiesInputShape = InputShape.Index;
+                  blockSource = `(-${inputToJS(block.inputs.NUM2, InputShape.Number)})`;
+                  break;
+                } else {
+                  satisfiesInputShape = InputShape.Index;
+                  blockSource = `(${num1 - 1} + ${inputToJS(block.inputs.NUM2, InputShape.Number)})`;
+                  break;
+                }
+              }
+            }
+          }
+
+          satisfiesInputShape = InputShape.Number;
+          blockSource = `((${inputToJS(block.inputs.NUM1, InputShape.Number)}) - (${inputToJS(
+            block.inputs.NUM2,
+            InputShape.Number
+          )}))`;
+          break;
+
+        case OpCode.operator_multiply:
+          satisfiesInputShape = InputShape.Number;
+          blockSource = `((${inputToJS(block.inputs.NUM1, InputShape.Number)}) * (${inputToJS(
+            block.inputs.NUM2,
+            InputShape.Number
+          )}))`;
+          break;
+
+        case OpCode.operator_divide:
+          satisfiesInputShape = InputShape.Number;
+          blockSource = `((${inputToJS(block.inputs.NUM1, InputShape.Number)}) / (${inputToJS(
+            block.inputs.NUM2,
+            InputShape.Number
+          )}))`;
+          break;
+
+        case OpCode.operator_random:
+          satisfiesInputShape = InputShape.Number;
+          blockSource = `this.random(${inputToJS(block.inputs.FROM, InputShape.Number)}, ${inputToJS(
+            block.inputs.TO,
+            InputShape.Number
+          )})`;
+          break;
+
+        case OpCode.operator_gt:
+          satisfiesInputShape = InputShape.Boolean;
+          blockSource = `(this.compare((${inputToJS(block.inputs.OPERAND1, InputShape.Any)}), (${inputToJS(
+            block.inputs.OPERAND2,
+            InputShape.Any
+          )})) > 0)`;
+          break;
+
+        case OpCode.operator_lt:
+          satisfiesInputShape = InputShape.Boolean;
+          blockSource = `(this.compare((${inputToJS(block.inputs.OPERAND1, InputShape.Any)}), (${inputToJS(
+            block.inputs.OPERAND2,
+            InputShape.Any
+          )})) < 0)`;
+          break;
+
+        case OpCode.operator_equals: {
+          satisfiesInputShape = InputShape.Boolean;
+
+          // If both sides are blocks, we can't make any assumptions about what kind of
+          // values are being compared.(*) Use the custom .compare() function to ensure
+          // compatibility with Scratch's equals block.
+          //
+          // (*) This is theoretically false, but we currently don't have a way to inspect
+          // the returned InputShape of a block input to see if both sides match up.
+
+          if (
+            (block.inputs.OPERAND1 as BlockInput.Any).type === "block" &&
+            (block.inputs.OPERAND2 as BlockInput.Any).type === "block"
+          ) {
+            blockSource = `(this.compare((${inputToJS(block.inputs.OPERAND1, InputShape.Any)}), (${inputToJS(
+              block.inputs.OPERAND2,
+              InputShape.Any
+            )})) === 0)`;
+            break;
+          }
+
+          // If both inputs were blocks, that was caught above - so from this point on,
+          // either the left- or right-hand side is definitely a primitive (or both).
+
+          const num1 = parseNumber(block.inputs.OPERAND1);
+          if (typeof num1 === "number") {
+            blockSource = `(${num1} === (${inputToJS(block.inputs.OPERAND2, InputShape.Number)}))`;
+            break;
+          }
+
+          const num2 = parseNumber(block.inputs.OPERAND2);
+          if (typeof num2 === "number") {
+            blockSource = `((${inputToJS(block.inputs.OPERAND1, InputShape.Number)}) === ${num2})`;
+            break;
+          }
+
+          // If neither side was parsed as a number, one side is definitely a string.
+          // Compare both sides as strings.
+
+          blockSource = `((${inputToJS(block.inputs.OPERAND1, InputShape.String)}) === (${inputToJS(
+            block.inputs.OPERAND2,
+            InputShape.String
+          )}))`;
+
+          break;
+        }
+
+        case OpCode.operator_and:
+          satisfiesInputShape = InputShape.Boolean;
+          blockSource = `((${inputToJS(block.inputs.OPERAND1, InputShape.Boolean)}) && (${inputToJS(
+            block.inputs.OPERAND2,
+            InputShape.Boolean
+          )}))`;
+          break;
+
+        case OpCode.operator_or:
+          satisfiesInputShape = InputShape.Boolean;
+          blockSource = `((${inputToJS(block.inputs.OPERAND1, InputShape.Boolean)}) || (${inputToJS(
+            block.inputs.OPERAND2,
+            InputShape.Boolean
+          )}))`;
+          break;
+
+        case OpCode.operator_not:
+          satisfiesInputShape = InputShape.Boolean;
+          blockSource = `(!(${inputToJS(block.inputs.OPERAND, InputShape.Boolean)}))`;
+          break;
+
+        case OpCode.operator_join:
+          satisfiesInputShape = InputShape.String;
+          blockSource = `((${inputToJS(block.inputs.STRING1, InputShape.String)}) + (${inputToJS(
+            block.inputs.STRING2,
+            InputShape.String
+          )}))`;
+          break;
+
+        case OpCode.operator_letter_of:
+          satisfiesInputShape = InputShape.String;
+          blockSource = `this.letterOf(${inputToJS(block.inputs.STRING, InputShape.Any)}, ${inputToJS(
+            block.inputs.LETTER,
+            InputShape.Index
+          )})`;
+          break;
+
+        case OpCode.operator_length:
+          satisfiesInputShape = InputShape.Number;
+          blockSource = `(${inputToJS(block.inputs.STRING, InputShape.String)}).length`;
+          break;
+
+        case OpCode.operator_contains:
+          satisfiesInputShape = InputShape.Boolean;
+          blockSource = `this.stringIncludes(${inputToJS(block.inputs.STRING1, InputShape.String)}, ${inputToJS(
+            block.inputs.STRING2,
+            InputShape.String
+          )})`;
+          break;
+
+        case OpCode.operator_mod:
+          satisfiesInputShape = InputShape.Number;
+          blockSource = `((${inputToJS(block.inputs.NUM1, InputShape.Number)}) % (${inputToJS(
+            block.inputs.NUM2,
+            InputShape.Number
+          )}))`;
+          break;
+
+        case OpCode.operator_round:
+          satisfiesInputShape = InputShape.Number;
+          blockSource = `Math.round(${inputToJS(block.inputs.NUM, InputShape.Number)})`;
+          break;
+
+        case OpCode.operator_mathop: {
+          const inputSource = inputToJS(block.inputs.NUM, InputShape.Number);
+          satisfiesInputShape = InputShape.Number;
+          switch (block.inputs.OPERATOR.value) {
+            case "abs":
+              blockSource = `Math.abs(${inputSource})`;
+              break;
+            case "floor":
+              blockSource = `Math.floor(${inputSource})`;
+              break;
+            case "ceiling":
+              blockSource = `Math.ceil(${inputSource})`;
+              break;
+            case "sqrt":
+              blockSource = `Math.sqrt(${inputSource})`;
+              break;
+            case "sin":
+              blockSource = `Math.sin(this.degToRad(${inputSource}))`;
+              break;
+            case "cos":
+              blockSource = `Math.cos(this.degToRad(${inputSource}))`;
+              break;
+            case "tan":
+              blockSource = `this.scratchTan(${inputSource})`;
+              break;
+            case "asin":
+              blockSource = `this.radToDeg(Math.asin(${inputSource}))`;
+              break;
+            case "acos":
+              blockSource = `this.radToDeg(Math.acos(${inputSource}))`;
+              break;
+            case "atan":
+              blockSource = `this.radToDeg(Math.atan(${inputSource}))`;
+              break;
+            case "ln":
+              blockSource = `Math.log(${inputSource})`;
+              break;
+            case "log":
+              blockSource = `Math.log10(${inputSource})`;
+              break;
+            case "e ^":
+              blockSource = `(Math.E ** (${inputSource}))`;
+              break;
+            case "10 ^":
+              blockSource = `(10 ** (${inputSource}))`;
+              break;
+          }
+          break;
+        }
+
         case OpCode.data_variable:
-          return selectedVarSource;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = selectedVarSource;
+          break;
+
         case OpCode.data_setvariableto:
-          return `${selectedVarSource} = (${inputToJS(block.inputs.VALUE)})`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `${selectedVarSource} = (${inputToJS(block.inputs.VALUE, InputShape.Any)})`;
+          break;
+
         case OpCode.data_changevariableby:
-          return `${selectedVarSource} += (${inputToJS(block.inputs.VALUE)})`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = increase(selectedVarSource, block.inputs.VALUE, true);
+          break;
+
         case OpCode.data_showvariable:
-          return `${selectedWatcherSource}.visible = true`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `${selectedWatcherSource}.visible = true`;
+          break;
+
         case OpCode.data_hidevariable:
-          return `${selectedWatcherSource}.visible = false`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `${selectedWatcherSource}.visible = false`;
+          break;
+
         case OpCode.data_listcontents:
-          return `${selectedVarSource}.join(" ")`;
+          satisfiesInputShape = InputShape.String;
+          blockSource = `${selectedVarSource}.join(" ")`;
+          break;
+
         case OpCode.data_addtolist:
-          return `${selectedVarSource}.push(${inputToJS(block.inputs.ITEM)})`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `${selectedVarSource}.push(${inputToJS(block.inputs.ITEM, InputShape.Any)})`;
+          break;
+
         case OpCode.data_deleteoflist:
+          satisfiesInputShape = InputShape.Stack;
           // Supposed to be a numerical index, but can be
           // string "all" when sb2 converted to sb3 by Scratch
           if (block.inputs.INDEX.value === "all") {
-            return `${selectedVarSource} = []`;
+            blockSource = `${selectedVarSource} = []`;
+          } else if (block.inputs.INDEX.value === "last") {
+            blockSource = `${selectedVarSource}.splice(${selectedVarSource}.length - 1, 1)`;
+          } else {
+            blockSource = `${selectedVarSource}.splice((${inputToJS(block.inputs.INDEX, InputShape.Index)}), 1)`;
           }
-          if (block.inputs.INDEX.value === "last") {
-            return `${selectedVarSource}.splice(${selectedVarSource}.length - 1, 1)`;
-          }
-          return `${selectedVarSource}.splice(((${inputToJS(block.inputs.INDEX)}) - 1), 1)`;
+          break;
+
         case OpCode.data_deletealloflist:
-          return `${selectedVarSource} = []`;
-        case OpCode.data_insertatlist:
-          return `${selectedVarSource}.splice(((${inputToJS(block.inputs.INDEX)}) - 1), 0, (${inputToJS(
-            block.inputs.ITEM
-          )}))`;
-        case OpCode.data_replaceitemoflist:
-          return `${selectedVarSource}.splice(((${inputToJS(block.inputs.INDEX)}) - 1), 1, (${inputToJS(
-            block.inputs.ITEM
-          )}))`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `${selectedVarSource} = []`;
+          break;
+
+        case OpCode.data_insertatlist: {
+          const index = inputToJS(block.inputs.INDEX, InputShape.Index);
+          const item = inputToJS(block.inputs.ITEM, InputShape.Any);
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `${selectedVarSource}.splice(${index}, 0, ${item})`;
+          break;
+        }
+
+        case OpCode.data_replaceitemoflist: {
+          const index = inputToJS(block.inputs.INDEX, InputShape.Index);
+          const item = inputToJS(block.inputs.ITEM, InputShape.Any);
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `${selectedVarSource}.splice(${index}, 1, ${item})`;
+          break;
+        }
+
         case OpCode.data_itemoflist:
+          satisfiesInputShape = InputShape.Any;
           if (block.inputs.INDEX.value === "last") {
-            return `${selectedVarSource}[${selectedVarSource}.length - 1]`;
+            blockSource = `this.itemOf(${selectedVarSource}, ${selectedVarSource}.length - 1)`;
+          } else {
+            blockSource = `this.itemOf(${selectedVarSource}, ${inputToJS(block.inputs.INDEX, InputShape.Index)})`;
           }
-          return `${selectedVarSource}[(${inputToJS(block.inputs.INDEX)}) - 1]`;
+          break;
+
         case OpCode.data_itemnumoflist:
-          return `(${selectedVarSource}.indexOf(${inputToJS(block.inputs.ITEM)}) + 1)`;
+          if (desiredInputShape === InputShape.Index) {
+            satisfiesInputShape = InputShape.Index;
+            blockSource = `this.indexInArray(${selectedVarSource}, ${inputToJS(block.inputs.ITEM, InputShape.Any)})`;
+          } else {
+            satisfiesInputShape = InputShape.Number;
+            blockSource = `(this.indexInArray(${selectedVarSource}, ${inputToJS(
+              block.inputs.ITEM,
+              InputShape.Any
+            )}) + 1)`;
+          }
+          break;
+
         case OpCode.data_lengthoflist:
-          return `${selectedVarSource}.length`;
+          satisfiesInputShape = InputShape.Number;
+          blockSource = `${selectedVarSource}.length`;
+          break;
+
         case OpCode.data_listcontainsitem:
-          return `${selectedVarSource}.includes(${inputToJS(block.inputs.ITEM)})`;
+          satisfiesInputShape = InputShape.Boolean;
+          blockSource = `this.arrayIncludes(${selectedVarSource}, ${inputToJS(block.inputs.ITEM, InputShape.Any)})`;
+          break;
+
         case OpCode.data_showlist:
-          return `${selectedWatcherSource}.visible = true`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `${selectedWatcherSource}.visible = true`;
+          break;
+
         case OpCode.data_hidelist:
-          return `${selectedWatcherSource}.visible = false`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `${selectedWatcherSource}.visible = false`;
+          break;
+
         case OpCode.procedures_call: {
+          satisfiesInputShape = InputShape.Stack;
+
           // Get name of custom block script with given PROCCODE:
           const procName = target.scripts.find(
             script =>
@@ -814,69 +1700,138 @@ export default function toLeopard(
               script.hat.inputs.PROCCODE.value === block.inputs.PROCCODE.value
           ).name;
 
-          const procArgs = `${block.inputs.INPUTS.value.map(inputToJS).join(", ")}`;
+          // TODO: Boolean inputs should provide appropriate desiredInputShape instead of "any"
+          const procArgs = `${block.inputs.INPUTS.value.map(input => inputToJS(input, InputShape.Any)).join(", ")}`;
 
           // Warp-mode procedures execute all child procedures in warp mode as well
           if (warp) {
-            return `this.warp(this.${procName})(${procArgs})`;
+            blockSource = `this.warp(this.${procName})(${procArgs})`;
           } else {
-            return `yield* this.${procName}(${procArgs})`;
+            blockSource = `yield* this.${procName}(${procArgs})`;
           }
+          break;
         }
+
         case OpCode.argument_reporter_string_number:
         case OpCode.argument_reporter_boolean:
           // Argument reporters dragged outside their script return 0
-          if (!script) return "0";
-          return customBlockArgNameMap.get(script)[block.inputs.VALUE.value];
+          if (!script) {
+            satisfiesInputShape = InputShape.Number;
+            blockSource = `0`;
+            break;
+          }
+
+          if (block.opcode === OpCode.argument_reporter_boolean) {
+            satisfiesInputShape = InputShape.Boolean;
+          } else {
+            satisfiesInputShape = InputShape.Any;
+          }
+          blockSource = customBlockArgNameMap.get(script)[block.inputs.VALUE.value];
+          break;
+
         case OpCode.pen_clear:
-          return `this.clearPen()`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `this.clearPen()`;
+          break;
+
         case OpCode.pen_stamp:
-          return `this.stamp()`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `this.stamp()`;
+          break;
+
         case OpCode.pen_penDown:
-          return `this.penDown = true`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `this.penDown = true`;
+          break;
+
         case OpCode.pen_penUp:
-          return `this.penDown = false`;
-        case OpCode.pen_setPenColorToColor: {
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `this.penDown = false`;
+          break;
+
+        case OpCode.pen_setPenColorToColor:
+          satisfiesInputShape = InputShape.Stack;
           if (block.inputs.COLOR.type === "color") {
             const { r, g, b } = block.inputs.COLOR.value;
-            return `this.penColor = Color.rgb(${r}, ${g}, ${b})`;
+            blockSource = `this.penColor = Color.rgb(${r}, ${g}, ${b})`;
           } else {
-            return `this.penColor = Color.num(${inputToJS(block.inputs.COLOR)})`;
-          }
-        }
-        case OpCode.pen_changePenColorParamBy: {
-          switch (block.inputs.colorParam.value) {
-            case "color":
-              return `this.penColor.h += (${inputToJS(block.inputs.VALUE)})`;
-            case "saturation":
-              return `this.penColor.s += (${inputToJS(block.inputs.VALUE)})`;
-            case "brightness":
-              return `this.penColor.v += (${inputToJS(block.inputs.VALUE)})`;
-            case "transparency":
-              return `this.penColor.a -= ((${inputToJS(block.inputs.VALUE)}) / 100)`;
+            blockSource = `this.penColor = Color.num(${inputToJS(block.inputs.COLOR, InputShape.Number)})`;
           }
           break;
-        }
-        case OpCode.pen_setPenColorParamTo: {
+
+        case OpCode.pen_changePenColorParamBy:
+          satisfiesInputShape = InputShape.Stack;
           switch (block.inputs.colorParam.value) {
             case "color":
-              return `this.penColor.h = (${inputToJS(block.inputs.VALUE)})`;
+              blockSource = increase(`this.penColor.h`, block.inputs.VALUE, false);
+              break;
             case "saturation":
-              return `this.penColor.s = (${inputToJS(block.inputs.VALUE)})`;
+              blockSource = increase(`this.penColor.s`, block.inputs.VALUE, false);
+              break;
             case "brightness":
-              return `this.penColor.v = (${inputToJS(block.inputs.VALUE)})`;
+              blockSource = increase(`this.penColor.v`, block.inputs.VALUE, false);
+              break;
             case "transparency":
-              return `this.penColor.a = (1 - ((${inputToJS(block.inputs.VALUE)}) / 100))`;
+              blockSource = `this.penColor.a -= ((${inputToJS(block.inputs.VALUE, InputShape.Number)}) / 100)`;
+              break;
           }
           break;
-        }
+
+        case OpCode.pen_setPenColorParamTo:
+          satisfiesInputShape = InputShape.Stack;
+          switch (block.inputs.colorParam.value) {
+            case "color":
+              blockSource = `this.penColor.h = (${inputToJS(block.inputs.VALUE, InputShape.Number)})`;
+              break;
+            case "saturation":
+              blockSource = `this.penColor.s = (${inputToJS(block.inputs.VALUE, InputShape.Number)})`;
+              break;
+            case "brightness":
+              blockSource = `this.penColor.v = (${inputToJS(block.inputs.VALUE, InputShape.Number)})`;
+              break;
+            case "transparency":
+              blockSource = `this.penColor.a = (1 - ((${inputToJS(block.inputs.VALUE, InputShape.Any)}) / 100))`;
+              break;
+          }
+          break;
+
         case OpCode.pen_setPenSizeTo:
-          return `this.penSize = (${inputToJS(block.inputs.SIZE)})`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = `this.penSize = (${inputToJS(block.inputs.SIZE, InputShape.Number)})`;
+          break;
+
         case OpCode.pen_changePenSizeBy:
-          return `this.penSize += (${inputToJS(block.inputs.SIZE)})`;
+          satisfiesInputShape = InputShape.Stack;
+          blockSource = increase(`this.penSize`, block.inputs.SIZE, false);
+          break;
+
         default:
-          return `/* TODO: Implement ${block.opcode} */ null`;
+          satisfiesInputShape = InputShape.Any;
+          blockSource = `/* TODO: Implement ${block.opcode} */ null`;
+          break;
       }
+
+      if (satisfiesInputShape === desiredInputShape) {
+        return blockSource;
+      }
+
+      if (desiredInputShape === "boolean") {
+        return `(this.toBoolean(${blockSource}))`;
+      }
+
+      if (desiredInputShape === "string") {
+        return `(this.toString(${blockSource}))`;
+      }
+
+      if (desiredInputShape === "number") {
+        return `(this.toNumber(${blockSource}))`;
+      }
+
+      if (desiredInputShape === "index") {
+        return `((${blockSource}) - 1)`;
+      }
+
+      return blockSource;
     }
   }
 
@@ -1075,7 +2030,10 @@ export default function toLeopard(
               value: () => this.vars.${newName},
               ${
                 variable instanceof Variable && variable.mode === "slider"
-                  ? `setValue: (value) => { this.vars.${newName} = value; },\n`
+                  ? `setValue: (value) => { this.vars.${newName} = value; },
+                  step: ${JSON.stringify(variable.isDiscrete ? 1 : 0.01)},
+                  min: ${JSON.stringify(variable.sliderMin)},
+                  max: ${JSON.stringify(variable.sliderMax)},`
                   : ""
               }x: ${JSON.stringify(variable.x + 240)},
               y: ${JSON.stringify(180 - variable.y)},
