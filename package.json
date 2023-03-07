@@ -25,7 +25,7 @@
   ],
   "author": "Josh Pullen <hello@joshuapullen.com> (https://joshuapullen.com/)",
   "contributors": [
-    "Florrie Haero Miller <towerofnix@gmail.com> (https://github.com/towerofnix)",
+    "Jade Miller <qznebula@protonmail.com> (https://github.com/towerofnix)",
     "adroitwhiz <adroitwhiz@protonmail.com> (https://github.com/adroitwhiz)"
   ],
   "license": "MIT",
@@ -43,7 +43,7 @@
     "typescript": "^3.7.2"
   },
   "dependencies": {
-    "jszip": "^3.2.2",
+    "jszip": "^3.10.1",
     "prettier": "^1.19.1"
   }
 }
