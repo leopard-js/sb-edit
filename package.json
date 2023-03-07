@@ -43,7 +43,7 @@
     "typescript": "^3.7.2"
   },
   "dependencies": {
-    "jszip": "^3.2.2",
+    "jszip": "^3.10.1",
     "prettier": "^1.19.1"
   }
 }
