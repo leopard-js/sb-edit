@@ -1835,12 +1835,34 @@ export default function toLeopard(
     }
   }
 
+  const getPathsToRelativeOrAbsolute = destination => {
+    const fakeOrigin = "http://" + Math.random() + ".com";
+    const isExternal = new URL(destination, fakeOrigin).origin !== fakeOrigin;
+    const isAbsolute = isExternal || destination.startsWith("/");
+
+    if (isAbsolute) {
+      return () => destination;
+    } else {
+      return ({ from }) => {
+        switch (from) {
+          case "index":
+            return "./" + destination;
+          case "target":
+            return "../" + destination;
+        }
+      };
+    }
+  };
+
+  const toLeopardJS = getPathsToRelativeOrAbsolute(options.leopardJSURL);
+  const toLeopardCSS = getPathsToRelativeOrAbsolute(options.leopardCSSURL);
+
   let files: { [fileName: string]: string } = {
     "index.html": `
       <!DOCTYPE html>
       <html>
         <head>
-          <link rel="stylesheet" href="${options.leopardCSSURL}" />
+          <link rel="stylesheet" href="${toLeopardCSS({ from: "index" })}" />
         </head>
         <body>
           <button id="greenFlag">Green Flag</button>
@@ -1863,7 +1885,7 @@ export default function toLeopard(
       </html>
     `,
     "index.js": `
-      import { Project } from ${JSON.stringify(options.leopardJSURL)};
+      import { Project } from ${JSON.stringify(toLeopardJS({ from: "index" }))};
 
       ${[project.stage, ...project.sprites]
         .map(
@@ -1954,9 +1976,9 @@ export default function toLeopard(
     }
 
     files[`${target.name}/${target.name}.js`] = `
-      import { ${target.isStage ? "Stage as StageBase" : "Sprite"}, Trigger, Watcher, Costume, Color, Sound } from '${
-      options.leopardJSURL
-    }';
+      import { ${
+        target.isStage ? "Stage as StageBase" : "Sprite"
+      }, Trigger, Watcher, Costume, Color, Sound } from '${toLeopardJS({ from: "target" })}';
 
       export default class ${target.name} extends ${target.isStage ? "StageBase" : "Sprite"} {
         constructor(...args) {
