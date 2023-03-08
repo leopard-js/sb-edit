@@ -487,9 +487,14 @@ export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAsset: Ge
 
 export default async function fromSb3(fileData: Parameters<typeof JSZip.loadAsync>[0]): Promise<Project> {
   const inZip = await JSZip.loadAsync(fileData);
-  const json = await inZip.file("project.json").async("text");
-  const getAsset = async ({ md5, ext }: { md5: string; ext: string }): Promise<ArrayBuffer> => {
-    return inZip.file(`${md5}.${ext}`).async("arraybuffer");
+  const projectFile = inZip.file("project.json");
+  if (!projectFile) {
+    throw new Error("Missing project.json");
+  }
+  const json = await projectFile.async("text");
+  const getAsset = async ({ md5, ext }: { md5: string; ext: string }): Promise<ArrayBuffer | undefined> => {
+    // TODO: figure out how to handle missing assets
+    return inZip.file(`${md5}.${ext}`)?.async("arraybuffer");
   };
   return fromSb3JSON(JSON.parse(json) as sb3.ProjectJSON, { getAsset });
 }

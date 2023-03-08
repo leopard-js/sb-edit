@@ -381,7 +381,7 @@ const KnownBlockInputMap = {
   },
   [OpCode.motion_ifonedgebounce]: {},
   [OpCode.motion_setrotationstyle]: {
-    STYLE: { type: "rotationStyle", initial: "leftRight" }
+    STYLE: { type: "rotationStyle", initial: "left-right" }
   },
   [OpCode.motion_xposition]: {},
   [OpCode.motion_yposition]: {},
