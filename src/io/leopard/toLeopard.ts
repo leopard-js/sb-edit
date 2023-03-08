@@ -575,7 +575,7 @@ export default function toLeopard(
       }
       if (varInputId) {
         const newName = variableNameMap[varInputId];
-        if (target === project.stage || !stageVariables.has(newName)) {
+        if (target === project.stage || !stageVariables.has(varInputId)) {
           selectedVarSource = `this.vars.${newName}`;
           selectedWatcherSource = `this.watchers.${newName}`;
         } else {
