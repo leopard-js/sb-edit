@@ -146,7 +146,7 @@ function uniqueNameGenerator(reservedNames: string[] | Set<string> = []) {
     if (numResult === null) {
       return uniqueName(name + "2");
     }
-    return uniqueName(name.slice(0, numResult.index) + (parseInt(numResult[0], 10) + 1));
+    return uniqueName(name.slice(0, numResult.index) + String(parseInt(numResult[0], 10) + 1));
   }
 }
 
@@ -175,7 +175,7 @@ function camelCase(name: string, upper = false): string {
   return result;
 }
 
-interface ToLeopardOptions {
+export interface ToLeopardOptions {
   leopardJSURL: string;
   leopardCSSURL: string;
   getTargetURL: (info: { name: string; from: "index" | "target" }) => string;
@@ -184,11 +184,10 @@ interface ToLeopardOptions {
   autoplay: boolean;
 }
 export default function toLeopard(
-  options: Partial<ToLeopardOptions> = {},
+  project: Project,
+  inOptions: Partial<ToLeopardOptions> = {},
   prettierConfig: prettier.Options = {}
 ): { [fileName: string]: string } {
-  const project: Project = this;
-
   const defaultOptions: ToLeopardOptions = {
     leopardJSURL: "https://unpkg.com/leopard@^1/dist/index.esm.js",
     leopardCSSURL: "https://unpkg.com/leopard@^1/dist/index.min.css",
@@ -211,7 +210,7 @@ export default function toLeopard(
     indexURL: "./index.js",
     autoplay: true
   };
-  options = { ...defaultOptions, ...options };
+  const options = { ...defaultOptions, ...inOptions };
 
   // Sprite identifier must not conflict with module-level/global identifiers,
   // imports and any others that are referenced in generated code.
@@ -360,7 +359,7 @@ export default function toLeopard(
     for (const script of target.scripts) {
       script.setName(uniqueScriptName(camelCase(script.name)));
 
-      const argNameMap = {};
+      const argNameMap: Record<string, string> = {};
       customBlockArgNameMap.set(script, argNameMap);
 
       // Parameter names aren't defined on a namespace at all, so must not conflict
@@ -395,7 +394,7 @@ export default function toLeopard(
   }
 
   function staticBlockInputToLiteral(
-    value: string | number | boolean | object,
+    value: string | number | boolean | object | null,
     desiredInputShape?: InputShape
   ): string {
     // Short-circuit for string inputs. These must never return number syntax.
@@ -424,7 +423,7 @@ export default function toLeopard(
       return null;
     }
 
-    const triggerInitStr = (name: string, options?: Partial<Record<string, string>>): string => {
+    const triggerInitStr = (name: string, options?: Record<string, string>): string => {
       let optionsStr = "";
       if (options) {
         const optionValues = [];
@@ -488,7 +487,7 @@ export default function toLeopard(
   function blockToJSWithContext(block: Block, target: Target, script?: Script): string {
     return blockToJS(block);
 
-    function increase(leftSide: string, input: BlockInput.Any, allowIncrementDecrement: boolean) {
+    function increase(leftSide: string, input: BlockInput.Any, allowIncrementDecrement: boolean): string {
       const n = parseNumber(input);
       if (n === null) {
         return `${leftSide} += (${inputToJS(input, InputShape.Number)});`;
@@ -500,7 +499,7 @@ export default function toLeopard(
         return `${leftSide}--;`;
       } else if (n >= 0) {
         return `${leftSide} += ${JSON.stringify(n)};`;
-      } else if (n < 0) {
+      } else {
         return `${leftSide} -= ${JSON.stringify(-n)};`;
       }
     }
@@ -517,7 +516,7 @@ export default function toLeopard(
         return `${leftSide}++`;
       } else if (n > 0) {
         return `${leftSide} -= ${JSON.stringify(n)}`;
-      } else if (n <= 0) {
+      } else {
         return `${leftSide} += ${JSON.stringify(-n)}`;
       }
     }
@@ -550,9 +549,9 @@ export default function toLeopard(
 
       switch (input.type) {
         case "block":
-          return blockToJS(input.value as Block, desiredInputShape);
+          return blockToJS(input.value, desiredInputShape);
         case "blocks":
-          return input.value.map(block => blockToJS(block as Block)).join(";\n");
+          return input.value?.map(block => blockToJS(block)).join(";\n") ?? "";
         default: {
           return staticBlockInputToLiteral(input.value, desiredInputShape);
         }
@@ -565,9 +564,10 @@ export default function toLeopard(
 
       // If the block contains a variable or list dropdown,
       // get the code to grab that variable now for convenience
-      let selectedVarSource: string = null;
-      let selectedWatcherSource: string = null;
-      let varInputId: string = null;
+      // TODO: set these to null and restructure control flow to avoid null checks
+      let selectedVarSource = "";
+      let selectedWatcherSource = "";
+      let varInputId: string | null = null;
       if ("VARIABLE" in block.inputs) {
         varInputId = (block.inputs.VARIABLE.value as { id: string }).id;
       } else if ("LIST" in block.inputs) {
@@ -586,8 +586,8 @@ export default function toLeopard(
 
       const stage = "this" + (target.isStage ? "" : ".stage");
 
-      let satisfiesInputShape: InputShape = null;
-      let blockSource: string = null;
+      let satisfiesInputShape: InputShape;
+      let blockSource: string;
 
       switch (block.opcode) {
         case OpCode.motion_movesteps:
@@ -1192,7 +1192,7 @@ export default function toLeopard(
           break;
 
         case OpCode.sensing_of: {
-          let propName: string;
+          let propName: string | null;
           switch (block.inputs.PROPERTY.value) {
             case "x position":
               propName = "x";
@@ -1221,15 +1221,22 @@ export default function toLeopard(
               satisfiesInputShape = InputShape.Number;
               break;
             case "volume":
-              propName = null;
+              propName = "audioEffects.volume";
+              satisfiesInputShape = InputShape.Number;
               break;
             default: {
               let varOwner: Target = project.stage;
               if (block.inputs.OBJECT.value !== "_stage_") {
-                varOwner = project.sprites.find(sprite => sprite.name === targetNameMap[block.inputs.OBJECT.value]);
+                const sprite = project.sprites.find(sprite => sprite.name === targetNameMap[block.inputs.OBJECT.value]);
+                if (sprite) {
+                  varOwner = sprite;
+                }
               }
               // "of" block gets variables by name, not ID, using lookupVariableByNameAndType in scratch-vm.
               const variable = varOwner.variables.find(variable => variable.name === block.inputs.PROPERTY.value);
+              if (!variable) {
+                throw new Error(`Variable ${block.inputs.PROPERTY.value} not found on ${varOwner.name}`);
+              }
               const newName = variableNameMap[variable.id];
               propName = `vars.${newName}`;
               satisfiesInputShape = InputShape.Any;
@@ -1693,12 +1700,14 @@ export default function toLeopard(
           satisfiesInputShape = InputShape.Stack;
 
           // Get name of custom block script with given PROCCODE:
+          // TODO: what if it doesn't exist?
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           const procName = target.scripts.find(
             script =>
               script.hat !== null &&
               script.hat.opcode === OpCode.procedures_definition &&
               script.hat.inputs.PROCCODE.value === block.inputs.PROCCODE.value
-          ).name;
+          )!.name;
 
           // TODO: Boolean inputs should provide appropriate desiredInputShape instead of "any"
           const procArgs = `${block.inputs.INPUTS.value.map(input => inputToJS(input, InputShape.Any)).join(", ")}`;
@@ -1713,9 +1722,16 @@ export default function toLeopard(
         }
 
         case OpCode.argument_reporter_string_number:
-        case OpCode.argument_reporter_boolean:
+        case OpCode.argument_reporter_boolean: {
           // Argument reporters dragged outside their script return 0
           if (!script) {
+            satisfiesInputShape = InputShape.Number;
+            blockSource = `0`;
+            break;
+          }
+          const argNames = customBlockArgNameMap.get(script);
+          // Procedure definition no longer exists. Return 0.
+          if (!argNames) {
             satisfiesInputShape = InputShape.Number;
             blockSource = `0`;
             break;
@@ -1726,8 +1742,9 @@ export default function toLeopard(
           } else {
             satisfiesInputShape = InputShape.Any;
           }
-          blockSource = customBlockArgNameMap.get(script)[block.inputs.VALUE.value];
+          blockSource = argNames[block.inputs.VALUE.value];
           break;
+        }
 
         case OpCode.pen_clear:
           satisfiesInputShape = InputShape.Stack;
@@ -1835,15 +1852,15 @@ export default function toLeopard(
     }
   }
 
-  const getPathsToRelativeOrAbsolute = destination => {
-    const fakeOrigin = "http://" + Math.random() + ".com";
+  const getPathsToRelativeOrAbsolute = (destination: string) => {
+    const fakeOrigin = `http://${Math.random()}.com`;
     const isExternal = new URL(destination, fakeOrigin).origin !== fakeOrigin;
     const isAbsolute = isExternal || destination.startsWith("/");
 
     if (isAbsolute) {
       return () => destination;
     } else {
-      return ({ from }) => {
+      return ({ from }: { from: "index" | "target" }) => {
         switch (from) {
           case "index":
             return "./" + destination;

@@ -11,7 +11,7 @@ export interface ToSb3Options {
   warn: (message: string) => void;
 }
 
-interface ToSb3Output {
+export interface ToSb3Output {
   json: string;
 }
 

@@ -102,7 +102,7 @@ export interface PointTowardsTarget extends Base {
 
 export interface RotationStyle extends Base {
   type: "rotationStyle";
-  value: string;
+  value: "left-right" | "don't rotate" | "all around";
 }
 
 // Deprecated field for "align scene" block.
@@ -113,7 +113,7 @@ export interface ScrollAlignment extends Base {
 
 export interface PenColorParam extends Base {
   type: "penColorParam";
-  value: string;
+  value: "color" | "saturation" | "brightness" | "transparency";
 }
 
 export interface MusicDrum extends Base {

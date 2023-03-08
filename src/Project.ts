@@ -1,9 +1,9 @@
 import { Sprite, Stage } from "./Target";
 
 import fromSb3, { fromSb3JSON } from "./io/sb3/fromSb3";
-import toSb3, { ToSb3Options } from "./io/sb3/toSb3";
+import toSb3 from "./io/sb3/toSb3";
 import toLeopard from "./io/leopard/toLeopard";
-import toScratchblocks, { ToScratchblocksOptions } from "./io/scratchblocks/toScratchblocks";
+import toScratchblocks from "./io/scratchblocks/toScratchblocks";
 
 export type TextToSpeechLanguage =
   | "ar"
@@ -34,10 +34,9 @@ export default class Project {
   public static fromSb3 = fromSb3;
   public static fromSb3JSON = fromSb3JSON;
 
-  public toSb3: (options?: Partial<ToSb3Options>) => ReturnType<typeof toSb3> = toSb3.bind(null, this);
-  public toLeopard: typeof toLeopard = toLeopard.bind(this);
-  public toScratchblocks: (options?: Partial<ToScratchblocksOptions>) => ReturnType<typeof toScratchblocks> =
-    toScratchblocks.bind(null, this);
+  public toSb3 = toSb3.bind(null, this);
+  public toLeopard = toLeopard.bind(null, this);
+  public toScratchblocks = toScratchblocks.bind(null, this);
 
   public stage: Stage = new Stage();
   public sprites: Sprite[] = [];
