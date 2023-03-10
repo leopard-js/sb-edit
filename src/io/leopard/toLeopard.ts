@@ -1732,7 +1732,8 @@ export default function toLeopard(
             break;
           }
           const argNames = customBlockArgNameMap.get(script);
-          // Procedure definition no longer exists. Return 0.
+          // The procedure definition that this argument reporter was dragged out of doesn't exist (it's in another
+          // sprite, or deleted). Scratch returns 0 here.
           if (!argNames) {
             satisfiesInputShape = InputShape.Number;
             blockSource = `0`;
