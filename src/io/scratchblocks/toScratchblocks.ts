@@ -11,19 +11,19 @@ export interface ToScratchblocksOptions {
 
 export default function toScratchblocks(
   project: Project,
-  options: Partial<ToScratchblocksOptions> = {}
+  inOptions: Partial<ToScratchblocksOptions> = {}
 ): {
   [targetName: string]: string;
 } {
   const defaultOptions: ToScratchblocksOptions = {
     indent: "\t"
   };
-  const fullOptions = { ...defaultOptions, ...options };
+  const options = { ...defaultOptions, ...inOptions };
 
   function indent(str: string): string {
     return str
       .split("\n")
-      .map(l => fullOptions.indent + l)
+      .map(l => options.indent + l)
       .join("\n");
   }
 
