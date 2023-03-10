@@ -589,7 +589,7 @@ export default function toLeopard(
       let satisfiesInputShape: InputShape;
       let blockSource: string;
 
-      switch (block.opcode) {
+      makeBlockSource: switch (block.opcode) {
         case OpCode.motion_movesteps:
           satisfiesInputShape = InputShape.Stack;
           blockSource = `this.move(${inputToJS(block.inputs.STEPS, InputShape.Number)})`;
@@ -1235,7 +1235,9 @@ export default function toLeopard(
               // "of" block gets variables by name, not ID, using lookupVariableByNameAndType in scratch-vm.
               const variable = varOwner.variables.find(variable => variable.name === block.inputs.PROPERTY.value);
               if (!variable) {
-                throw new Error(`Variable ${block.inputs.PROPERTY.value} not found on ${varOwner.name}`);
+                blockSource = `(0 /* ${varOwner.name} doesn't have a "${block.inputs.PROPERTY.value}" variable */)`;
+                satisfiesInputShape = InputShape.Number;
+                break makeBlockSource;
               }
               const newName = variableNameMap[variable.id];
               propName = `vars.${newName}`;
