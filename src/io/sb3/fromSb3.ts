@@ -248,8 +248,6 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
           PROCCODE: { type: "string", value: mutation.proccode },
           INPUTS: {
             type: "customBlockInputValues",
-            // TODO: Scratch itself uses the argumentids of the corresponding procedures_prototype block.
-            // There may be some cases where they go out of sync!
             value: (JSON.parse(mutation.argumentids) as string[]).map(argumentid => {
               let value = result[argumentid] as Exclude<BlockInput.Any, BlockInput.CustomBlockInputValues> | undefined;
               if (value === undefined) {
