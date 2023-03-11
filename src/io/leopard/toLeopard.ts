@@ -444,6 +444,8 @@ export default function toLeopard(
       case OpCode.event_whenthisspriteclicked:
       case OpCode.event_whenstageclicked:
         return triggerInitStr("clicked");
+      case OpCode.event_whenbackdropswitchesto:
+        return triggerInitStr("backdropChanged", { backdrop: JSON.stringify(hat.inputs.BACKDROP.value) });
       case OpCode.event_whenbroadcastreceived:
         return triggerInitStr("broadcastReceived", { name: JSON.stringify(hat.inputs.BROADCAST_OPTION.value) });
       case OpCode.event_whengreaterthan: {
