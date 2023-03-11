@@ -431,21 +431,21 @@ export default function toLeopard(
         for (const [optionName, optionValue] of Object.entries(options)) {
           optionValues.push(`${optionName}: ${optionValue}`);
         }
-        optionsStr = `, {${optionValues.join(", ")}}`;
+        optionsStr = `{${optionValues.join(", ")}}, `;
       }
-      return `new Trigger(Trigger.${name}${optionsStr}, this.${script.name})`;
+      return `Trigger.${name}(${optionsStr}this.${script.name})`;
     };
 
     switch (hat.opcode) {
       case OpCode.event_whenflagclicked:
-        return triggerInitStr("GREEN_FLAG");
+        return triggerInitStr("greenFlag");
       case OpCode.event_whenkeypressed:
-        return triggerInitStr("KEY_PRESSED", { key: JSON.stringify(hat.inputs.KEY_OPTION.value) });
+        return triggerInitStr("keyPressed", { key: JSON.stringify(hat.inputs.KEY_OPTION.value) });
       case OpCode.event_whenthisspriteclicked:
       case OpCode.event_whenstageclicked:
-        return triggerInitStr("CLICKED");
+        return triggerInitStr("clicked");
       case OpCode.event_whenbroadcastreceived:
-        return triggerInitStr("BROADCAST", { name: JSON.stringify(hat.inputs.BROADCAST_OPTION.value) });
+        return triggerInitStr("broadcastReceived", { name: JSON.stringify(hat.inputs.BROADCAST_OPTION.value) });
       case OpCode.event_whengreaterthan: {
         const valueInput = hat.inputs.VALUE as BlockInput.Any;
         // If the "greater than" value is a literal, we can include it directly.
@@ -455,12 +455,23 @@ export default function toLeopard(
           valueInput.type === "block"
             ? `() => ${blockToJSWithContext(valueInput.value, target)}`
             : staticBlockInputToLiteral(valueInput.value, InputShape.Number);
-        return triggerInitStr(`${hat.inputs.WHENGREATERTHANMENU.value}_GREATER_THAN`, {
-          VALUE: value
-        });
+        let name: string | undefined;
+        switch (hat.inputs.WHENGREATERTHANMENU.value) {
+          case "LOUDNESS":
+            name = "loudnessGreaterThan";
+            break;
+          case "TIMER":
+            name = "timerGreaterThan";
+            break;
+        }
+        if (name) {
+          return triggerInitStr(name, { VALUE: value });
+        } else {
+          return `(${triggerInitStr("unreachable", { VALUE: value })} /* "when greater than ${hat.inputs.WHENGREATERTHANMENU.value}" not supported */)`;
+        }
       }
       case OpCode.control_start_as_clone:
-        return triggerInitStr("CLONE_START");
+        return triggerInitStr("startedAsClone");
       default:
         return null;
     }
