@@ -291,7 +291,10 @@ export default class Stage extends StageBase {
   </body>
 </html>
 ",
-  "index.js": "import { Project } from \\"https://unpkg.com/leopard@^1/dist/index.esm.js\\";
+  "index.js": "import {
+  Project,
+  Sprite
+} from \\"https://unpkg.com/leopard@^1/dist/index.esm.js\\";
 
 import Stage from \\"./Stage/Stage.js\\";
 import Abby from \\"./Abby/Abby.js\\";
@@ -303,6 +306,7 @@ const sprites = {
     x: -36,
     y: -23,
     direction: 90,
+    rotationStyle: Sprite.RotationStyle.ALL_AROUND,
     costumeNumber: 1,
     size: 100,
     visible: true,
