@@ -1885,7 +1885,7 @@ export default function toLeopard(
       </html>
     `,
     "index.js": `
-      import { Project } from ${JSON.stringify(toLeopardJS({ from: "index" }))};
+      import { Project, Sprite } from ${JSON.stringify(toLeopardJS({ from: "index" }))};
 
       ${[project.stage, ...project.sprites]
         .map(
@@ -1900,15 +1900,24 @@ export default function toLeopard(
         ${project.sprites
           .map(
             sprite =>
-              `${sprite.name}: new ${sprite.name}(${JSON.stringify({
+              `${sprite.name}: new ${sprite.name}({${Object.entries({
                 x: sprite.x,
                 y: sprite.y,
                 direction: sprite.direction,
+                rotationStyle: `Sprite.RotationStyle.${
+                  {
+                    normal: "ALL_AROUND",
+                    leftRight: "LEFT_RIGHT",
+                    none: "DONT_ROTATE"
+                  }[sprite.rotationStyle]
+                }`,
                 costumeNumber: sprite.costumeNumber + 1,
                 size: sprite.size,
                 visible: sprite.visible,
                 layerOrder: sprite.layerOrder
-              })})`
+              })
+                .map(([key, value]) => `${key}:${value}`)
+                .join(",")}})`
           )
           .join(",\n")}
       };
