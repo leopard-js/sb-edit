@@ -25,34 +25,9 @@ export default function toSb3(project: Project, options: Partial<ToSb3Options> =
     warn = options.warn;
   }
 
-  function getVariableId(variableName: string, target: Target, stage: Stage): string | null {
-    // Get the ID associated with the provided variable name on either the
-    // provided target or the stage, or null if no matching variable is found.
-
-    let variable = target.getVariable(variableName);
-    variable = variable || stage.getVariable(variableName);
-    return variable ? variable.id : null;
-  }
-
-  function getListId(listName: string, target: Target, stage: Stage): string | null {
-    // Get the ID associated with the provided list name on either the provided
-    // target or the stage, or null if no matching list is found.
-
-    let list = target.getList(listName);
-    list = list || stage.getList(listName);
-    return list ? list.id : null;
-  }
-
-  interface SerializeInputsToFieldsOptions {
-    stage: Stage;
-    target: Target;
-
-    fieldEntries: (typeof sb3.fieldTypeMap)[OpCode];
-  }
-
   function serializeInputsToFields(
     inputs: { [key: string]: BlockInput.Any },
-    options: SerializeInputsToFieldsOptions
+    fieldEntries: (typeof sb3.fieldTypeMap)[OpCode]
   ): sb3.Block["fields"] {
     // Serialize provided inputs into a "fields" mapping that can be stored
     // on a serialized block.
@@ -80,8 +55,6 @@ export default function toSb3(project: Project, options: Partial<ToSb3Options> =
     // The important thing to remember with fields during serialization is that
     // they refer to slots that don't accept blocks: non-droppable menus,
     // primarily, but the value in a (non-compressed) shadow input too.
-
-    const { fieldEntries, stage, target } = options;
 
     const fields: sb3.Block["fields"] = {};
 
@@ -488,11 +461,7 @@ export default function toSb3(project: Project, options: Partial<ToSb3Options> =
 
     const { blockData, stage, target, initialBroadcastName, customBlockDataMap } = options;
 
-    const fields = serializeInputsToFields(block.inputs, {
-      fieldEntries: sb3.fieldTypeMap[block.opcode],
-      stage,
-      target
-    });
+    const fields = serializeInputsToFields(block.inputs, sb3.fieldTypeMap[block.opcode]);
 
     let inputs: sb3.Block["inputs"] = {};
     let mutation: sb3.Block["mutation"];
