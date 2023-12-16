@@ -92,7 +92,7 @@ export interface SoundEffect extends Base {
 
 export interface GoToTarget extends Base {
   type: "goToTarget";
-  value: "_random_" | "_mouse_" | string;
+  value: string; // Specially handled: _mouse_, _random_
 }
 
 export interface PointTowardsTarget extends Base {
@@ -236,7 +236,7 @@ export interface CloneTarget extends Base {
 
 export interface TouchingTarget extends Base {
   type: "touchingTarget";
-  value: "_mouse_" | string;
+  value: string; // Specially handled: _mouse_
 }
 
 export interface DistanceToMenu extends Base {

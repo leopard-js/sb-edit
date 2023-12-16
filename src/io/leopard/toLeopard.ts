@@ -1,6 +1,6 @@
 import Project from "../../Project";
 import Script from "../../Script";
-import Block, { BlockBase } from "../../Block";
+import Block from "../../Block";
 import * as BlockInput from "../../BlockInput";
 import { OpCode } from "../../OpCode";
 
@@ -398,7 +398,7 @@ export default function toLeopard(
     desiredInputShape?: InputShape
   ): string {
     // Short-circuit for string inputs. These must never return number syntax.
-    if (desiredInputShape === "string") {
+    if (desiredInputShape === InputShape.String) {
       return JSON.stringify(value);
     }
 
@@ -406,7 +406,7 @@ export default function toLeopard(
     // These are all OK to return JavaScript number literals for.
     const asNum = Number(value as string);
     if (!isNaN(asNum) && value !== "") {
-      if (desiredInputShape === "index") {
+      if (desiredInputShape === InputShape.Index) {
         return JSON.stringify(asNum - 1);
       } else {
         return JSON.stringify(asNum);
@@ -1835,19 +1835,19 @@ export default function toLeopard(
         return blockSource;
       }
 
-      if (desiredInputShape === "boolean") {
+      if (desiredInputShape === InputShape.Boolean) {
         return `(this.toBoolean(${blockSource}))`;
       }
 
-      if (desiredInputShape === "string") {
+      if (desiredInputShape === InputShape.String) {
         return `(this.toString(${blockSource}))`;
       }
 
-      if (desiredInputShape === "number") {
+      if (desiredInputShape === InputShape.Number) {
         return `(this.toNumber(${blockSource}))`;
       }
 
-      if (desiredInputShape === "index") {
+      if (desiredInputShape === InputShape.Index) {
         return `((${blockSource}) - 1)`;
       }
 

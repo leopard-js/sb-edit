@@ -8,7 +8,7 @@ import * as BlockInput from "../../BlockInput";
 import Costume from "../../Costume";
 import Project from "../../Project";
 import Sound from "../../Sound";
-import Target, { Sprite, Stage, TargetOptions } from "../../Target";
+import { Sprite, Stage, TargetOptions } from "../../Target";
 import { List, Variable } from "../../Data";
 import Script from "../../Script";
 
@@ -104,7 +104,7 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
             // We basically just want to copy the important
             // information from the shadow block down into
             // the block containing the shadow.
-            if (block.opcode === "procedures_prototype") {
+            if (block.opcode === OpCode.procedures_prototype) {
               const mutation = (block as sb3.Block<OpCode.procedures_prototype>).mutation;
 
               // Split proccode (such as "letter %n of %s") into ["letter", "%n", "of", "%s"]
