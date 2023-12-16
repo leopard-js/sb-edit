@@ -19,7 +19,7 @@
   "license": "MIT",
   "author": "Josh Pullen <hello@joshuapullen.com> (https://joshuapullen.com/)",
   "contributors": [
-    "Jade Miller <qznebula@protonmail.com> (https://github.com/towerofnix)",
+    "Quasar Nebula <qznebula@protonmail.com> (https://github.com/towerofnix)",
     "adroitwhiz <adroitwhiz@protonmail.com> (https://github.com/adroitwhiz)"
   ],
   "main": "lib/index.js",
