@@ -9,6 +9,13 @@
     "sb3",
     "leopard"
   ],
+  "bugs": {
+    "url": "https://github.com/leopard-js/sb-edit/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/leopard-js/sb-edit.git"
+  },
   "license": "MIT",
   "author": "Josh Pullen <hello@joshuapullen.com> (https://joshuapullen.com/)",
   "contributors": [
