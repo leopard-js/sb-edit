@@ -194,7 +194,6 @@ export default function toSb3(project: Project, options: Partial<ToSb3Options> =
   }
 
   interface SerializeInputsToInputsOptions<PassedInputs extends { [key: string]: BlockInput.Any }> {
-    stage: Stage;
     target: Target;
 
     blockData: sb3.Target["blocks"];
@@ -306,8 +305,7 @@ export default function toSb3(project: Project, options: Partial<ToSb3Options> =
     // ...where someId is the ID of the variable, and [4, 0] is the obscured
     // shadow block, as usual.
 
-    const { block, blockData, initialBroadcastName, customBlockDataMap, initialValues, inputEntries, stage, target } =
-      options;
+    const { block, blockData, initialBroadcastName, customBlockDataMap, initialValues, inputEntries, target } = options;
 
     const resultInputs: sb3.Block["inputs"] = {};
 
@@ -318,7 +316,6 @@ export default function toSb3(project: Project, options: Partial<ToSb3Options> =
 
         if (input) {
           const options = {
-            stage,
             target,
             blockData,
             initialBroadcastName,
@@ -390,7 +387,6 @@ export default function toSb3(project: Project, options: Partial<ToSb3Options> =
                 initialBroadcastName,
                 customBlockDataMap,
                 parent: block,
-                stage,
                 target
               });
               break;
@@ -412,7 +408,6 @@ export default function toSb3(project: Project, options: Partial<ToSb3Options> =
   }
 
   interface SerializeInputsOptions {
-    stage: Stage;
     target: Target;
 
     blockData: sb3.Target["blocks"];
@@ -459,7 +454,7 @@ export default function toSb3(project: Project, options: Partial<ToSb3Options> =
     // that wouldn't fit on the block's input and field mappings. Specific
     // details may vary greatly based on the opcode.
 
-    const { blockData, stage, target, initialBroadcastName, customBlockDataMap } = options;
+    const { blockData, target, initialBroadcastName, customBlockDataMap } = options;
 
     const fields = serializeInputsToFields(block.inputs, sb3.fieldTypeMap[block.opcode]);
 
@@ -568,7 +563,6 @@ export default function toSb3(project: Project, options: Partial<ToSb3Options> =
           }
 
           inputs = serializeInputsToInputs(constructedInputs, {
-            stage,
             target,
 
             blockData,
@@ -596,7 +590,6 @@ export default function toSb3(project: Project, options: Partial<ToSb3Options> =
           }
 
           inputs = serializeInputsToInputs(block.inputs, {
-            stage,
             target,
 
             blockData,
@@ -618,7 +611,6 @@ export default function toSb3(project: Project, options: Partial<ToSb3Options> =
   }
 
   interface SerializeBlockOptions {
-    stage: Stage;
     target: Target;
 
     blockData: sb3.Target["blocks"];
@@ -668,10 +660,9 @@ export default function toSb3(project: Project, options: Partial<ToSb3Options> =
     // responsible for updating this and setting it to the following block ID.
     // (The function serializeBlockStack is generally where this happens.)
 
-    const { blockData, initialBroadcastName, customBlockDataMap, parent, stage, target } = options;
+    const { blockData, initialBroadcastName, customBlockDataMap, parent, target } = options;
 
     const serializeInputsResult = serializeInputs(block, {
-      stage,
       target,
 
       blockData,
@@ -825,8 +816,6 @@ export default function toSb3(project: Project, options: Partial<ToSb3Options> =
   }
 
   interface SerializeTargetOptions {
-    stage: Stage;
-
     initialBroadcastName: string;
 
     broadcasts: sb3.Sprite["broadcasts"];
@@ -867,7 +856,7 @@ export default function toSb3(project: Project, options: Partial<ToSb3Options> =
       return ret;
     }
 
-    const { broadcasts, initialBroadcastName, stage } = options;
+    const { broadcasts, initialBroadcastName } = options;
 
     const blockData: sb3.Target["blocks"] = {};
 
@@ -875,7 +864,6 @@ export default function toSb3(project: Project, options: Partial<ToSb3Options> =
 
     for (const script of target.scripts) {
       serializeBlockStack(script.blocks, {
-        stage,
         target,
         blockData,
         initialBroadcastName,
@@ -937,8 +925,6 @@ export default function toSb3(project: Project, options: Partial<ToSb3Options> =
   };
 
   interface SerializeSpriteOptions {
-    stage: Stage;
-
     initialBroadcastName: string;
   }
 
@@ -946,11 +932,9 @@ export default function toSb3(project: Project, options: Partial<ToSb3Options> =
     // Serialize a sprite. Extending from a serialized target, sprites carry
     // a variety of properties for their on-screen position and appearance.
 
-    const { initialBroadcastName, stage } = options;
+    const { initialBroadcastName } = options;
     return {
       ...serializeTarget(sprite, {
-        stage,
-
         initialBroadcastName,
 
         // Broadcasts are stored on the stage, not on any sprite.
@@ -984,7 +968,7 @@ export default function toSb3(project: Project, options: Partial<ToSb3Options> =
 
     const { broadcasts, initialBroadcastName } = options;
     return {
-      ...serializeTarget(stage, { broadcasts, initialBroadcastName, stage }),
+      ...serializeTarget(stage, { broadcasts, initialBroadcastName }),
       isStage: true,
       tempo: options.tempo,
       textToSpeechLanguage: options.textToSpeechLanguage,
@@ -1045,8 +1029,6 @@ export default function toSb3(project: Project, options: Partial<ToSb3Options> =
         }),
         ...project.sprites.map(sprite =>
           serializeSprite(sprite, {
-            stage: project.stage,
-
             initialBroadcastName
           })
         )
