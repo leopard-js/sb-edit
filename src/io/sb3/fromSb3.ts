@@ -20,9 +20,9 @@ interface AssetInfo {
   spriteName: string;
 }
 
-// "unknown" allows user to store the asset encoded however it's useful to them.
-// sb-edit doesn't care, it just stores the asset as it's provided for easy
-// access later.
+// "unknown" allows user to store the asset encoded however it's useful to
+// them. sb-edit doesn't care, it just stores the asset as it's provided for
+// easy access later.
 type GetAsset = (info: AssetInfo) => Promise<unknown>;
 
 function extractCostumes(target: sb3.Target, getAsset: GetAsset): Promise<Costume[]> {

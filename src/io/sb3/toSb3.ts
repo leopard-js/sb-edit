@@ -234,6 +234,9 @@ export default function toSb3(project: Project, options: Partial<ToSb3Options> =
       [fieldName: string]: number | OpCode;
     };
 
+    // Only used when an input is obscured; this will be used for the default
+    // value in the input's shadow (i.e. value when the contained reproter is
+    // pulled out).
     initialValues: {
       [key in keyof PassedInputs]: Readonly<BlockInput.Any["value"]>;
     };

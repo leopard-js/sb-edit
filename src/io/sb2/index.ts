@@ -34,9 +34,10 @@ interface Info {
   spriteCount: number;
 }
 
-export type Script = [number, number, [Block]];
+export type BlockArg = string | number | Block[];
+export type Block = [string, ...BlockArg[]];
 
-export type Block = [string, ...unknown[]];
+export type Script = [number, number, [Block]];
 
 export interface ProjectJSON {
   objName: string;
