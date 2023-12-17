@@ -1327,10 +1327,17 @@ export default function toLeopard(
           const times = inputToJS(block.inputs.TIMES, InputShape.Number);
           const substack = inputToJS(block.inputs.SUBSTACK, InputShape.Stack);
 
-          blockSource = `for (let i = 0; i < ${times}; i++) {
-            ${substack};
-            ${warp ? "" : "yield;"}
-          }`;
+          if (block.inputs.TIMES.type === "number") {
+            blockSource = `for (let i = 0; i < ${times}; i++) {
+              ${substack};
+              ${warp ? "" : "yield;"}
+            }`;
+          } else {
+            blockSource = `for (let i = 0, times = ${times}; i < times; i++) {
+              ${substack};
+              ${warp ? "" : "yield;"}
+            }`;
+          }
 
           break;
         }
