@@ -538,6 +538,10 @@ export default function toLeopard(
       return n;
     }
 
+    function spriteInputToJS(input: { value: string }): string {
+      return `this.sprites[${JSON.stringify(targetNameMap[input.value])}]`;
+    }
+
     function inputToJS(input: BlockInput.Any, desiredInputShape: InputShape): string {
       // TODO: Right now, inputs can be completely undefined if imported from
       // the .sb3 format (because sb3 is weird). This little check will replace
@@ -617,8 +621,8 @@ export default function toLeopard(
         case OpCode.motion_goto: {
           satisfiesInputShape = InputShape.Stack;
 
-          let x;
-          let y;
+          let x: string;
+          let y: string;
           switch (block.inputs.TO.value) {
             case "_random_": {
               x = `this.random(-240, 240)`;
@@ -633,7 +637,7 @@ export default function toLeopard(
             }
 
             default: {
-              const sprite = `this.sprites[${JSON.stringify(targetNameMap[block.inputs.TO.value])}]`;
+              const sprite = spriteInputToJS(block.inputs.TO);
               x = `${sprite}.x`;
               y = `${sprite}.y`;
               break;
@@ -660,8 +664,8 @@ export default function toLeopard(
 
           const secs = inputToJS(block.inputs.SECS, InputShape.Number);
 
-          let x;
-          let y;
+          let x: string;
+          let y: string;
           switch (block.inputs.TO.value) {
             case "_random_": {
               x = `this.random(-240, 240)`;
@@ -676,7 +680,7 @@ export default function toLeopard(
             }
 
             default: {
-              const sprite = `this.sprites[${JSON.stringify(targetNameMap[block.inputs.TO.value])}]`;
+              const sprite = spriteInputToJS(block.inputs.TO);
               x = `${sprite}.x`;
               y = `${sprite}.y`;
               break;
@@ -711,21 +715,24 @@ export default function toLeopard(
         case OpCode.motion_pointtowards: {
           satisfiesInputShape = InputShape.Stack;
 
-          let coords: string;
-
+          let x: string;
+          let y: string;
           switch (block.inputs.TOWARDS.value) {
             case "_mouse_": {
-              coords = `this.mouse`;
+              x = `this.mouse.x`;
+              y = `this.mouse.y`;
               break;
             }
 
             default: {
-              coords = `this.sprites[${JSON.stringify(targetNameMap[block.inputs.TOWARDS.value])}]`;
+              const sprite = spriteInputToJS(block.inputs.TOWARDS);
+              x = `${sprite}.x`;
+              y = `${sprite}.y`;
               break;
             }
           }
 
-          blockSource = `this.direction = this.radToScratch(Math.atan2(${coords}.y - this.y, ${coords}.x - this.x))`;
+          blockSource = `this.direction = this.radToScratch(Math.atan2(${y} - this.y, ${x} - this.x))`;
 
           break;
         }
@@ -767,7 +774,7 @@ export default function toLeopard(
         case OpCode.motion_setrotationstyle: {
           satisfiesInputShape = InputShape.Stack;
 
-          let style;
+          let style: string;
           switch (block.inputs.STYLE.value) {
             case "left-right": {
               style = `LEFT_RIGHT`;
@@ -1318,19 +1325,20 @@ export default function toLeopard(
         case OpCode.control_create_clone_of: {
           satisfiesInputShape = InputShape.Stack;
 
+          let target: string;
           switch (block.inputs.CLONE_OPTION.value) {
             case "_myself_": {
-              blockSource = `this.createClone()`;
+              target = `this`;
               break;
             }
 
             default: {
-              blockSource = `this.sprites[${JSON.stringify(
-                targetNameMap[block.inputs.CLONE_OPTION.value]
-              )}].createClone()`;
+              target = spriteInputToJS(block.inputs.CLONE_OPTION);
               break;
             }
           }
+
+          blockSource = `${target}.createClone()`;
 
           break;
         }
@@ -1370,24 +1378,26 @@ export default function toLeopard(
         case OpCode.sensing_touchingobject: {
           satisfiesInputShape = InputShape.Boolean;
 
+          let target: string;
           switch (block.inputs.TOUCHINGOBJECTMENU.value) {
             case "_mouse_": {
-              blockSource = `this.touching("mouse")`;
+              target = "mouse";
               break;
             }
 
             case "_edge_": {
-              blockSource = `this.touching("edge")`;
+              target = "edge";
               break;
             }
 
             default: {
-              blockSource = `this.touching(this.sprites[${JSON.stringify(
-                targetNameMap[block.inputs.TOUCHINGOBJECTMENU.value]
-              )}].andClones())`;
+              const sprite = spriteInputToJS(block.inputs.TOUCHINGOBJECTMENU);
+              target = `${sprite}.andClones()`;
               break;
             }
           }
+
+          blockSource = `this.touching(${target})`;
 
           break;
         }
@@ -1436,20 +1446,24 @@ export default function toLeopard(
         case OpCode.sensing_distanceto: {
           satisfiesInputShape = InputShape.Number;
 
-          let coords: string;
+          let x: string;
+          let y: string;
           switch (block.inputs.DISTANCETOMENU.value) {
             case "_mouse_": {
-              coords = `this.mouse`;
+              x = `this.mouse.x`;
+              y = `this.mouse.y`;
               break;
             }
 
             default: {
-              coords = `this.sprites[${JSON.stringify(targetNameMap[block.inputs.DISTANCETOMENU.value])}]`;
+              const sprite = spriteInputToJS(block.inputs.DISTANCETOMENU);
+              x = `${sprite}.x`;
+              y = `${sprite}.y`;
               break;
             }
           }
 
-          blockSource = `(Math.hypot(${coords}.x - this.x, ${coords}.y - this.y))`;
+          blockSource = `(Math.hypot(${x} - this.x, ${y} - this.y))`;
 
           break;
         }
@@ -1606,7 +1620,7 @@ export default function toLeopard(
           if (block.inputs.OBJECT.value === "_stage_") {
             targetObj = `this.stage`;
           } else {
-            targetObj = `this.sprites[${JSON.stringify(targetNameMap[block.inputs.OBJECT.value])}]`;
+            targetObj = spriteInputToJS(block.inputs.OBJECT);
           }
 
           blockSource = `${targetObj}.${propName}`;
