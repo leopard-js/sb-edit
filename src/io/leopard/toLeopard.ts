@@ -298,11 +298,32 @@ enum InputShape {
   Any = "Any",
 
   /**
-   * Number input shape. If the input block isn't guaranteed to be a number,
-   * it is automatically wrapped with this.toNumber(), which has particular
-   * behavior to match Scratch.
+   * Typical number input shape. If the input block isn't guaranteed to be
+   * a number, it is automatically wrapped with this.toNumber(), which has
+   * particular behavior to match Scratch: most values that JavaScript casts
+   * to NaN are instead cast to zero.
    */
-  Number = "Number",
+  ZeroCastNumber = "ZeroCastNumber",
+
+  /**
+   * Number input shape which requires that non-numeric values get cast to NaN
+   * instead of zero. This is mostly useful as a desired input shape for equals
+   * comparison, but some blocks also satisfy it directly. While ZeroCastNumber
+   * satisfies StrictlyCastNumber, the reverse isn't true - blocks which return
+   * a StrictlyCastNumber will be cast when ZeroCastNumber is desired, avoiding
+   * NaN "leaking" into numeric operations that expect zero instead.
+   */
+  StrictlyCastNumber = "StrictlyCastNumber",
+
+  /**
+   * Number input shape where the dynamic behavior is the same regardless if
+   * the input is equal to zero or NaN. This avoids needless casting from
+   * StrictlyCastNumber to ZeroCastNumber, and uses the more "simple" casting
+   * of this.toNumber() when casting is required (i.e. the reporter doesn't
+   * return a number at all). Mostly useful for duration or quantity-based
+   * operations.
+   */
+  LooseNumber = "LooseNumber",
 
   /**
    * Special "index" shape, representing an arbitrary number which has been
@@ -558,7 +579,7 @@ export default function toLeopard(
         const value =
           valueInput.type === "block"
             ? `() => ${blockToJSWithContext(valueInput.value, target)}`
-            : staticBlockInputToLiteral(valueInput.value, InputShape.Number);
+            : staticBlockInputToLiteral(valueInput.value, InputShape.LooseNumber);
         return triggerInitStr(`${hat.inputs.WHENGREATERTHANMENU.value}_GREATER_THAN`, {
           VALUE: value
         });
@@ -595,7 +616,7 @@ export default function toLeopard(
     function increase(leftSide: string, input: BlockInput.Any, allowIncrementDecrement: boolean): string {
       const n = parseNumber(input);
       if (typeof n !== "number") {
-        return `${leftSide} += ${inputToJS(input, InputShape.Number)}`;
+        return `${leftSide} += ${inputToJS(input, InputShape.ZeroCastNumber)}`;
       }
 
       if (allowIncrementDecrement && n === 1) {
@@ -612,7 +633,7 @@ export default function toLeopard(
     function decrease(leftSide: string, input: BlockInput.Any, allowIncrementDecrement: boolean) {
       const n = parseNumber(input);
       if (typeof n !== "number") {
-        return `${leftSide} -= ${inputToJS(input, InputShape.Number)}`;
+        return `${leftSide} -= ${inputToJS(input, InputShape.ZeroCastNumber)}`;
       }
 
       if (allowIncrementDecrement && n === 1) {
@@ -652,7 +673,7 @@ export default function toLeopard(
         const { r, g, b } = input.value;
         return `Color.rgb(${r}, ${g}, ${b})`;
       } else {
-        const num = inputToJS(input, InputShape.Number);
+        const num = inputToJS(input, InputShape.ZeroCastNumber);
         return `Color.num(${num})`;
       }
     }
@@ -721,7 +742,7 @@ export default function toLeopard(
         case OpCode.motion_movesteps: {
           satisfiesInputShape = InputShape.Stack;
 
-          const steps = inputToJS(block.inputs.STEPS, InputShape.Number);
+          const steps = inputToJS(block.inputs.STEPS, InputShape.LooseNumber);
           blockSource = `this.move(${steps})`;
 
           break;
@@ -777,8 +798,8 @@ export default function toLeopard(
         case OpCode.motion_gotoxy: {
           satisfiesInputShape = InputShape.Stack;
 
-          const x = inputToJS(block.inputs.X, InputShape.Number);
-          const y = inputToJS(block.inputs.Y, InputShape.Number);
+          const x = inputToJS(block.inputs.X, InputShape.LooseNumber);
+          const y = inputToJS(block.inputs.Y, InputShape.LooseNumber);
           blockSource = `this.goto(${x}, ${y})`;
 
           break;
@@ -787,7 +808,7 @@ export default function toLeopard(
         case OpCode.motion_glideto: {
           satisfiesInputShape = InputShape.Stack;
 
-          const secs = inputToJS(block.inputs.SECS, InputShape.Number);
+          const secs = inputToJS(block.inputs.SECS, InputShape.LooseNumber);
 
           let x: string;
           let y: string;
@@ -820,9 +841,9 @@ export default function toLeopard(
         case OpCode.motion_glidesecstoxy: {
           satisfiesInputShape = InputShape.Stack;
 
-          const secs = inputToJS(block.inputs.SECS, InputShape.Number);
-          const x = inputToJS(block.inputs.X, InputShape.Number);
-          const y = inputToJS(block.inputs.Y, InputShape.Number);
+          const secs = inputToJS(block.inputs.SECS, InputShape.LooseNumber);
+          const x = inputToJS(block.inputs.X, InputShape.LooseNumber);
+          const y = inputToJS(block.inputs.Y, InputShape.LooseNumber);
           blockSource = `yield* this.glide(${secs}, ${x}, ${y})`;
 
           break;
@@ -831,7 +852,7 @@ export default function toLeopard(
         case OpCode.motion_pointindirection: {
           satisfiesInputShape = InputShape.Stack;
 
-          const direction = inputToJS(block.inputs.DIRECTION, InputShape.Number);
+          const direction = inputToJS(block.inputs.DIRECTION, InputShape.ZeroCastNumber);
           blockSource = `this.direction = ${direction}`;
 
           break;
@@ -873,7 +894,7 @@ export default function toLeopard(
         case OpCode.motion_setx: {
           satisfiesInputShape = InputShape.Stack;
 
-          const x = inputToJS(block.inputs.X, InputShape.Number);
+          const x = inputToJS(block.inputs.X, InputShape.ZeroCastNumber);
           blockSource = `this.x = ${x}`;
 
           break;
@@ -890,7 +911,7 @@ export default function toLeopard(
         case OpCode.motion_sety: {
           satisfiesInputShape = InputShape.Stack;
 
-          const y = inputToJS(block.inputs.Y, InputShape.Number);
+          const y = inputToJS(block.inputs.Y, InputShape.ZeroCastNumber);
           blockSource = `this.y = ${y}`;
 
           break;
@@ -931,7 +952,7 @@ export default function toLeopard(
         }
 
         case OpCode.motion_xposition: {
-          satisfiesInputShape = InputShape.Number;
+          satisfiesInputShape = InputShape.ZeroCastNumber;
 
           blockSource = `this.x`;
 
@@ -939,7 +960,7 @@ export default function toLeopard(
         }
 
         case OpCode.motion_yposition: {
-          satisfiesInputShape = InputShape.Number;
+          satisfiesInputShape = InputShape.ZeroCastNumber;
 
           blockSource = `this.y`;
 
@@ -947,7 +968,7 @@ export default function toLeopard(
         }
 
         case OpCode.motion_direction: {
-          satisfiesInputShape = InputShape.Number;
+          satisfiesInputShape = InputShape.ZeroCastNumber;
 
           blockSource = `this.direction`;
 
@@ -978,7 +999,7 @@ export default function toLeopard(
           satisfiesInputShape = InputShape.Stack;
 
           const message = inputToJS(block.inputs.MESSAGE, InputShape.Any);
-          const secs = inputToJS(block.inputs.SECS, InputShape.Number);
+          const secs = inputToJS(block.inputs.SECS, InputShape.LooseNumber);
           blockSource = `yield* this.sayAndWait(${message}, ${secs})`;
 
           break;
@@ -997,7 +1018,7 @@ export default function toLeopard(
           satisfiesInputShape = InputShape.Stack;
 
           const message = inputToJS(block.inputs.MESSAGE, InputShape.Any);
-          const secs = inputToJS(block.inputs.SECS, InputShape.Number);
+          const secs = inputToJS(block.inputs.SECS, InputShape.LooseNumber);
           blockSource = `yield* this.thinkAndWait(${message}, ${secs})`;
 
           break;
@@ -1057,7 +1078,7 @@ export default function toLeopard(
         case OpCode.looks_setsizeto: {
           satisfiesInputShape = InputShape.Stack;
 
-          const size = inputToJS(block.inputs.SIZE, InputShape.Number);
+          const size = inputToJS(block.inputs.SIZE, InputShape.ZeroCastNumber);
           blockSource = `this.size = ${size}`;
 
           break;
@@ -1076,7 +1097,7 @@ export default function toLeopard(
           satisfiesInputShape = InputShape.Stack;
 
           const effect = block.inputs.EFFECT.value.toLowerCase();
-          const value = inputToJS(block.inputs.VALUE, InputShape.Number);
+          const value = inputToJS(block.inputs.VALUE, InputShape.ZeroCastNumber);
           blockSource = `this.effects.${effect} = ${value}`;
 
           break;
@@ -1128,7 +1149,7 @@ export default function toLeopard(
         case OpCode.looks_goforwardbackwardlayers: {
           satisfiesInputShape = InputShape.Stack;
 
-          const num = inputToJS(block.inputs.NUM, InputShape.Number);
+          const num = inputToJS(block.inputs.NUM, InputShape.ZeroCastNumber);
 
           switch (block.inputs.FORWARD_BACKWARD.value) {
             case "forward": {
@@ -1167,7 +1188,7 @@ export default function toLeopard(
 
             case "number":
             default: {
-              satisfiesInputShape = InputShape.Number;
+              satisfiesInputShape = InputShape.ZeroCastNumber;
               blockSource = `this.costumeNumber`;
               break;
             }
@@ -1186,7 +1207,7 @@ export default function toLeopard(
 
             case "number":
             default: {
-              satisfiesInputShape = InputShape.Number;
+              satisfiesInputShape = InputShape.ZeroCastNumber;
               blockSource = `${stage}.costumeNumber`;
               break;
             }
@@ -1196,7 +1217,7 @@ export default function toLeopard(
         }
 
         case OpCode.looks_size: {
-          satisfiesInputShape = InputShape.Number;
+          satisfiesInputShape = InputShape.ZeroCastNumber;
 
           blockSource = `this.size`;
 
@@ -1224,7 +1245,7 @@ export default function toLeopard(
         case OpCode.sound_setvolumeto: {
           satisfiesInputShape = InputShape.Stack;
 
-          const volume = inputToJS(block.inputs.VOLUME, InputShape.Number);
+          const volume = inputToJS(block.inputs.VOLUME, InputShape.ZeroCastNumber);
           blockSource = `this.audioEffects.volume = ${volume}`;
 
           break;
@@ -1239,7 +1260,7 @@ export default function toLeopard(
         }
 
         case OpCode.sound_volume: {
-          satisfiesInputShape = InputShape.Number;
+          satisfiesInputShape = InputShape.ZeroCastNumber;
 
           blockSource = `this.audioEffects.volume`;
 
@@ -1249,7 +1270,7 @@ export default function toLeopard(
         case OpCode.sound_seteffectto: {
           satisfiesInputShape = InputShape.Stack;
 
-          const value = inputToJS(block.inputs.VALUE, InputShape.Number);
+          const value = inputToJS(block.inputs.VALUE, InputShape.ZeroCastNumber);
 
           if (block.inputs.EFFECT.type === "soundEffect") {
             const effect = block.inputs.EFFECT.value.toLowerCase();
@@ -1315,7 +1336,7 @@ export default function toLeopard(
         case OpCode.control_wait: {
           satisfiesInputShape = InputShape.Stack;
 
-          const duration = inputToJS(block.inputs.DURATION, InputShape.Number);
+          const duration = inputToJS(block.inputs.DURATION, InputShape.LooseNumber);
           blockSource = `yield* this.wait(${duration})`;
 
           break;
@@ -1324,7 +1345,7 @@ export default function toLeopard(
         case OpCode.control_repeat: {
           satisfiesInputShape = InputShape.Stack;
 
-          const times = inputToJS(block.inputs.TIMES, InputShape.Number);
+          const times = inputToJS(block.inputs.TIMES, InputShape.LooseNumber);
           const substack = inputToJS(block.inputs.SUBSTACK, InputShape.Stack);
 
           blockSource = `for (let i = 0; i < ${times}; i++) {
@@ -1417,7 +1438,7 @@ export default function toLeopard(
         case OpCode.control_for_each: {
           satisfiesInputShape = InputShape.Stack;
 
-          const value = inputToJS(block.inputs.VALUE, InputShape.Number);
+          const value = inputToJS(block.inputs.VALUE, InputShape.LooseNumber);
           const substack = inputToJS(block.inputs.SUBSTACK, InputShape.Stack);
 
           // TODO: Verify compatibility if variable changes during evaluation
@@ -1555,7 +1576,7 @@ export default function toLeopard(
         }
 
         case OpCode.sensing_distanceto: {
-          satisfiesInputShape = InputShape.Number;
+          satisfiesInputShape = InputShape.ZeroCastNumber;
 
           let x: string;
           let y: string;
@@ -1614,7 +1635,7 @@ export default function toLeopard(
         }
 
         case OpCode.sensing_mousex: {
-          satisfiesInputShape = InputShape.Number;
+          satisfiesInputShape = InputShape.ZeroCastNumber;
 
           blockSource = `this.mouse.x`;
 
@@ -1622,7 +1643,7 @@ export default function toLeopard(
         }
 
         case OpCode.sensing_mousey: {
-          satisfiesInputShape = InputShape.Number;
+          satisfiesInputShape = InputShape.ZeroCastNumber;
 
           blockSource = `this.mouse.y`;
 
@@ -1630,7 +1651,7 @@ export default function toLeopard(
         }
 
         case OpCode.sensing_loudness: {
-          satisfiesInputShape = InputShape.Number;
+          satisfiesInputShape = InputShape.ZeroCastNumber;
 
           blockSource = `this.loudness`;
 
@@ -1638,7 +1659,7 @@ export default function toLeopard(
         }
 
         case OpCode.sensing_timer: {
-          satisfiesInputShape = InputShape.Number;
+          satisfiesInputShape = InputShape.ZeroCastNumber;
 
           blockSource = `this.timer`;
 
@@ -1657,26 +1678,26 @@ export default function toLeopard(
           let propName: string | null;
           switch (block.inputs.PROPERTY.value) {
             case "x position": {
-              satisfiesInputShape = InputShape.Number;
+              satisfiesInputShape = InputShape.ZeroCastNumber;
               propName = "x";
               break;
             }
 
             case "y position": {
-              satisfiesInputShape = InputShape.Number;
+              satisfiesInputShape = InputShape.ZeroCastNumber;
               propName = "y";
               break;
             }
 
             case "direction": {
-              satisfiesInputShape = InputShape.Number;
+              satisfiesInputShape = InputShape.ZeroCastNumber;
               propName = "direction";
               break;
             }
 
             case "costume #":
             case "backdrop #": {
-              satisfiesInputShape = InputShape.Number;
+              satisfiesInputShape = InputShape.ZeroCastNumber;
               propName = "costumeNumber";
               break;
             }
@@ -1689,13 +1710,13 @@ export default function toLeopard(
             }
 
             case "size": {
-              satisfiesInputShape = InputShape.Number;
+              satisfiesInputShape = InputShape.ZeroCastNumber;
               propName = "size";
               break;
             }
 
             case "volume": {
-              satisfiesInputShape = InputShape.Number;
+              satisfiesInputShape = InputShape.ZeroCastNumber;
               propName = "audioEffects.volume";
               break;
             }
@@ -1714,7 +1735,7 @@ export default function toLeopard(
               // "of" block gets variables by name, not ID, using lookupVariableByNameAndType in scratch-vm.
               const variable = varOwner.variables.find(variable => variable.name === block.inputs.PROPERTY.value);
               if (!variable) {
-                satisfiesInputShape = InputShape.Number;
+                satisfiesInputShape = InputShape.ZeroCastNumber;
                 blockSource = `(0 /* ${varOwner.name} doesn't have a "${block.inputs.PROPERTY.value}" variable */)`;
                 break makeBlockSource;
               }
@@ -1741,7 +1762,7 @@ export default function toLeopard(
         }
 
         case OpCode.sensing_current: {
-          satisfiesInputShape = InputShape.Number;
+          satisfiesInputShape = InputShape.ZeroCastNumber;
 
           switch (block.inputs.CURRENTMENU.value) {
             case "YEAR": {
@@ -1790,7 +1811,7 @@ export default function toLeopard(
         }
 
         case OpCode.sensing_dayssince2000: {
-          satisfiesInputShape = InputShape.Number;
+          satisfiesInputShape = InputShape.ZeroCastNumber;
 
           blockSource = `((new Date().getTime() - new Date(2000, 0, 1)) / 1000 / 60 + new Date().getTimezoneOffset()) / 60 / 24`;
 
@@ -1814,10 +1835,10 @@ export default function toLeopard(
         }
 
         case OpCode.operator_add: {
-          satisfiesInputShape = InputShape.Number;
+          satisfiesInputShape = InputShape.ZeroCastNumber;
 
-          const num1 = inputToJS(block.inputs.NUM1, InputShape.Number);
-          const num2 = inputToJS(block.inputs.NUM2, InputShape.Number);
+          const num1 = inputToJS(block.inputs.NUM1, InputShape.ZeroCastNumber);
+          const num2 = inputToJS(block.inputs.NUM2, InputShape.ZeroCastNumber);
 
           if (desiredInputShape === InputShape.Index) {
             // Attempt to fulfill a desired index input by subtracting 1 from either side
@@ -1843,10 +1864,10 @@ export default function toLeopard(
         }
 
         case OpCode.operator_subtract: {
-          satisfiesInputShape = InputShape.Number;
+          satisfiesInputShape = InputShape.ZeroCastNumber;
 
-          const num1 = inputToJS(block.inputs.NUM1, InputShape.Number);
-          const num2 = inputToJS(block.inputs.NUM2, InputShape.Number);
+          const num1 = inputToJS(block.inputs.NUM1, InputShape.ZeroCastNumber);
+          const num2 = inputToJS(block.inputs.NUM2, InputShape.ZeroCastNumber);
 
           if (desiredInputShape === InputShape.Index) {
             // Do basically the same thing as the addition operator does, but with
@@ -1871,30 +1892,40 @@ export default function toLeopard(
         }
 
         case OpCode.operator_multiply: {
-          satisfiesInputShape = InputShape.Number;
+          satisfiesInputShape = InputShape.ZeroCastNumber;
 
-          const num1 = inputToJS(block.inputs.NUM1, InputShape.Number);
-          const num2 = inputToJS(block.inputs.NUM2, InputShape.Number);
+          const num1 = inputToJS(block.inputs.NUM1, InputShape.ZeroCastNumber);
+          const num2 = inputToJS(block.inputs.NUM2, InputShape.ZeroCastNumber);
           blockSource = `${num1} * ${num2}`;
 
           break;
         }
 
         case OpCode.operator_divide: {
-          satisfiesInputShape = InputShape.Number;
+          // Division returns NaN if zero is divided by zero. We can rule that
+          // out if there a non-zero primitive on either side of the operation.
 
-          const num1 = inputToJS(block.inputs.NUM1, InputShape.Number);
-          const num2 = inputToJS(block.inputs.NUM2, InputShape.Number);
+          const val1 = parseNumber(block.inputs.NUM1);
+          const val2 = parseNumber(block.inputs.NUM2);
+
+          if ((typeof val1 === "number" && val1 !== 0) || (typeof val2 === "number" && val2 !== 0)) {
+            satisfiesInputShape = InputShape.ZeroCastNumber;
+          } else {
+            satisfiesInputShape = InputShape.StrictlyCastNumber;
+          }
+
+          const num1 = inputToJS(block.inputs.NUM1, InputShape.ZeroCastNumber);
+          const num2 = inputToJS(block.inputs.NUM2, InputShape.ZeroCastNumber);
           blockSource = `${num1} / ${num2}`;
 
           break;
         }
 
         case OpCode.operator_random: {
-          satisfiesInputShape = InputShape.Number;
+          satisfiesInputShape = InputShape.ZeroCastNumber;
 
-          const from = inputToJS(block.inputs.FROM, InputShape.Number);
-          const to = inputToJS(block.inputs.TO, InputShape.Number);
+          const from = inputToJS(block.inputs.FROM, InputShape.ZeroCastNumber);
+          const to = inputToJS(block.inputs.TO, InputShape.ZeroCastNumber);
           blockSource = `this.random(${from}, ${to})`;
 
           break;
@@ -1945,14 +1976,14 @@ export default function toLeopard(
 
           const val1 = parseNumber(block.inputs.OPERAND1);
           if (typeof val1 === "number") {
-            const operand2 = inputToJS(block.inputs.OPERAND2, InputShape.Number);
+            const operand2 = inputToJS(block.inputs.OPERAND2, InputShape.StrictlyCastNumber);
             blockSource = `${val1} === ${operand2}`;
             break;
           }
 
           const val2 = parseNumber(block.inputs.OPERAND2);
           if (typeof val2 === "number") {
-            const operand1 = inputToJS(block.inputs.OPERAND1, InputShape.Number);
+            const operand1 = inputToJS(block.inputs.OPERAND1, InputShape.StrictlyCastNumber);
             blockSource = `${operand1} === ${val2}`;
             break;
           }
@@ -2018,7 +2049,7 @@ export default function toLeopard(
         }
 
         case OpCode.operator_length: {
-          satisfiesInputShape = InputShape.Number;
+          satisfiesInputShape = InputShape.ZeroCastNumber;
 
           const string = inputToJS(block.inputs.STRING, InputShape.Any);
           blockSource = `${string}.length`;
@@ -2037,19 +2068,34 @@ export default function toLeopard(
         }
 
         case OpCode.operator_mod: {
-          satisfiesInputShape = InputShape.Number;
+          // Modulo returns NaN if the divisor is zero or the dividend is Infinity.
 
-          const num1 = inputToJS(block.inputs.NUM1, InputShape.Number);
-          const num2 = inputToJS(block.inputs.NUM2, InputShape.Number);
+          const val1 = parseNumber(block.inputs.NUM1);
+          const val2 = parseNumber(block.inputs.NUM2);
+
+          // The divisor isn't zero if it's a non-zero primitive.
+          const divisorIsNotZero = typeof val2 === "number" && val2 !== 0;
+
+          // The dividend isn't infinity if it's a primitive.
+          const dividendIsNotInfinity = typeof val1 === "number";
+
+          if (divisorIsNotZero && dividendIsNotInfinity) {
+            satisfiesInputShape = InputShape.ZeroCastNumber;
+          } else {
+            satisfiesInputShape = InputShape.StrictlyCastNumber;
+          }
+
+          const num1 = inputToJS(block.inputs.NUM1, InputShape.ZeroCastNumber);
+          const num2 = inputToJS(block.inputs.NUM2, InputShape.ZeroCastNumber);
           blockSource = `${num1} % ${num2}`;
 
           break;
         }
 
         case OpCode.operator_round: {
-          satisfiesInputShape = InputShape.Number;
+          satisfiesInputShape = InputShape.ZeroCastNumber;
 
-          const num = inputToJS(block.inputs.NUM, InputShape.Number);
+          const num = inputToJS(block.inputs.NUM, InputShape.ZeroCastNumber);
           blockSource = `Math.round(${num})`;
 
           break;
@@ -2057,9 +2103,9 @@ export default function toLeopard(
 
         case OpCode.operator_mathop: {
           // TODO: Verify this is true for all ops.
-          satisfiesInputShape = InputShape.Number;
+          satisfiesInputShape = InputShape.ZeroCastNumber;
 
-          const num = inputToJS(block.inputs.NUM, InputShape.Number);
+          const num = inputToJS(block.inputs.NUM, InputShape.ZeroCastNumber);
           switch (block.inputs.OPERATOR.value) {
             case "abs": {
               blockSource = `Math.abs(${num})`;
@@ -2273,7 +2319,7 @@ export default function toLeopard(
             satisfiesInputShape = InputShape.Index;
             blockSource = `this.indexInArray(${selectedVarSource}, ${item})`;
           } else {
-            satisfiesInputShape = InputShape.Number;
+            satisfiesInputShape = InputShape.ZeroCastNumber;
             blockSource = `this.indexInArray(${selectedVarSource}, ${item}) + 1`;
           }
 
@@ -2281,7 +2327,7 @@ export default function toLeopard(
         }
 
         case OpCode.data_lengthoflist: {
-          satisfiesInputShape = InputShape.Number;
+          satisfiesInputShape = InputShape.ZeroCastNumber;
 
           blockSource = `${selectedVarSource}.length`;
 
@@ -2343,7 +2389,7 @@ export default function toLeopard(
         case OpCode.argument_reporter_boolean: {
           // Argument reporters dragged outside their script return 0
           if (!script) {
-            satisfiesInputShape = InputShape.Number;
+            satisfiesInputShape = InputShape.ZeroCastNumber;
             blockSource = `0`;
             break;
           }
@@ -2352,7 +2398,7 @@ export default function toLeopard(
           // The procedure definition that this argument reporter was dragged out of doesn't exist (it's in another
           // sprite, or deleted). Scratch returns 0 here.
           if (!argNames) {
-            satisfiesInputShape = InputShape.Number;
+            satisfiesInputShape = InputShape.ZeroCastNumber;
             blockSource = `0`;
             break;
           }
@@ -2429,7 +2475,7 @@ export default function toLeopard(
             }
 
             case "transparency": {
-              const value = inputToJS(block.inputs.VALUE, InputShape.Number);
+              const value = inputToJS(block.inputs.VALUE, InputShape.ZeroCastNumber);
               blockSource = `this.penColor.a -= ${value} / 100`;
               break;
             }
@@ -2441,7 +2487,7 @@ export default function toLeopard(
         case OpCode.pen_setPenColorParamTo: {
           satisfiesInputShape = InputShape.Stack;
 
-          const value = inputToJS(block.inputs.VALUE, InputShape.Number);
+          const value = inputToJS(block.inputs.VALUE, InputShape.ZeroCastNumber);
 
           switch (block.inputs.COLOR_PARAM.value) {
             case "color": {
@@ -2471,7 +2517,7 @@ export default function toLeopard(
         case OpCode.pen_setPenSizeTo: {
           satisfiesInputShape = InputShape.Stack;
 
-          const size = inputToJS(block.inputs.SIZE, InputShape.Number);
+          const size = inputToJS(block.inputs.SIZE, InputShape.ZeroCastNumber);
           blockSource = `this.penSize = ${size}`;
 
           break;
@@ -2499,12 +2545,35 @@ export default function toLeopard(
           return blockSource;
         }
 
-        case InputShape.Number: {
+        case InputShape.ZeroCastNumber: {
           return `this.toNumber(${blockSource})`;
         }
 
+        case InputShape.LooseNumber: {
+          if (
+            satisfiesInputShape === InputShape.ZeroCastNumber ||
+            satisfiesInputShape === InputShape.StrictlyCastNumber
+          ) {
+            return blockSource;
+          }
+
+          return `this.toNumber(${blockSource})`;
+        }
+
+        case InputShape.StrictlyCastNumber: {
+          if (satisfiesInputShape === InputShape.ZeroCastNumber) {
+            return blockSource;
+          }
+
+          return `this.toNumber(${blockSource}, true)`;
+        }
+
         case InputShape.Index: {
-          return `(${blockSource}) - 1`;
+          if (satisfiesInputShape === InputShape.ZeroCastNumber) {
+            return `(${blockSource}) - 1`;
+          }
+
+          return `this.toNumber(${blockSource}) - 1`;
         }
 
         case InputShape.Boolean: {
