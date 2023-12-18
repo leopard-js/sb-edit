@@ -2102,77 +2102,101 @@ export default function toLeopard(
         }
 
         case OpCode.operator_mathop: {
-          // TODO: Verify this is true for all ops.
-          satisfiesInputShape = InputShape.ZeroCastNumber;
-
           const num = inputToJS(block.inputs.NUM, InputShape.ZeroCastNumber);
+          const val = parseNumber(num);
+
+          const isNotInfinity = typeof val === "number";
+          const infinityIsNaN = isNotInfinity ? InputShape.ZeroCastNumber : InputShape.StrictlyCastNumber;
+
+          const isNotNegative = typeof val === "number" && val >= 0;
+          const negativeIsNaN = isNotNegative ? InputShape.ZeroCastNumber : InputShape.StrictlyCastNumber;
+
+          const magnitudeIsOneOrLower = typeof val === "number" && Math.abs(val) <= 1;
+          const magnitudeAboveOneIsNaN = magnitudeIsOneOrLower
+            ? InputShape.ZeroCastNumber
+            : InputShape.StrictlyCastNumber;
+
           switch (block.inputs.OPERATOR.value) {
             case "abs": {
+              satisfiesInputShape = InputShape.ZeroCastNumber;
               blockSource = `Math.abs(${num})`;
               break;
             }
 
             case "floor": {
+              satisfiesInputShape = InputShape.ZeroCastNumber;
               blockSource = `Math.floor(${num})`;
               break;
             }
 
             case "ceiling": {
+              satisfiesInputShape = InputShape.ZeroCastNumber;
               blockSource = `Math.ceil(${num})`;
               break;
             }
 
             case "sqrt": {
+              satisfiesInputShape = negativeIsNaN;
               blockSource = `Math.sqrt(${num})`;
               break;
             }
 
             case "sin": {
+              satisfiesInputShape = infinityIsNaN;
               blockSource = `Math.sin(this.degToRad(${num}))`;
               break;
             }
 
             case "cos": {
+              satisfiesInputShape = infinityIsNaN;
               blockSource = `Math.cos(this.degToRad(${num}))`;
               break;
             }
 
             case "tan": {
+              satisfiesInputShape = infinityIsNaN;
               blockSource = `this.scratchTan(${num})`;
               break;
             }
 
             case "asin": {
+              satisfiesInputShape = magnitudeAboveOneIsNaN;
               blockSource = `this.radToDeg(Math.asin(${num}))`;
               break;
             }
 
             case "acos": {
+              satisfiesInputShape = magnitudeAboveOneIsNaN;
               blockSource = `this.radToDeg(Math.acos(${num}))`;
               break;
             }
 
             case "atan": {
+              satisfiesInputShape = InputShape.ZeroCastNumber;
               blockSource = `this.radToDeg(Math.atan(${num}))`;
               break;
             }
 
             case "ln": {
+              satisfiesInputShape = negativeIsNaN;
               blockSource = `Math.log(${num})`;
               break;
             }
 
             case "log": {
+              satisfiesInputShape = negativeIsNaN;
               blockSource = `Math.log10(${num})`;
               break;
             }
 
             case "e ^": {
+              satisfiesInputShape = InputShape.ZeroCastNumber;
               blockSource = `Math.E ** ${num}`;
               break;
             }
 
             case "10 ^": {
+              satisfiesInputShape = InputShape.ZeroCastNumber;
               blockSource = `10 ** ${num}`;
               break;
             }
