@@ -489,7 +489,7 @@ export default function toLeopard(
 
     function increase(leftSide: string, input: BlockInput.Any, allowIncrementDecrement: boolean): string {
       const n = parseNumber(input);
-      if (n === null) {
+      if (typeof n !== "number") {
         return `${leftSide} += ${inputToJS(input, InputShape.Number)}`;
       }
 
@@ -506,7 +506,7 @@ export default function toLeopard(
 
     function decrease(leftSide: string, input: BlockInput.Any, allowIncrementDecrement: boolean) {
       const n = parseNumber(input);
-      if (n === null) {
+      if (typeof n !== "number") {
         return `${leftSide} -= ${inputToJS(input, InputShape.Number)}`;
       }
 
@@ -1469,7 +1469,8 @@ export default function toLeopard(
         case OpCode.sensing_askandwait: {
           satisfiesInputShape = InputShape.Stack;
 
-          blockSource = `yield* this.askAndWait(${inputToJS(block.inputs.QUESTION, InputShape.Any)})`;
+          const question = inputToJS(block.inputs.QUESTION, InputShape.Any);
+          blockSource = `yield* this.askAndWait(${question})`;
 
           break;
         }
@@ -1485,7 +1486,8 @@ export default function toLeopard(
         case OpCode.sensing_keypressed: {
           satisfiesInputShape = InputShape.Boolean;
 
-          blockSource = `this.keyPressed(${inputToJS(block.inputs.KEY_OPTION, InputShape.String)})`;
+          const key = inputToJS(block.inputs.KEY_OPTION, InputShape.String);
+          blockSource = `this.keyPressed(${key})`;
 
           break;
         }
