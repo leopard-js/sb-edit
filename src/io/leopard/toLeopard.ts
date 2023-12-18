@@ -490,24 +490,24 @@ export default function toLeopard(
     function increase(leftSide: string, input: BlockInput.Any, allowIncrementDecrement: boolean): string {
       const n = parseNumber(input);
       if (n === null) {
-        return `${leftSide} += (${inputToJS(input, InputShape.Number)});`;
+        return `${leftSide} += ${inputToJS(input, InputShape.Number)}`;
       }
 
       if (allowIncrementDecrement && n === 1) {
-        return `${leftSide}++;`;
+        return `${leftSide}++`;
       } else if (allowIncrementDecrement && n === -1) {
-        return `${leftSide}--;`;
+        return `${leftSide}--`;
       } else if (n >= 0) {
-        return `${leftSide} += ${JSON.stringify(n)};`;
+        return `${leftSide} += ${JSON.stringify(n)}`;
       } else {
-        return `${leftSide} -= ${JSON.stringify(-n)};`;
+        return `${leftSide} -= ${JSON.stringify(-n)}`;
       }
     }
 
     function decrease(leftSide: string, input: BlockInput.Any, allowIncrementDecrement: boolean) {
       const n = parseNumber(input);
       if (n === null) {
-        return `${leftSide} -= (${inputToJS(input, InputShape.Number)})`;
+        return `${leftSide} -= ${inputToJS(input, InputShape.Number)}`;
       }
 
       if (allowIncrementDecrement && n === 1) {
@@ -562,10 +562,19 @@ export default function toLeopard(
       }
 
       switch (input.type) {
-        case "block":
-          return blockToJS(input.value, desiredInputShape);
-        case "blocks":
+        case "block": {
+          const inputSource = blockToJS(input.value, desiredInputShape);
+          if (desiredInputShape === InputShape.Stack) {
+            return inputSource;
+          } else {
+            return `(${inputSource})`;
+          }
+        }
+
+        case "blocks": {
           return input.value?.map(block => blockToJS(block)).join(";\n") ?? "";
+        }
+
         default: {
           return staticBlockInputToLiteral(input.value, desiredInputShape);
         }
@@ -607,7 +616,8 @@ export default function toLeopard(
         case OpCode.motion_movesteps: {
           satisfiesInputShape = InputShape.Stack;
 
-          blockSource = `this.move(${inputToJS(block.inputs.STEPS, InputShape.Number)})`;
+          const steps = inputToJS(block.inputs.STEPS, InputShape.Number);
+          blockSource = `this.move(${steps})`;
 
           break;
         }
@@ -717,7 +727,7 @@ export default function toLeopard(
           satisfiesInputShape = InputShape.Stack;
 
           const direction = inputToJS(block.inputs.DIRECTION, InputShape.Number);
-          blockSource = `this.direction = (${direction})`;
+          blockSource = `this.direction = ${direction}`;
 
           break;
         }
@@ -759,7 +769,7 @@ export default function toLeopard(
           satisfiesInputShape = InputShape.Stack;
 
           const x = inputToJS(block.inputs.X, InputShape.Number);
-          blockSource = `this.x = (${x})`;
+          blockSource = `this.x = ${x}`;
 
           break;
         }
@@ -776,7 +786,7 @@ export default function toLeopard(
           satisfiesInputShape = InputShape.Stack;
 
           const y = inputToJS(block.inputs.Y, InputShape.Number);
-          blockSource = `this.y = (${y})`;
+          blockSource = `this.y = ${y}`;
 
           break;
         }
@@ -893,7 +903,7 @@ export default function toLeopard(
           satisfiesInputShape = InputShape.Stack;
 
           const costume = inputToJS(block.inputs.COSTUME, InputShape.Any);
-          blockSource = `this.costume = (${costume})`;
+          blockSource = `this.costume = ${costume}`;
 
           break;
         }
@@ -910,7 +920,7 @@ export default function toLeopard(
           satisfiesInputShape = InputShape.Stack;
 
           const backdrop = inputToJS(block.inputs.BACKDROP, InputShape.Any);
-          blockSource = `${stage}.costume = (${backdrop})`;
+          blockSource = `${stage}.costume = ${backdrop}`;
 
           break;
         }
@@ -935,7 +945,7 @@ export default function toLeopard(
           satisfiesInputShape = InputShape.Stack;
 
           const size = inputToJS(block.inputs.SIZE, InputShape.Number);
-          blockSource = `this.size = (${size})`;
+          blockSource = `this.size = ${size}`;
 
           break;
         }
@@ -1204,7 +1214,7 @@ export default function toLeopard(
           const times = inputToJS(block.inputs.TIMES, InputShape.Number);
           const substack = inputToJS(block.inputs.SUBSTACK, InputShape.Stack);
 
-          blockSource = `for (let i = 0; i < (${times}); i++) {
+          blockSource = `for (let i = 0; i < ${times}; i++) {
             ${substack};
             ${warp ? "" : "yield;"}
           }`;
@@ -1258,7 +1268,7 @@ export default function toLeopard(
           satisfiesInputShape = InputShape.Stack;
 
           const condition = inputToJS(block.inputs.CONDITION, InputShape.Boolean);
-          blockSource = `while (!(${condition})) { yield; }`;
+          blockSource = `while (!${condition}) { yield; }`;
 
           break;
         }
@@ -1269,7 +1279,7 @@ export default function toLeopard(
           const condition = inputToJS(block.inputs.CONDITION, InputShape.Boolean);
           const substack = inputToJS(block.inputs.SUBSTACK, InputShape.Stack);
 
-          blockSource = `while (!(${condition})) {
+          blockSource = `while (!${condition}) {
             ${substack}
             ${warp ? "" : "yield;"}
           }`;
@@ -1298,7 +1308,7 @@ export default function toLeopard(
           const substack = inputToJS(block.inputs.SUBSTACK, InputShape.Stack);
 
           // TODO: Verify compatibility if variable changes during evaluation
-          blockSource = `for (${selectedVarSource} = 1; ${selectedVarSource} <= (${value}); ${selectedVarSource}++) {
+          blockSource = `for (${selectedVarSource} = 1; ${selectedVarSource} <= ${value}; ${selectedVarSource}++) {
             ${substack}
             ${warp ? "" : "yield;"}
           }`;
@@ -1426,7 +1436,7 @@ export default function toLeopard(
 
           const color1 = colorInputToJS(block.inputs.COLOR);
           const color2 = colorInputToJS(block.inputs.COLOR2);
-          blockSource = `this.colorTouching((${color1}), (${color2}))`;
+          blockSource = `this.colorTouching(${color1}, ${color2})`;
 
           break;
         }
@@ -1451,7 +1461,7 @@ export default function toLeopard(
             }
           }
 
-          blockSource = `(Math.hypot(${x} - this.x, ${y} - this.y))`;
+          blockSource = `Math.hypot(${x} - this.x, ${y} - this.y)`;
 
           break;
         }
@@ -1620,42 +1630,43 @@ export default function toLeopard(
 
           switch (block.inputs.CURRENTMENU.value) {
             case "YEAR": {
-              blockSource = `(new Date().getFullYear())`;
+              blockSource = `new Date().getFullYear()`;
               break;
             }
 
             case "MONTH": {
-              blockSource = `(new Date().getMonth() + 1)`;
+              blockSource = `new Date().getMonth() + 1`;
               break;
             }
 
             case "DATE": {
-              blockSource = `(new Date().getDate())`;
+              blockSource = `new Date().getDate()`;
               break;
             }
 
             case "DAYOFWEEK": {
-              blockSource = `(new Date().getDay() + 1)`;
+              blockSource = `new Date().getDay() + 1`;
               break;
             }
 
             case "HOUR": {
-              blockSource = `(new Date().getHours())`;
+              blockSource = `new Date().getHours()`;
               break;
             }
 
             case "MINUTE": {
-              blockSource = `(new Date().getMinutes())`;
+              blockSource = `new Date().getMinutes()`;
               break;
             }
 
             case "SECOND": {
-              blockSource = `(new Date().getSeconds())`;
+              blockSource = `new Date().getSeconds()`;
               break;
             }
 
             default: {
-              blockSource = `('')`;
+              satisfiesInputShape = InputShape.String;
+              blockSource = `""`;
               break;
             }
           }
@@ -1666,7 +1677,7 @@ export default function toLeopard(
         case OpCode.sensing_dayssince2000: {
           satisfiesInputShape = InputShape.Number;
 
-          blockSource = `(((new Date().getTime() - new Date(2000, 0, 1)) / 1000 / 60 + new Date().getTimezoneOffset()) / 60 / 24)`;
+          blockSource = `((new Date().getTime() - new Date(2000, 0, 1)) / 1000 / 60 + new Date().getTimezoneOffset()) / 60 / 24`;
 
           break;
         }
@@ -1702,16 +1713,16 @@ export default function toLeopard(
             let val2 = parseNumber(block.inputs.NUM2);
             if (typeof val2 === "number") {
               satisfiesInputShape = InputShape.Index;
-              blockSource = --val2 ? `((${num1}) + ${val2})` : `(${num1})`;
+              blockSource = --val2 ? `${num1} + ${val2}` : num1;
               break;
             } else if (typeof val1 === "number") {
               satisfiesInputShape = InputShape.Index;
-              blockSource = --val1 ? `(${val1} + (${num2}))` : `(${num2})`;
+              blockSource = --val1 ? `${val1} + ${num2}` : num2;
               break;
             }
           }
 
-          blockSource = `((${num1}) + (${num2}))`;
+          blockSource = `${num1} + ${num2}`;
 
           break;
         }
@@ -1730,16 +1741,16 @@ export default function toLeopard(
             let val2 = parseNumber(block.inputs.NUM2);
             if (typeof val2 === "number") {
               satisfiesInputShape = InputShape.Index;
-              blockSource = ++val2 ? `((${num1}) - ${val2})` : `(${num1})`;
+              blockSource = ++val2 ? `${num1} - ${val2}` : num1;
               break;
             } else if (typeof val1 === "number") {
               satisfiesInputShape = InputShape.Index;
-              blockSource = --val1 ? `(${val1} - (${num2}))` : `(-${num2})`;
+              blockSource = --val1 ? `${val1} - ${num2}` : `-${num2}`;
               break;
             }
           }
 
-          blockSource = `((${num1}) - (${num2}))`;
+          blockSource = `${num1} - ${num2}`;
 
           break;
         }
@@ -1749,7 +1760,7 @@ export default function toLeopard(
 
           const num1 = inputToJS(block.inputs.NUM1, InputShape.Number);
           const num2 = inputToJS(block.inputs.NUM2, InputShape.Number);
-          blockSource = `((${num1}) * (${num2}))`;
+          blockSource = `${num1} * ${num2}`;
 
           break;
         }
@@ -1759,7 +1770,7 @@ export default function toLeopard(
 
           const num1 = inputToJS(block.inputs.NUM1, InputShape.Number);
           const num2 = inputToJS(block.inputs.NUM2, InputShape.Number);
-          blockSource = `((${num1}) / (${num2}))`;
+          blockSource = `${num1} / ${num2}`;
 
           break;
         }
@@ -1779,7 +1790,7 @@ export default function toLeopard(
 
           const operand1 = inputToJS(block.inputs.OPERAND1, InputShape.Any);
           const operand2 = inputToJS(block.inputs.OPERAND2, InputShape.Any);
-          blockSource = `(this.compare(${operand1}, ${operand2}) > 0)`;
+          blockSource = `this.compare(${operand1}, ${operand2}) > 0`;
 
           break;
         }
@@ -1789,7 +1800,7 @@ export default function toLeopard(
 
           const operand1 = inputToJS(block.inputs.OPERAND1, InputShape.Any);
           const operand2 = inputToJS(block.inputs.OPERAND2, InputShape.Any);
-          blockSource = `(this.compare(${operand1}, ${operand2}) < 0)`;
+          blockSource = `this.compare(${operand1}, ${operand2}) < 0`;
 
           break;
         }
@@ -1810,7 +1821,7 @@ export default function toLeopard(
           ) {
             const operand1 = inputToJS(block.inputs.OPERAND1, InputShape.Any);
             const operand2 = inputToJS(block.inputs.OPERAND2, InputShape.Any);
-            blockSource = `(this.compare(${operand1}, ${operand2}) === 0)`;
+            blockSource = `this.compare(${operand1}, ${operand2}) === 0`;
             break;
           }
 
@@ -1820,14 +1831,14 @@ export default function toLeopard(
           const val1 = parseNumber(block.inputs.OPERAND1);
           if (typeof val1 === "number") {
             const operand2 = inputToJS(block.inputs.OPERAND2, InputShape.Number);
-            blockSource = `(${val1} === (${operand2}))`;
+            blockSource = `${val1} === ${operand2}`;
             break;
           }
 
           const val2 = parseNumber(block.inputs.OPERAND2);
           if (typeof val2 === "number") {
             const operand1 = inputToJS(block.inputs.OPERAND1, InputShape.Number);
-            blockSource = `((${operand1}) === ${val2})`;
+            blockSource = `${operand1} === ${val2}`;
             break;
           }
 
@@ -1837,7 +1848,7 @@ export default function toLeopard(
           // TODO: Shouldn't this be case-insensitive?
           const operand1 = inputToJS(block.inputs.OPERAND1, InputShape.String);
           const operand2 = inputToJS(block.inputs.OPERAND2, InputShape.String);
-          blockSource = `((${operand1}) === (${operand2}))`;
+          blockSource = `${operand1} === ${operand2}`;
 
           break;
         }
@@ -1847,7 +1858,7 @@ export default function toLeopard(
 
           const operand1 = inputToJS(block.inputs.OPERAND1, InputShape.Boolean);
           const operand2 = inputToJS(block.inputs.OPERAND2, InputShape.Boolean);
-          blockSource = `((${operand1}) && (${operand2}))`;
+          blockSource = `${operand1} && ${operand2}`;
 
           break;
         }
@@ -1857,7 +1868,7 @@ export default function toLeopard(
 
           const operand1 = inputToJS(block.inputs.OPERAND1, InputShape.Boolean);
           const operand2 = inputToJS(block.inputs.OPERAND2, InputShape.Boolean);
-          blockSource = `((${operand1}) || (${operand2}))`;
+          blockSource = `${operand1} || ${operand2}`;
 
           break;
         }
@@ -1866,7 +1877,7 @@ export default function toLeopard(
           satisfiesInputShape = InputShape.Boolean;
 
           const operand = inputToJS(block.inputs.OPERAND, InputShape.Boolean);
-          blockSource = `(!(${operand}))`;
+          blockSource = `!${operand}`;
 
           break;
         }
@@ -1876,7 +1887,7 @@ export default function toLeopard(
 
           const string1 = inputToJS(block.inputs.STRING1, InputShape.String);
           const string2 = inputToJS(block.inputs.STRING2, InputShape.String);
-          blockSource = `((${string1}) + (${string2}))`;
+          blockSource = `${string1} + ${string2}`;
 
           break;
         }
@@ -1895,7 +1906,7 @@ export default function toLeopard(
           satisfiesInputShape = InputShape.Number;
 
           const string = inputToJS(block.inputs.STRING, InputShape.Any);
-          blockSource = `(${string}).length`;
+          blockSource = `${string}.length`;
 
           break;
         }
@@ -1915,7 +1926,7 @@ export default function toLeopard(
 
           const num1 = inputToJS(block.inputs.NUM1, InputShape.Number);
           const num2 = inputToJS(block.inputs.NUM2, InputShape.Number);
-          blockSource = `((${num1}) % (${num2}))`;
+          blockSource = `${num1} % ${num2}`;
 
           break;
         }
@@ -1996,12 +2007,12 @@ export default function toLeopard(
             }
 
             case "e ^": {
-              blockSource = `(Math.E ** (${num}))`;
+              blockSource = `Math.E ** ${num}`;
               break;
             }
 
             case "10 ^": {
-              blockSource = `(10 ** (${num}))`;
+              blockSource = `10 ** ${num}`;
               break;
             }
           }
@@ -2022,7 +2033,7 @@ export default function toLeopard(
           satisfiesInputShape = InputShape.Stack;
 
           const value = inputToJS(block.inputs.VALUE, InputShape.Any);
-          blockSource = `${selectedVarSource} = (${value})`;
+          blockSource = `${selectedVarSource} = ${value}`;
 
           break;
         }
@@ -2148,7 +2159,7 @@ export default function toLeopard(
             blockSource = `this.indexInArray(${selectedVarSource}, ${item})`;
           } else {
             satisfiesInputShape = InputShape.Number;
-            blockSource = `(this.indexInArray(${selectedVarSource}, ${item}) + 1)`;
+            blockSource = `this.indexInArray(${selectedVarSource}, ${item}) + 1`;
           }
 
           break;
@@ -2278,7 +2289,7 @@ export default function toLeopard(
           satisfiesInputShape = InputShape.Stack;
 
           const color = colorInputToJS(block.inputs.COLOR);
-          blockSource = `this.penColor = (${color})`;
+          blockSource = `this.penColor = ${color}`;
 
           break;
         }
@@ -2304,7 +2315,7 @@ export default function toLeopard(
 
             case "transparency": {
               const value = inputToJS(block.inputs.VALUE, InputShape.Number);
-              blockSource = `this.penColor.a -= ((${value}) / 100)`;
+              blockSource = `this.penColor.a -= ${value} / 100`;
               break;
             }
           }
@@ -2319,22 +2330,22 @@ export default function toLeopard(
 
           switch (block.inputs.COLOR_PARAM.value) {
             case "color": {
-              blockSource = `this.penColor.h = (${value})`;
+              blockSource = `this.penColor.h = ${value}`;
               break;
             }
 
             case "saturation": {
-              blockSource = `this.penColor.s = (${value})`;
+              blockSource = `this.penColor.s = ${value}`;
               break;
             }
 
             case "brightness": {
-              blockSource = `this.penColor.v = (${value})`;
+              blockSource = `this.penColor.v = ${value}`;
               break;
             }
 
             case "transparency": {
-              blockSource = `this.penColor.a = (1 - ((${value}) / 100))`;
+              blockSource = `this.penColor.a = 1 - (${value} / 100)`;
               break;
             }
           }
@@ -2346,7 +2357,7 @@ export default function toLeopard(
           satisfiesInputShape = InputShape.Stack;
 
           const size = inputToJS(block.inputs.SIZE, InputShape.Number);
-          blockSource = `this.penSize = (${size})`;
+          blockSource = `this.penSize = ${size}`;
 
           break;
         }
@@ -2374,19 +2385,19 @@ export default function toLeopard(
         }
 
         case InputShape.Number: {
-          return `(this.toNumber(${blockSource}))`;
+          return `this.toNumber(${blockSource})`;
         }
 
         case InputShape.Index: {
-          return `((${blockSource}) - 1)`;
+          return `(${blockSource}) - 1`;
         }
 
         case InputShape.Boolean: {
-          return `(this.toBoolean(${blockSource}))`;
+          return `this.toBoolean(${blockSource})`;
         }
 
         case InputShape.String: {
-          return `(this.toString(${blockSource}))`;
+          return `this.toString(${blockSource})`;
         }
 
         default: {
