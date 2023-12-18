@@ -542,6 +542,16 @@ export default function toLeopard(
       return `this.sprites[${JSON.stringify(targetNameMap[input.value])}]`;
     }
 
+    function colorInputToJS(input: BlockInput.Color | BlockInput.Block): string {
+      if (input.type === "color") {
+        const { r, g, b } = input.value;
+        return `Color.rgb(${r}, ${g}, ${b})`;
+      } else {
+        const num = inputToJS(input, InputShape.Number);
+        return `Color.num(${num})`;
+      }
+    }
+
     function inputToJS(input: BlockInput.Any, desiredInputShape: InputShape): string {
       // TODO: Right now, inputs can be completely undefined if imported from
       // the .sb3 format (because sb3 is weird). This little check will replace
@@ -1405,13 +1415,8 @@ export default function toLeopard(
         case OpCode.sensing_touchingcolor: {
           satisfiesInputShape = InputShape.Boolean;
 
-          if (block.inputs.COLOR.type === "color") {
-            const { r, g, b } = block.inputs.COLOR.value;
-            blockSource = `this.touching(Color.rgb(${r}, ${g}, ${b}))`;
-          } else {
-            const num = inputToJS(block.inputs.COLOR, InputShape.Number);
-            blockSource = `this.touching(Color.num(${num}))`;
-          }
+          const color = colorInputToJS(block.inputs.COLOR);
+          blockSource = `this.touching(${color})`;
 
           break;
         }
@@ -1419,25 +1424,8 @@ export default function toLeopard(
         case OpCode.sensing_coloristouchingcolor: {
           satisfiesInputShape = InputShape.Boolean;
 
-          let color1: string;
-          let color2: string;
-
-          if (block.inputs.COLOR.type === "color") {
-            const { r, g, b } = block.inputs.COLOR.value;
-            color1 = `Color.rgb(${r}, ${g}, ${b})`;
-          } else {
-            const num = inputToJS(block.inputs.COLOR, InputShape.Number);
-            color1 = `Color.num(${num})`;
-          }
-
-          if (block.inputs.COLOR2.type === "color") {
-            const { r, g, b } = block.inputs.COLOR2.value;
-            color2 = `Color.rgb(${r}, ${g}, ${b})`;
-          } else {
-            const num = inputToJS(block.inputs.COLOR, InputShape.Number);
-            color2 = `Color.num(${num})`;
-          }
-
+          const color1 = colorInputToJS(block.inputs.COLOR);
+          const color2 = colorInputToJS(block.inputs.COLOR2);
           blockSource = `this.colorTouching((${color1}), (${color2}))`;
 
           break;
@@ -2289,13 +2277,8 @@ export default function toLeopard(
         case OpCode.pen_setPenColorToColor: {
           satisfiesInputShape = InputShape.Stack;
 
-          if (block.inputs.COLOR.type === "color") {
-            const { r, g, b } = block.inputs.COLOR.value;
-            blockSource = `this.penColor = Color.rgb(${r}, ${g}, ${b})`;
-          } else {
-            const num = inputToJS(block.inputs.COLOR, InputShape.Number);
-            blockSource = `this.penColor = Color.num(${num})`;
-          }
+          const color = colorInputToJS(block.inputs.COLOR);
+          blockSource = `this.penColor = (${color})`;
 
           break;
         }
