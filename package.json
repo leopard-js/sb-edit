@@ -1,6 +1,6 @@
 {
   "name": "sb-edit",
-  "version": "0.13.12",
+  "version": "0.13.13",
   "description": "Import, edit, and export Scratch project files",
   "keywords": [
     "Scratch",
