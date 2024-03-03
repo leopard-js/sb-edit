@@ -1401,12 +1401,12 @@ export default function toLeopard(
           let target: string;
           switch (block.inputs.TOUCHINGOBJECTMENU.value) {
             case "_mouse_": {
-              target = "mouse";
+              target = JSON.stringify("mouse");
               break;
             }
 
             case "_edge_": {
-              target = "edge";
+              target = JSON.stringify("edge");
               break;
             }
 
