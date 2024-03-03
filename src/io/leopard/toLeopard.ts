@@ -278,6 +278,7 @@ export default function toLeopard(
       "glide",
       "goto",
       "move",
+      "ifOnEdgeBounce",
       "rotationStyle",
       "x",
       "y",
@@ -787,6 +788,14 @@ export default function toLeopard(
 
           const y = inputToJS(block.inputs.Y, InputShape.Number);
           blockSource = `this.y = ${y}`;
+
+          break;
+        }
+
+        case OpCode.motion_ifonedgebounce: {
+          satisfiesInputShape = InputShape.Stack;
+
+          blockSource = `this.ifOnEdgeBounce()`;
 
           break;
         }

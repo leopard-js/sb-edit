@@ -49,7 +49,7 @@ export default class Abby extends Sprite {
     this.x = -36;
     this.y += 10;
     this.y = -23;
-    /* TODO: Implement motion_ifonedgebounce */ null;
+    this.ifOnEdgeBounce();
     this.rotationStyle = Sprite.RotationStyle.LEFT_RIGHT;
     this.createClone();
     this.deleteThisClone();
