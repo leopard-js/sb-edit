@@ -28,6 +28,64 @@ sb-edit can also be used to modify Scratch projects. A few things you can/will b
 | Scripts             | 🕒 Planned | 🕒 Planned | 🕒 Planned |
 | Costumes and sounds | 🕒 Planned | 🕒 Planned | 🕒 Planned |
 
+## CLI Examples
+
+To use the sb-edit CLI, first install it globally using the following command:
+
+```
+$ npm i -g sb-edit
+```
+
+### Convert .sb3 project to Leopard
+
+```
+$ sb-edit --input path/to/project.sb3 --output path/to/output-folder
+```
+
+### Convert .sb3 project to Leopard .zip
+
+```
+$ sb-edit --input path/to/project.sb3 --output path/to/output-folder.zip
+```
+
+## Code Examples
+
+### Import an .sb3 file in Node
+
+```js
+const { Project } = require("sb-edit");
+const fs = require("fs");
+const path = require("path");
+
+const file = fs.readFileSync(path.join(__dirname, "myProject.sb3"));
+const project = await Project.fromSb3(file);
+
+console.log(project);
+```
+
+### Export an .sb3 file in Node
+
+```js
+const { Project } = require("sb-edit");
+const fs = require("fs");
+const path = require("path");
+
+const project = /* Get yourself a `Project`... */;
+
+const saveLocation = path.join(__dirname, "myProject.sb3");
+fs.writeFileSync(saveLocation, Buffer.from(await project.toSb3()));
+
+// `project` is now saved at ./myProject.sb3
+```
+
+### Get Leopard code for project
+
+```js
+const project = /* Get yourself a `Project`... */;
+
+console.log(project.toLeopard({ printWidth: 100 })); // Optionally pass a Prettier config object!
+```
+
 ## Development
 
 If you want to help develop the sb-edit package, you'll need to follow these steps:
@@ -71,42 +129,4 @@ And finally, make sure everything is pretty:
 ```shell
 > cd sb-edit
 > npm run format # Format code to look nice with Prettier
-```
-
-## Code Examples
-
-### Import an .sb3 file in Node
-
-```js
-const { Project } = require("sb-edit");
-const fs = require("fs");
-const path = require("path");
-
-const file = fs.readFileSync(path.join(__dirname, "myProject.sb3"));
-const project = await Project.fromSb3(file);
-
-console.log(project);
-```
-
-### Export an .sb3 file in Node
-
-```js
-const { Project } = require("sb-edit");
-const fs = require("fs");
-const path = require("path");
-
-const project = /* Get yourself a `Project`... */;
-
-const saveLocation = path.join(__dirname, "myProject.sb3");
-fs.writeFileSync(saveLocation, Buffer.from(await project.toSb3()));
-
-// `project` is now saved at ./myProject.sb3
-```
-
-### Get Leopard code for project
-
-```js
-const project = /* Get yourself a `Project`... */;
-
-console.log(project.toLeopard({ printWidth: 100 })); // Optionally pass a Prettier config object!
 ```
