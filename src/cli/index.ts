@@ -2,6 +2,7 @@
 
 import { Command, Option } from "commander";
 import Project from "../Project";
+import { createWriteStream } from "node:fs";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import JSZip from "jszip";
@@ -270,9 +271,7 @@ async function run() {
           }
         }
 
-        zip
-          .generateNodeStream({ type: "nodebuffer", streamFiles: true })
-          .pipe((await fs.open(fullOutputPath)).createWriteStream());
+        zip.generateNodeStream({ type: "nodebuffer", streamFiles: true }).pipe(createWriteStream(fullOutputPath));
       });
 
       break;
