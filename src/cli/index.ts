@@ -7,7 +7,6 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import JSZip from "jszip";
 import chalk from "chalk";
-import wcwidth from "wcwidth";
 
 const program = new Command();
 
@@ -202,18 +201,18 @@ async function run() {
 
         for (const target of [project.stage, ...project.sprites]) {
           const costumeDir = path.join(target.name, "costumes");
+          await fs.mkdir(path.resolve(fullOutputPath, costumeDir), { recursive: true });
           for (const costume of target.costumes) {
             const filename = path.join(costumeDir, `${costume.name}.${costume.ext}`);
             const asset = Buffer.from(costume.asset as ArrayBuffer);
-            await fs.mkdir(path.resolve(fullOutputPath, filename, ".."), { recursive: true });
             await fs.writeFile(path.resolve(fullOutputPath, filename), asset);
           }
 
           const soundDir = path.join(target.name, "sounds");
+          await fs.mkdir(path.resolve(fullOutputPath, soundDir), { recursive: true });
           for (const sound of target.sounds) {
             const filename = path.join(soundDir, `${sound.name}.${sound.ext}`);
             const asset = Buffer.from(sound.asset as ArrayBuffer);
-            await fs.mkdir(path.resolve(fullOutputPath, filename, ".."), { recursive: true });
             await fs.writeFile(path.resolve(fullOutputPath, filename), asset);
           }
         }
@@ -279,17 +278,28 @@ async function run() {
   }
 }
 
+function stripAnsi(string: string) {
+  const pattern = [
+    "[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]+)*|[a-zA-Z\\d]+(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)",
+    "(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-nq-uy=><~]))"
+  ].join("|");
+  const regex = new RegExp(pattern, "g");
+  return string.replace(regex, "");
+}
+
+function stringLength(string: string) {
+  return stripAnsi(string).length;
+}
+
 function chalkBox(lines: string[]): string {
-  const lengths = lines.map(line => wcwidth(line));
-  const boxInnerWidth = Math.max(...lengths) + 2;
+  const boxInnerWidth = Math.max(...lines.map(stringLength)) + 2;
 
   let outputStr = "";
   outputStr += chalk.bold.blue`╔${"═".repeat(boxInnerWidth)}╗`;
   for (const line of lines) {
-    const length = wcwidth(line);
     outputStr += chalk.bold.blue`\n║ `;
     outputStr += chalk.gray(line);
-    outputStr += " ".repeat(boxInnerWidth - length - 2);
+    outputStr += " ".repeat(boxInnerWidth - stringLength(line) - 2);
     outputStr += chalk.bold.blue` ║`;
   }
   outputStr += chalk.bold.blue(`\n╚${"═".repeat(boxInnerWidth)}╝\n`);
