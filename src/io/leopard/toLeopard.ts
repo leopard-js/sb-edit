@@ -70,76 +70,53 @@ const JS_RESERVED_WORDS = [
 ];
 
 /**
+ * Property names which have special meaning in JavaScript. Custom properties
+ * must not overwrite these names, no matter the context.
+ */
+const JS_RESERVED_PROPERTIES = ["__proto__", "constructor", "prototype"];
+
+/**
  * Property names which are used by any Leopard target - these correspond to
  * Leopard's `SpriteBase` abstract class. Properties here are present on
  * sprites as well as the stage.
  *
- * Custom properties (e.g. variables, lists, scripts) must not overwrite these
- * names. Note that this is *not* a superset of ordinary JavaScript reserved
+ * Overwriting these properties would change behavior that Leopard itself
+ * provides and expects to be behave in certain ways. While this a coding wizard
+ * might like to take advantage of this in their own Leopard project, generated
+ * projects must never accidentally overwrite these!
+ *
+ * This list is a superset of `JS_RESERVED_PROPERTIES` (and so are all supersets
+ * of this list).
+ *
+ * Note that this is *not* a superset of ordinary JavaScript reserved
  * words. Properties are always accessed with `this.${name}` syntax, not used
- * as standalone identifiers (just `${name}`).
+ * as standalone identifiers (`let ${name} = foo`).
  */
 const LEOPARD_RESERVED_SPRITE_BASE_PROPERTIES = [
-  // Essential data
-  "costumes",
-  "effectChain",
-  "effects",
-  "height",
-  "name",
-  "sounds",
+  ...JS_RESERVED_PROPERTIES,
+
+  // Internals
+  "_costumeNumber",
+  "_layerOrder",
+  "_project",
+  "_vars",
+
+  // Basic execution
   "triggers",
   "vars",
-  "watchers",
-  "width",
+  "warp",
 
   // Other objects
-  "andClones",
-  "clones",
   "stage",
   "sprites",
-  "parent",
-
-  // Motion
-  "direction",
-  "glide",
-  "goto",
-  "move",
-  "ifOnEdgeBounce",
-  "rotationStyle",
-  "x",
-  "y",
-
-  // Looks
-  "costumeNumber",
-  "costume",
-  "moveAhead",
-  "moveBehind",
-  "say",
-  "sayAndWait",
-  "size",
-  "think",
-  "thinkAndWait",
-  "visible",
-
-  // Sounds
-  "audioEffects",
-  "getSound",
-  "getSoundsPlayedByMe",
-  "playSoundUntilDone",
-  "startSound",
-  "stapAllOfMySounds",
-  "stopAllSounds",
+  "watchers",
 
   // Control & events
   "broadcast",
   "broadcastAndWait",
-  "createClone",
-  "deleteThisClone",
-  "fireBackdropChanged",
   "wait",
-  "warp",
 
-  // Opeartors - casting
+  // Operators - casting
   "toNumber",
   "toBoolean",
   "toString",
@@ -155,32 +132,45 @@ const LEOPARD_RESERVED_SPRITE_BASE_PROPERTIES = [
   "radToDeg",
   "radToScratch",
   "random",
+  "scratchTan",
   "scratchToDeg",
   "scratchToRad",
   "normalizeDeg",
-
-  // Sensing
-  "answer",
-  "askAndWait",
-  "colorTouching",
-  "keyPressed",
-  "loudness",
-  "mouse",
-  "restartTimer",
-  "timer",
-  "touching",
+  "wrapClamp",
 
   // Lists (arrays)
   "arrayIncludes",
   "indexInArray",
   "itemOf",
 
+  // Sensing
+  "answer",
+  "askAndWait",
+  "keyPressed",
+  "loudness",
+  "mouse",
+  "restartTimer",
+  "timer",
+
+  // Looks
+  "costume",
+  "costumeNumber",
+  "costumes",
+  "effects",
+
+  // Sounds
+  "audioEffects",
+  "effectChain",
+  "getSound",
+  "getSoundsPlayedByMe",
+  "playSoundUntilDone",
+  "sounds",
+  "startSound",
+  "stopAllOfMySounds",
+  "stopAllSounds",
+
   // Pen
-  "clearPen",
-  "penColor",
-  "penDown",
-  "penSize",
-  "stamp"
+  "clearPen"
 ];
 
 /**
@@ -188,14 +178,76 @@ const LEOPARD_RESERVED_SPRITE_BASE_PROPERTIES = [
  * whether any subclass or directly constructed from `Sprite`). This list is
  * a superset of `LEOPARD_RESERVED_SPRITE_BASE_PROPERTIES`.
  */
-const LEOPARD_RESERVED_STAGE_PROPERTIES = [...LEOPARD_RESERVED_SPRITE_BASE_PROPERTIES];
+const LEOPARD_RESERVED_STAGE_PROPERTIES = [
+  ...LEOPARD_RESERVED_SPRITE_BASE_PROPERTIES,
+
+  // Essential properties
+  "__counter",
+  "fence",
+  "height",
+  "width",
+
+  // Events & control
+  "fireBackdropChanged"
+];
 
 /**
  * Property names which are used by Leopard stages (instances of `Stage`,
  * whether any subclass or directly constructed from `Stage`). This list is
  * a superset of `LEOPARD_RESERVED_SPRITE_BASE_PROPERTIES`.
  */
-const LEOPARD_RESERVED_SPRITE_PROPERTIES = [...LEOPARD_RESERVED_SPRITE_BASE_PROPERTIES];
+const LEOPARD_RESERVED_SPRITE_PROPERTIES = [
+  ...LEOPARD_RESERVED_SPRITE_BASE_PROPERTIES,
+
+  // Internals
+  "_direction",
+  "_penColor",
+  "_penDown",
+  "_speechBubble",
+  "_x",
+  "_y",
+
+  // Other objects
+  "andClones",
+  "clones",
+  "parent",
+
+  // Control & events
+  "createClone",
+  "deleteThisClone",
+
+  // Sensing
+  "colorTouching",
+  "touching",
+  "nearestEdge",
+
+  // Looks
+  "moveAhead",
+  "moveBehind",
+  "say",
+  "sayAndWait",
+  "size",
+  "think",
+  "thinkAndWait",
+  "visible",
+
+  // Motion
+  "direction",
+  "glide",
+  "goto",
+  "ifOnEdgeBounce",
+  "move",
+  "positionInFence",
+  "rotationStyle",
+  "x",
+  "y",
+
+  // Pen
+  "penColor",
+  "penDown",
+  "penSize",
+  "stamp"
+];
 
 /**
  * Input shapes are the basic attribute controlling which of a set of syntaxes
