@@ -69,18 +69,17 @@ const JS_RESERVED_WORDS = [
   "with"
 ];
 
-// Scripts are uniquely named per-target. These are on the sprite's main
-// namespace, so must not conflict with properties and methods defined on
-// all sprites/targets by Leopard.
-//
-// The list of reserved names is technically different between BaseSprite,
-// Sprite, and Stage, but all three are considered together here, whatever
-// kind of target will actually be getting script names here.
-//
-// Note: since scripts are serialized as class methods, these never conflict
-// with reserved JavaScript words like "class" or "new" (they're accessed
-// with the same typeof syntax, e.g. this.whenGreenFlagClicked).
-const LEOPARD_RESERVED_TARGET_PROPERTIES = [
+/**
+ * Property names which are used by any Leopard target - these correspond to
+ * Leopard's `SpriteBase` abstract class. Properties here are present on
+ * sprites as well as the stage.
+ *
+ * Custom properties (e.g. variables, lists, scripts) must not overwrite these
+ * names. Note that this is *not* a superset of ordinary JavaScript reserved
+ * words. Properties are always accessed with `this.${name}` syntax, not used
+ * as standalone identifiers (just `${name}`).
+ */
+const LEOPARD_RESERVED_SPRITE_BASE_PROPERTIES = [
   // Essential data
   "costumes",
   "effectChain",
@@ -183,6 +182,20 @@ const LEOPARD_RESERVED_TARGET_PROPERTIES = [
   "penSize",
   "stamp"
 ];
+
+/**
+ * Property names which are used by Leopard sprites (instances of `Sprite`,
+ * whether any subclass or directly constructed from `Sprite`). This list is
+ * a superset of `LEOPARD_RESERVED_SPRITE_BASE_PROPERTIES`.
+ */
+const LEOPARD_RESERVED_STAGE_PROPERTIES = [...LEOPARD_RESERVED_SPRITE_BASE_PROPERTIES];
+
+/**
+ * Property names which are used by Leopard stages (instances of `Stage`,
+ * whether any subclass or directly constructed from `Stage`). This list is
+ * a superset of `LEOPARD_RESERVED_SPRITE_BASE_PROPERTIES`.
+ */
+const LEOPARD_RESERVED_SPRITE_PROPERTIES = [...LEOPARD_RESERVED_SPRITE_BASE_PROPERTIES];
 
 /**
  * Input shapes are the basic attribute controlling which of a set of syntaxes
@@ -357,7 +370,10 @@ export default function toLeopard(
       variableNameMap[id] = newName;
     }
 
-    const uniqueScriptName = uniqueNameGenerator(LEOPARD_RESERVED_TARGET_PROPERTIES);
+    const reservedProperties =
+      target === project.stage ? LEOPARD_RESERVED_STAGE_PROPERTIES : LEOPARD_RESERVED_SPRITE_PROPERTIES;
+
+    const uniqueScriptName = uniqueNameGenerator(reservedProperties);
 
     for (const script of target.scripts) {
       script.setName(uniqueScriptName(camelCase(script.name)));
