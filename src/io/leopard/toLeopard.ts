@@ -421,9 +421,21 @@ export default function toLeopard(
   };
   const options = { ...defaultOptions, ...inOptions };
 
+  // Maps targets' Scratch names to corresponding Leopard names
+  // (JS class names, which are identifiers).
   let targetNameMap: Partial<Record<string, string>> = {};
+
+  // Maps input names on actual custom block Script objects to corresponding
+  // Leopard names (JS function arguments, which are identifiers).
   let customBlockArgNameMap: Map<Script, { [key: string]: string }> = new Map();
-  let variableNameMap: { [id: string]: string } = {}; // ID to unique (Leopard) name
+
+  // Maps variables and lists' Scratch IDs to corresponding Leopard names
+  // (JS properties on `this.vars`). This is shared across all sprites, so
+  // that global (stage) variables' IDs map to the same name regardless what
+  // sprite they're accessed in. There's no issue about local (sprite)
+  // variables conflicting with each other, since the variables in each
+  // sprite all have unique IDs, even if they share the same (Scratch) name.
+  let variableNameMap: { [id: string]: string } = {};
 
   const uniqueSpriteName = uniqueNameFactory(LEOPARD_RESERVED_SPRITE_NAMES);
 
@@ -434,10 +446,7 @@ export default function toLeopard(
 
     // Variables are uniquely named per-target. These are on an empty namespace
     // so don't have any conflicts.
-    //
-    // Note: since variables are serialized as properties on an object (this.vars),
-    // these never conflict with reserved JavaScript words like "class" or "new".
-    const uniqueVariableName = uniqueNameFactory();
+    const uniqueVariableName = uniqueNameFactory(JS_RESERVED_PROPERTIES);
 
     for (const { id, name } of [...target.lists, ...target.variables]) {
       const newName = uniqueVariableName(camelCase(name));
