@@ -70,6 +70,35 @@ const JS_RESERVED_WORDS = [
 ];
 
 /**
+ * Global identifiers which Leopard sprites (subclasses of `Sprite`) must not
+ * be named as, since that would overwrite or be a reference binding error.
+ *
+ * Only capitalized identifiers need to be listed here: generated sprite names
+ * will never conflict with identifiers whose first letter is lowercase.
+ * (This is also why JS reserved words aren't listed here - they're all
+ * lowercase, so don't conflict with generated sprite names.)
+ *
+ * However, it *must* include even (capitalized) identifiers which *aren't*
+ * provided by Leopard, if any part of generated Leopard code could directly
+ * refer to those identifiers (expecting some browser-provided value, rather
+ * than a generated `Sprite` subclass!).
+ */
+const LEOPARD_RESERVED_SPRITE_NAMES = [
+  // Browser-provided identifiers
+  "Date",
+  "Math",
+
+  // Leopard-provided identifiers
+  "Color",
+  "Costume",
+  "Sound",
+  "Sprite",
+  "StageBase",
+  "Trigger",
+  "Watcher"
+];
+
+/**
  * Property names which have special meaning in JavaScript. Custom properties
  * must not overwrite these names, no matter the context.
  */
@@ -392,18 +421,11 @@ export default function toLeopard(
   };
   const options = { ...defaultOptions, ...inOptions };
 
-  // Sprite identifier must not conflict with module-level/global identifiers,
-  // imports and any others that are referenced in generated code.
-  //
-  // Only classes and similar capitalized namespaces need to be listed here:
-  // generated sprite names will never conflict with identifiers whose first
-  // letter is lowercase. (This is also why JavaScript reserved words aren't
-  // listed here - they're all lowercase, so sprite names won't conflict.)
-  const uniqueSpriteName = uniqueNameGenerator(["Color", "Costume", "Sound", "Sprite", "Trigger", "Watcher"]);
-
   let targetNameMap: Partial<Record<string, string>> = {};
   let customBlockArgNameMap: Map<Script, { [key: string]: string }> = new Map();
   let variableNameMap: { [id: string]: string } = {}; // ID to unique (Leopard) name
+
+  const uniqueSpriteName = uniqueNameGenerator(LEOPARD_RESERVED_SPRITE_NAMES);
 
   for (const target of [project.stage, ...project.sprites]) {
     const newTargetName = uniqueSpriteName(camelCase(target.name, true));
