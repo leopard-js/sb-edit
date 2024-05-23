@@ -341,7 +341,7 @@ enum InputShape {
   Stack = "Stack"
 }
 
-function uniqueNameGenerator(reservedNames: string[] | Set<string> = []) {
+function uniqueNameFactory(reservedNames: string[] | Set<string> = []) {
   const usedNames: Set<string> = new Set(reservedNames);
   return uniqueName;
 
@@ -425,7 +425,7 @@ export default function toLeopard(
   let customBlockArgNameMap: Map<Script, { [key: string]: string }> = new Map();
   let variableNameMap: { [id: string]: string } = {}; // ID to unique (Leopard) name
 
-  const uniqueSpriteName = uniqueNameGenerator(LEOPARD_RESERVED_SPRITE_NAMES);
+  const uniqueSpriteName = uniqueNameFactory(LEOPARD_RESERVED_SPRITE_NAMES);
 
   for (const target of [project.stage, ...project.sprites]) {
     const newTargetName = uniqueSpriteName(camelCase(target.name, true));
@@ -437,17 +437,16 @@ export default function toLeopard(
     //
     // Note: since variables are serialized as properties on an object (this.vars),
     // these never conflict with reserved JavaScript words like "class" or "new".
-    let uniqueVariableName = uniqueNameGenerator();
+    const uniqueVariableName = uniqueNameFactory();
 
     for (const { id, name } of [...target.lists, ...target.variables]) {
       const newName = uniqueVariableName(camelCase(name));
       variableNameMap[id] = newName;
     }
 
-    const reservedProperties =
-      target === project.stage ? LEOPARD_RESERVED_STAGE_PROPERTIES : LEOPARD_RESERVED_SPRITE_PROPERTIES;
-
-    const uniqueScriptName = uniqueNameGenerator(reservedProperties);
+    const uniqueScriptName = uniqueNameFactory(
+      target === project.stage ? LEOPARD_RESERVED_STAGE_PROPERTIES : LEOPARD_RESERVED_SPRITE_PROPERTIES
+    );
 
     for (const script of target.scripts) {
       script.setName(uniqueScriptName(camelCase(script.name)));
@@ -457,7 +456,7 @@ export default function toLeopard(
 
       // Parameter names aren't defined on a namespace at all, so must not conflict
       // with JavaScript reserved words.
-      const uniqueParamName = uniqueNameGenerator(JS_RESERVED_WORDS);
+      const uniqueParamName = uniqueNameFactory(JS_RESERVED_WORDS);
 
       for (const block of script.blocks) {
         if (block.opcode === OpCode.procedures_definition) {
