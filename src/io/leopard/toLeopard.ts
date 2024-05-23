@@ -69,6 +69,121 @@ const JS_RESERVED_WORDS = [
   "with"
 ];
 
+// Scripts are uniquely named per-target. These are on the sprite's main
+// namespace, so must not conflict with properties and methods defined on
+// all sprites/targets by Leopard.
+//
+// The list of reserved names is technically different between BaseSprite,
+// Sprite, and Stage, but all three are considered together here, whatever
+// kind of target will actually be getting script names here.
+//
+// Note: since scripts are serialized as class methods, these never conflict
+// with reserved JavaScript words like "class" or "new" (they're accessed
+// with the same typeof syntax, e.g. this.whenGreenFlagClicked).
+const LEOPARD_RESERVED_TARGET_PROPERTIES = [
+  // Essential data
+  "costumes",
+  "effectChain",
+  "effects",
+  "height",
+  "name",
+  "sounds",
+  "triggers",
+  "vars",
+  "watchers",
+  "width",
+
+  // Other objects
+  "andClones",
+  "clones",
+  "stage",
+  "sprites",
+  "parent",
+
+  // Motion
+  "direction",
+  "glide",
+  "goto",
+  "move",
+  "ifOnEdgeBounce",
+  "rotationStyle",
+  "x",
+  "y",
+
+  // Looks
+  "costumeNumber",
+  "costume",
+  "moveAhead",
+  "moveBehind",
+  "say",
+  "sayAndWait",
+  "size",
+  "think",
+  "thinkAndWait",
+  "visible",
+
+  // Sounds
+  "audioEffects",
+  "getSound",
+  "getSoundsPlayedByMe",
+  "playSoundUntilDone",
+  "startSound",
+  "stapAllOfMySounds",
+  "stopAllSounds",
+
+  // Control & events
+  "broadcast",
+  "broadcastAndWait",
+  "createClone",
+  "deleteThisClone",
+  "fireBackdropChanged",
+  "wait",
+  "warp",
+
+  // Opeartors - casting
+  "toNumber",
+  "toBoolean",
+  "toString",
+  "compare",
+
+  // Operators - strings
+  "stringIncludes",
+  "letterOf",
+
+  // Operators - numbers
+  "degToRad",
+  "degToScratch",
+  "radToDeg",
+  "radToScratch",
+  "random",
+  "scratchToDeg",
+  "scratchToRad",
+  "normalizeDeg",
+
+  // Sensing
+  "answer",
+  "askAndWait",
+  "colorTouching",
+  "keyPressed",
+  "loudness",
+  "mouse",
+  "restartTimer",
+  "timer",
+  "touching",
+
+  // Lists (arrays)
+  "arrayIncludes",
+  "indexInArray",
+  "itemOf",
+
+  // Pen
+  "clearPen",
+  "penColor",
+  "penDown",
+  "penSize",
+  "stamp"
+];
+
 /**
  * Input shapes are the basic attribute controlling which of a set of syntaxes
  * is returned for any given block (or primitive value). Provide an input shape
@@ -242,120 +357,7 @@ export default function toLeopard(
       variableNameMap[id] = newName;
     }
 
-    // Scripts are uniquely named per-target. These are on the sprite's main
-    // namespace, so must not conflict with properties and methods defined on
-    // all sprites/targets by Leopard.
-    //
-    // The list of reserved names is technically different between BaseSprite,
-    // Sprite, and Stage, but all three are considered together here, whatever
-    // kind of target will actually be getting script names here.
-    //
-    // Note: since scripts are serialized as class methods, these never conflict
-    // with reserved JavaScript words like "class" or "new" (they're accessed
-    // with the same typeof syntax, e.g. this.whenGreenFlagClicked).
-    const uniqueScriptName = uniqueNameGenerator([
-      // Essential data
-      "costumes",
-      "effectChain",
-      "effects",
-      "height",
-      "name",
-      "sounds",
-      "triggers",
-      "vars",
-      "watchers",
-      "width",
-
-      // Other objects
-      "andClones",
-      "clones",
-      "stage",
-      "sprites",
-      "parent",
-
-      // Motion
-      "direction",
-      "glide",
-      "goto",
-      "move",
-      "ifOnEdgeBounce",
-      "rotationStyle",
-      "x",
-      "y",
-
-      // Looks
-      "costumeNumber",
-      "costume",
-      "moveAhead",
-      "moveBehind",
-      "say",
-      "sayAndWait",
-      "size",
-      "think",
-      "thinkAndWait",
-      "visible",
-
-      // Sounds
-      "audioEffects",
-      "getSound",
-      "getSoundsPlayedByMe",
-      "playSoundUntilDone",
-      "startSound",
-      "stapAllOfMySounds",
-      "stopAllSounds",
-
-      // Control & events
-      "broadcast",
-      "broadcastAndWait",
-      "createClone",
-      "deleteThisClone",
-      "fireBackdropChanged",
-      "wait",
-      "warp",
-
-      // Opeartors - casting
-      "toNumber",
-      "toBoolean",
-      "toString",
-      "compare",
-
-      // Operators - strings
-      "stringIncludes",
-      "letterOf",
-
-      // Operators - numbers
-      "degToRad",
-      "degToScratch",
-      "radToDeg",
-      "radToScratch",
-      "random",
-      "scratchToDeg",
-      "scratchToRad",
-      "normalizeDeg",
-
-      // Sensing
-      "answer",
-      "askAndWait",
-      "colorTouching",
-      "keyPressed",
-      "loudness",
-      "mouse",
-      "restartTimer",
-      "timer",
-      "touching",
-
-      // Lists (arrays)
-      "arrayIncludes",
-      "indexInArray",
-      "itemOf",
-
-      // Pen
-      "clearPen",
-      "penColor",
-      "penDown",
-      "penSize",
-      "stamp"
-    ]);
+    const uniqueScriptName = uniqueNameGenerator(LEOPARD_RESERVED_TARGET_PROPERTIES);
 
     for (const script of target.scripts) {
       script.setName(uniqueScriptName(camelCase(script.name)));
