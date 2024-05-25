@@ -84,6 +84,9 @@ const JS_RESERVED_WORDS = [
  * than a generated `Sprite` subclass!).
  */
 const LEOPARD_RESERVED_SPRITE_NAMES = [
+  // Flat-out syntax errors
+  "NaN",
+
   // Browser-provided identifiers
   "Date",
   "Math",
