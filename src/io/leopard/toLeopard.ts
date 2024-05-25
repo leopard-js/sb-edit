@@ -203,8 +203,8 @@ const LEOPARD_RESERVED_SPRITE_BASE_PROPERTIES = [
 ];
 
 /**
- * Property names which are used by Leopard sprites (instances of `Sprite`,
- * whether any subclass or directly constructed from `Sprite`). This list is
+ * Property names which are used by Leopard stages (instances of `Stage`,
+ * whether any subclass or directly constructed from `Stage`). This list is
  * a superset of `LEOPARD_RESERVED_SPRITE_BASE_PROPERTIES`.
  */
 const LEOPARD_RESERVED_STAGE_PROPERTIES = [
@@ -221,8 +221,8 @@ const LEOPARD_RESERVED_STAGE_PROPERTIES = [
 ];
 
 /**
- * Property names which are used by Leopard stages (instances of `Stage`,
- * whether any subclass or directly constructed from `Stage`). This list is
+ * Property names which are used by Leopard sprites (instances of `Sprite`,
+ * whether any subclass or directly constructed from `Sprite`). This list is
  * a superset of `LEOPARD_RESERVED_SPRITE_BASE_PROPERTIES`.
  */
 const LEOPARD_RESERVED_SPRITE_PROPERTIES = [
