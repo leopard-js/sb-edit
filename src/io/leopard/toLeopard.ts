@@ -85,6 +85,7 @@ const JS_RESERVED_WORDS = [
  */
 const LEOPARD_RESERVED_SPRITE_NAMES = [
   // Flat-out syntax errors
+  "Infinity",
   "NaN",
 
   // Browser-provided identifiers
