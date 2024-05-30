@@ -77,8 +77,8 @@ type MutationFor<Op extends OpCode> = Op extends OpCode.procedures_prototype
 export interface Block<Op extends OpCode = OpCode> {
   opcode: Op;
 
-  next: string | null;
-  parent: string | null;
+  next?: string | null;
+  parent?: string | null;
 
   inputs: {
     [key: string]: BlockInput;

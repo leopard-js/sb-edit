@@ -292,7 +292,7 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
     }
   }
 
-  function blockWithNext(blockId: string, parentId: string | undefined = undefined): Block[] {
+  function blockWithNext(blockId: string, parentId?: string): Block[] {
     const sb3Block = blocks[blockId];
     const block = new BlockBase({
       opcode: sb3Block.opcode,
@@ -302,7 +302,7 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
       next: sb3Block.next ?? undefined
     }) as Block;
     let next: Block[] = [];
-    if (sb3Block.next !== null) {
+    if (typeof sb3Block.next === "string") {
       next = blockWithNext(sb3Block.next, blockId);
     }
     return [block, ...next];
