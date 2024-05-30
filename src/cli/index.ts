@@ -16,7 +16,8 @@ program
   .requiredOption("-i, --input <path>", "The path to the input project")
   .addOption(new Option("-it, --input-type <type>", "The type of input file").choices(["sb3"]))
   .requiredOption("-o, --output <path>", "The path to the output project")
-  .addOption(new Option("-ot, --output-type <type>", "The type of output file").choices(["leopard", "leopard-zip"]));
+  .addOption(new Option("-ot, --output-type <type>", "The type of output file").choices(["leopard", "leopard-zip"]))
+  .addOption(new Option("-t, --trace", "Show a detailed error trace"));
 
 program.parse();
 
@@ -25,6 +26,7 @@ const options: {
   inputType: "sb3";
   output: string;
   outputType: "leopard" | "leopard-zip";
+  trace: boolean | undefined;
 } = program.opts();
 
 let { input, inputType, output, outputType } = options;
@@ -106,14 +108,22 @@ async function run() {
       value = await fn();
       process.stdout.write(chalk.bold.green(" Done.\n"));
     } catch (err) {
+      const indent = " ".repeat(4 + String(thisStepNumber).length);
       if (err instanceof StepError) {
-        process.stdout.write(chalk.bold.red(`\n${" ".repeat(4 + String(thisStepNumber).length)}${err.message}`));
+        process.stdout.write(chalk.bold.red(`\n${indent}${err.message}`));
         process.stdout.write(chalk.red(`\n\nProject conversion failed.\n`));
       } else {
-        process.stdout.write(
-          chalk.bold.red`\n${" ".repeat(4 + String(thisStepNumber).length)}An unknown error occurred.`
-        );
-        process.stderr.write(chalk.red`\n\n${err}\n`);
+        process.stdout.write(chalk.bold.red`\n${indent}An unknown error occurred.`);
+        process.stdout.write(chalk.red`\n${indent}The JavaScript details are shown below.`);
+        process.stdout.write(chalk.red`\n${indent}This is a bug, please share the project you used on:`);
+        process.stdout.write(`\n${indent}https://github.com/leopard-js/sb-edit/issues`);
+        process.stdout.write(`\n\n`);
+
+        if (options.trace && err instanceof Error) {
+          console.error(err.stack);
+        } else {
+          console.error(String(err));
+        }
       }
       process.exit(1);
     }
