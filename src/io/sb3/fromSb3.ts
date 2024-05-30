@@ -391,6 +391,8 @@ export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAsset: Ge
       extractSounds(target, options.getAsset)
     ]);
 
+    const getScript = getBlockScript(target.blocks);
+
     return {
       name: target.name,
       isStage: target.isStage,
@@ -402,7 +404,7 @@ export async function fromSb3JSON(json: sb3.ProjectJSON, options: { getAsset: Ge
         .map(
           ([id, block]) =>
             new Script({
-              blocks: getBlockScript(target.blocks)(id),
+              blocks: getScript(id),
               x: block.x,
               y: block.y
             })
