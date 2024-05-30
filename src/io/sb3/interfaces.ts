@@ -208,36 +208,26 @@ export const fieldTypeMap: {
     [fieldName: string]: _BlockInput.Any["type"];
   };
 } = {
+  // Standalone blocks
+
   [OpCode.motion_setrotationstyle]: { STYLE: "rotationStyle" },
-  [OpCode.motion_pointtowards_menu]: { TOWARDS: "pointTowardsTarget" },
-  [OpCode.motion_glideto_menu]: { TO: "goToTarget" },
-  [OpCode.motion_goto_menu]: { TO: "goToTarget" },
   [OpCode.motion_align_scene]: { ALIGNMENT: "scrollAlignment" },
-  [OpCode.looks_costume]: { COSTUME: "costume" },
   [OpCode.looks_gotofrontback]: { FRONT_BACK: "frontBackMenu" },
   [OpCode.looks_goforwardbackwardlayers]: { FORWARD_BACKWARD: "forwardBackwardMenu" },
   [OpCode.looks_changeeffectby]: { EFFECT: "graphicEffect" },
   [OpCode.looks_backdropnumbername]: { NUMBER_NAME: "costumeNumberName" },
   [OpCode.looks_costumenumbername]: { NUMBER_NAME: "costumeNumberName" },
-  [OpCode.looks_backdrops]: { BACKDROP: "backdrop" },
   [OpCode.looks_seteffectto]: { EFFECT: "graphicEffect" },
   [OpCode.sound_seteffectto]: { EFFECT: "soundEffect" },
   [OpCode.sound_changeeffectby]: { EFFECT: "soundEffect" },
-  [OpCode.sound_sounds_menu]: { SOUND_MENU: "sound" },
   [OpCode.event_whenkeypressed]: { KEY_OPTION: "key" },
   [OpCode.event_whenbackdropswitchesto]: { BACKDROP: "backdrop" },
   [OpCode.event_whengreaterthan]: { WHENGREATERTHANMENU: "greaterThanMenu" },
   [OpCode.event_whenbroadcastreceived]: { BROADCAST_OPTION: "broadcast" },
-  [OpCode.event_broadcast_menu]: { BROADCAST_OPTION: "broadcast" },
   [OpCode.control_stop]: { STOP_OPTION: "stopMenu" },
-  [OpCode.control_create_clone_of_menu]: { CLONE_OPTION: "cloneTarget" },
   [OpCode.control_for_each]: { VARIABLE: "variable" },
-  [OpCode.sensing_touchingobjectmenu]: { TOUCHINGOBJECTMENU: "touchingTarget" },
-  [OpCode.sensing_distancetomenu]: { DISTANCETOMENU: "distanceToMenu" },
-  [OpCode.sensing_keyoptions]: { KEY_OPTION: "key" },
   [OpCode.sensing_setdragmode]: { DRAG_MODE: "dragModeMenu" },
   [OpCode.sensing_of]: { PROPERTY: "propertyOfMenu" },
-  [OpCode.sensing_of_object_menu]: { OBJECT: "target" },
   [OpCode.sensing_current]: { CURRENTMENU: "currentMenu" },
   [OpCode.operator_mathop]: { OPERATOR: "mathopMenu" },
   [OpCode.data_variable]: { VARIABLE: "variable" },
@@ -259,18 +249,95 @@ export const fieldTypeMap: {
   [OpCode.data_hidelist]: { LIST: "list" },
   [OpCode.argument_reporter_string_number]: { VALUE: "string" },
   [OpCode.argument_reporter_boolean]: { VALUE: "string" },
+
+  // Shadow blocks - generally these are menus or specialized inputs
+  //
+  // These are treated differently than normal inputs and sometimes specially
+  // processed, so each item shows the blocks which refer to this menu.
+
+  [OpCode.motion_pointtowards_menu]: { TOWARDS: "pointTowardsTarget" },
+  // - OpCode.motion_pointtowards
+
+  [OpCode.motion_glideto_menu]: { TO: "goToTarget" },
+  // - OpCode.motion_glideto
+
+  [OpCode.motion_goto_menu]: { TO: "goToTarget" },
+  // - OpCode.motion_goto
+
+  [OpCode.looks_costume]: { COSTUME: "costume" },
+  // - OpCode.looks_switchcostumeto
+
+  [OpCode.looks_backdrops]: { BACKDROP: "backdrop" },
+  // - OpCode.looks_switchbackdropto
+  // - OpCode.looks_switchbackdroptoandwait
+
+  [OpCode.sound_sounds_menu]: { SOUND_MENU: "sound" },
+  // - OpCode.sound_play
+  // - OpCode.sound_playuntildone
+
+  [OpCode.event_broadcast_menu]: { BROADCAST_OPTION: "broadcast" },
+  // (Not directly used in any blocks; this is generally serialized
+  //  as a BlockInputStatus.BROADCAST_PRIMITIVE instead)
+
+  [OpCode.control_create_clone_of_menu]: { CLONE_OPTION: "cloneTarget" },
+  // - OpCode.control_create_clone_of
+
+  [OpCode.sensing_touchingobjectmenu]: { TOUCHINGOBJECTMENU: "touchingTarget" },
+  // - OpCode.sensing_touchingobject
+
+  [OpCode.sensing_distancetomenu]: { DISTANCETOMENU: "distanceToMenu" },
+  // - OpCode.sensing_distanceto
+
+  [OpCode.sensing_keyoptions]: { KEY_OPTION: "key" },
+  // - OpCode.sensing_keypressed
+
+  [OpCode.sensing_of_object_menu]: { OBJECT: "target" },
+  // - OpCode.sensing_of
+
   [OpCode.pen_menu_colorParam]: { colorParam: "penColorParam" },
+  // - OpCode.pen_changePenColorParamBy
+  // - OpCode.pen_setPenColorParamTo
+  //
+  // (!) NOTE: The above blocks' input is `COLOR_PARAM`, but this
+  //     shadow block's field is `colorParam`.
+
   [OpCode.music_menu_DRUM]: { DRUM: "musicDrum" },
+  // - OpCode.music_playDrumForBeats
+
   [OpCode.music_menu_INSTRUMENT]: { INSTRUMENT: "musicInstrument" },
+  // - OpCode.music_setInstrument
+
   [OpCode.note]: { NOTE: "number" },
+  // - OpCode.music_playNoteForBeats
+
   [OpCode.videoSensing_menu_ATTRIBUTE]: { ATTRIBUTE: "videoSensingAttribute" },
+  // - OpCode.videoSensing_videoOn
+
   [OpCode.videoSensing_menu_SUBJECT]: { SUBJECT: "videoSensingSubject" },
+  // - OpCode.videoSensing_videoOn
+
   [OpCode.videoSensing_menu_VIDEO_STATE]: { VIDEO_STATE: "videoSensingVideoState" },
+  // - OpCode.videoSensing_videoToggle
+
   [OpCode.wedo2_menu_MOTOR_ID]: { MOTOR_ID: "wedo2MotorId" },
+  // - OpCode.wedo2_motorOnFor
+  // - OpCode.wedo2_motorOn
+  // - OpCode.wedo2_motorOff
+  // - OpCode.wedo2_startMotorPower
+  // - OpCode.wedo2_setMotorDirection
+
   [OpCode.wedo2_menu_MOTOR_DIRECTION]: { MOTOR_DIRECTION: "wedo2MotorDirection" },
+  // - OpCode.wedo2_setMotorDirection
+
   [OpCode.wedo2_menu_TILT_DIRECTION]: { TILT_DIRECTION: "wedo2TiltDirection" },
+  // - OpCode.wedo2_getTiltAngle
+
   [OpCode.wedo2_menu_TILT_DIRECTION_ANY]: { TILT_DIRECTION_ANY: "wedo2TiltDirectionAny" },
+  // - OpCode.wedo2_whenTilted
+  // - OpCode.wedo2_isTilted
+
   [OpCode.wedo2_menu_OP]: { OP: "wedo2Op" }
+  // - OpCode.wedo2_whenDistance
 };
 
 export enum BlockInputStatus {
