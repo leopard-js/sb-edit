@@ -99,11 +99,9 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
           const block = blocks[value];
           const inputScript = blockWithNext(value, blockId);
           if (inputScript.length === 1 && blocks[value].shadow) {
-            // Input contains a shadow block.
-            // Conceptually, shadow blocks are weird.
-            // We basically just want to copy the important
-            // information from the shadow block down into
-            // the block containing the shadow.
+            // Procedure prototype (the "example" of what a custom procedure looks like,
+            // inside the "define" block) - this is considered a shadow block but requires
+            // special care compared to normal shadow blocks, so handle it separately.
             if (block.opcode === OpCode.procedures_prototype) {
               const mutation = (block as sb3.Block<OpCode.procedures_prototype>).mutation;
 
@@ -155,13 +153,28 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
               addInput("ARGUMENTS", { type: "customBlockArguments", value: args });
               addInput("WARP", { type: "boolean", value: mutation.warp === "true" });
             } else {
-              // In most cases, just copy the shadow block's fields and inputs
-              // into its parent
-              result = {
-                ...result,
-                ...translateInputs(blocks[value].inputs),
-                ...translateFields(blocks[value].fields, blocks[value].opcode)
-              };
+              // Input contains a shadow block. Conceptually, shadow blocks are weird.
+              // We basically just want to copy the important information from the
+              // shadow block down into the block containing the shadow. There are some
+              // special cases so compute the inputs and fields up-front, then decide
+              // how to apply them.
+              const shadowInputs = translateInputs(blocks[value].inputs);
+              const shadowFields = translateFields(blocks[value].fields, blocks[value].opcode);
+
+              if (blocks[value].opcode === "pen_menu_colorParam") {
+                result = {
+                  ...result,
+                  COLOR_PARAM: (shadowFields as any).colorParam
+                };
+              } else {
+                // For most shadow blocks, just copy the shadow block's fields and inputs
+                // into its parent using the exact same names.
+                result = {
+                  ...result,
+                  ...shadowInputs,
+                  ...shadowFields
+                };
+              }
             }
           } else {
             let isBlocks;
