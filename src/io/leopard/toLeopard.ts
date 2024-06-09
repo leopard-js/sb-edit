@@ -70,6 +70,219 @@ const JS_RESERVED_WORDS = [
 ];
 
 /**
+ * Global identifiers which Leopard sprites (subclasses of `Sprite`) must not
+ * be named as, since that would overwrite or be a reference binding error.
+ *
+ * Only capitalized identifiers need to be listed here: generated sprite names
+ * will never conflict with identifiers whose first letter is lowercase.
+ * (This is also why JS reserved words aren't listed here - they're all
+ * lowercase, so don't conflict with generated sprite names.)
+ *
+ * However, it *must* include even (capitalized) identifiers which *aren't*
+ * provided by Leopard, if any part of generated Leopard code could directly
+ * refer to those identifiers (expecting some browser-provided value, rather
+ * than a generated `Sprite` subclass!).
+ */
+const LEOPARD_RESERVED_SPRITE_NAMES = [
+  // Flat-out syntax errors
+  "Infinity",
+  "NaN",
+
+  // Browser-provided identifiers
+  "Date",
+  "Math",
+
+  // Leopard-provided identifiers
+  "Color",
+  "Costume",
+  "Sound",
+  "Sprite",
+  "StageBase",
+  "Trigger",
+  "Watcher"
+];
+
+/**
+ * Property names which have special meaning in JavaScript. Custom properties
+ * must not overwrite these names, no matter the context.
+ */
+const JS_RESERVED_PROPERTIES = ["__proto__", "constructor", "prototype"];
+
+/**
+ * Property names which are used by any Leopard target - these correspond to
+ * Leopard's `SpriteBase` abstract class. Properties here are present on
+ * sprites as well as the stage.
+ *
+ * Overwriting these properties would change behavior that Leopard itself
+ * provides and expects to be behave in certain ways. While this a coding wizard
+ * might like to take advantage of this in their own Leopard project, generated
+ * projects must never accidentally overwrite these!
+ *
+ * This list is a superset of `JS_RESERVED_PROPERTIES` (and so are all supersets
+ * of this list).
+ *
+ * Note that this is *not* a superset of ordinary JavaScript reserved
+ * words. Properties are always accessed with `this.${name}` syntax, not used
+ * as standalone identifiers (`let ${name} = foo`).
+ */
+const LEOPARD_RESERVED_SPRITE_BASE_PROPERTIES = [
+  ...JS_RESERVED_PROPERTIES,
+
+  // Internals
+  "_costumeNumber",
+  "_layerOrder",
+  "_project",
+  "_vars",
+
+  // Basic execution
+  "triggers",
+  "vars",
+  "warp",
+
+  // Other objects
+  "stage",
+  "sprites",
+  "watchers",
+
+  // Control & events
+  "broadcast",
+  "broadcastAndWait",
+  "wait",
+
+  // Operators - casting
+  "toNumber",
+  "toBoolean",
+  "toString",
+  "compare",
+
+  // Operators - strings
+  "stringIncludes",
+  "letterOf",
+
+  // Operators - numbers
+  "degToRad",
+  "degToScratch",
+  "radToDeg",
+  "radToScratch",
+  "random",
+  "scratchTan",
+  "scratchToDeg",
+  "scratchToRad",
+  "normalizeDeg",
+  "wrapClamp",
+
+  // Lists (arrays)
+  "arrayIncludes",
+  "indexInArray",
+  "itemOf",
+
+  // Sensing
+  "answer",
+  "askAndWait",
+  "keyPressed",
+  "loudness",
+  "mouse",
+  "restartTimer",
+  "timer",
+
+  // Looks
+  "costume",
+  "costumeNumber",
+  "costumes",
+  "effects",
+
+  // Sounds
+  "audioEffects",
+  "effectChain",
+  "getSound",
+  "getSoundsPlayedByMe",
+  "playSoundUntilDone",
+  "sounds",
+  "startSound",
+  "stopAllOfMySounds",
+  "stopAllSounds",
+
+  // Pen
+  "clearPen"
+];
+
+/**
+ * Property names which are used by Leopard stages (instances of `Stage`,
+ * whether any subclass or directly constructed from `Stage`). This list is
+ * a superset of `LEOPARD_RESERVED_SPRITE_BASE_PROPERTIES`.
+ */
+const LEOPARD_RESERVED_STAGE_PROPERTIES = [
+  ...LEOPARD_RESERVED_SPRITE_BASE_PROPERTIES,
+
+  // Essential properties
+  "__counter",
+  "fence",
+  "height",
+  "width",
+
+  // Events & control
+  "fireBackdropChanged"
+];
+
+/**
+ * Property names which are used by Leopard sprites (instances of `Sprite`,
+ * whether any subclass or directly constructed from `Sprite`). This list is
+ * a superset of `LEOPARD_RESERVED_SPRITE_BASE_PROPERTIES`.
+ */
+const LEOPARD_RESERVED_SPRITE_PROPERTIES = [
+  ...LEOPARD_RESERVED_SPRITE_BASE_PROPERTIES,
+
+  // Internals
+  "_direction",
+  "_penColor",
+  "_penDown",
+  "_speechBubble",
+  "_x",
+  "_y",
+
+  // Other objects
+  "andClones",
+  "clones",
+  "parent",
+
+  // Control & events
+  "createClone",
+  "deleteThisClone",
+
+  // Sensing
+  "colorTouching",
+  "touching",
+  "nearestEdge",
+
+  // Looks
+  "moveAhead",
+  "moveBehind",
+  "say",
+  "sayAndWait",
+  "size",
+  "think",
+  "thinkAndWait",
+  "visible",
+
+  // Motion
+  "direction",
+  "glide",
+  "goto",
+  "ifOnEdgeBounce",
+  "move",
+  "positionInFence",
+  "rotationStyle",
+  "x",
+  "y",
+
+  // Pen
+  "penColor",
+  "penDown",
+  "penSize",
+  "stamp"
+];
+
+/**
  * Input shapes are the basic attribute controlling which of a set of syntaxes
  * is returned for any given block (or primitive value). Provide an input shape
  * to inputToJS to specify what kind of value should be provided as the value
@@ -132,7 +345,7 @@ enum InputShape {
   Stack = "Stack"
 }
 
-function uniqueNameGenerator(reservedNames: string[] | Set<string> = []) {
+function uniqueNameFactory(reservedNames: string[] | Set<string> = []) {
   const usedNames: Set<string> = new Set(reservedNames);
   return uniqueName;
 
@@ -212,18 +425,23 @@ export default function toLeopard(
   };
   const options = { ...defaultOptions, ...inOptions };
 
-  // Sprite identifier must not conflict with module-level/global identifiers,
-  // imports and any others that are referenced in generated code.
-  //
-  // Only classes and similar capitalized namespaces need to be listed here:
-  // generated sprite names will never conflict with identifiers whose first
-  // letter is lowercase. (This is also why JavaScript reserved words aren't
-  // listed here - they're all lowercase, so sprite names won't conflict.)
-  const uniqueSpriteName = uniqueNameGenerator(["Color", "Costume", "Sound", "Sprite", "Trigger", "Watcher"]);
-
+  // Maps targets' Scratch names to corresponding Leopard names
+  // (JS class names, which are identifiers).
   let targetNameMap: Partial<Record<string, string>> = {};
+
+  // Maps input names on actual custom block Script objects to corresponding
+  // Leopard names (JS function arguments, which are identifiers).
   let customBlockArgNameMap: Map<Script, { [key: string]: string }> = new Map();
-  let variableNameMap: { [id: string]: string } = {}; // ID to unique (Leopard) name
+
+  // Maps variables and lists' Scratch IDs to corresponding Leopard names
+  // (JS properties on `this.vars`). This is shared across all sprites, so
+  // that global (stage) variables' IDs map to the same name regardless what
+  // sprite they're accessed in. There's no issue about local (sprite)
+  // variables conflicting with each other, since the variables in each
+  // sprite all have unique IDs, even if they share the same (Scratch) name.
+  let variableNameMap: { [id: string]: string } = {};
+
+  const uniqueSpriteName = uniqueNameFactory(LEOPARD_RESERVED_SPRITE_NAMES);
 
   for (const target of [project.stage, ...project.sprites]) {
     const newTargetName = uniqueSpriteName(camelCase(target.name, true));
@@ -232,130 +450,16 @@ export default function toLeopard(
 
     // Variables are uniquely named per-target. These are on an empty namespace
     // so don't have any conflicts.
-    //
-    // Note: since variables are serialized as properties on an object (this.vars),
-    // these never conflict with reserved JavaScript words like "class" or "new".
-    let uniqueVariableName = uniqueNameGenerator();
+    const uniqueVariableName = uniqueNameFactory(JS_RESERVED_PROPERTIES);
 
     for (const { id, name } of [...target.lists, ...target.variables]) {
       const newName = uniqueVariableName(camelCase(name));
       variableNameMap[id] = newName;
     }
 
-    // Scripts are uniquely named per-target. These are on the sprite's main
-    // namespace, so must not conflict with properties and methods defined on
-    // all sprites/targets by Leopard.
-    //
-    // The list of reserved names is technically different between BaseSprite,
-    // Sprite, and Stage, but all three are considered together here, whatever
-    // kind of target will actually be getting script names here.
-    //
-    // Note: since scripts are serialized as class methods, these never conflict
-    // with reserved JavaScript words like "class" or "new" (they're accessed
-    // with the same typeof syntax, e.g. this.whenGreenFlagClicked).
-    const uniqueScriptName = uniqueNameGenerator([
-      // Essential data
-      "costumes",
-      "effectChain",
-      "effects",
-      "height",
-      "name",
-      "sounds",
-      "triggers",
-      "vars",
-      "watchers",
-      "width",
-
-      // Other objects
-      "andClones",
-      "clones",
-      "stage",
-      "sprites",
-      "parent",
-
-      // Motion
-      "direction",
-      "glide",
-      "goto",
-      "move",
-      "ifOnEdgeBounce",
-      "rotationStyle",
-      "x",
-      "y",
-
-      // Looks
-      "costumeNumber",
-      "costume",
-      "moveAhead",
-      "moveBehind",
-      "say",
-      "sayAndWait",
-      "size",
-      "think",
-      "thinkAndWait",
-      "visible",
-
-      // Sounds
-      "audioEffects",
-      "getSound",
-      "getSoundsPlayedByMe",
-      "playSoundUntilDone",
-      "startSound",
-      "stapAllOfMySounds",
-      "stopAllSounds",
-
-      // Control & events
-      "broadcast",
-      "broadcastAndWait",
-      "createClone",
-      "deleteThisClone",
-      "fireBackdropChanged",
-      "wait",
-      "warp",
-
-      // Opeartors - casting
-      "toNumber",
-      "toBoolean",
-      "toString",
-      "compare",
-
-      // Operators - strings
-      "stringIncludes",
-      "letterOf",
-
-      // Operators - numbers
-      "degToRad",
-      "degToScratch",
-      "radToDeg",
-      "radToScratch",
-      "random",
-      "scratchToDeg",
-      "scratchToRad",
-      "normalizeDeg",
-
-      // Sensing
-      "answer",
-      "askAndWait",
-      "colorTouching",
-      "keyPressed",
-      "loudness",
-      "mouse",
-      "restartTimer",
-      "timer",
-      "touching",
-
-      // Lists (arrays)
-      "arrayIncludes",
-      "indexInArray",
-      "itemOf",
-
-      // Pen
-      "clearPen",
-      "penColor",
-      "penDown",
-      "penSize",
-      "stamp"
-    ]);
+    const uniqueScriptName = uniqueNameFactory(
+      target === project.stage ? LEOPARD_RESERVED_STAGE_PROPERTIES : LEOPARD_RESERVED_SPRITE_PROPERTIES
+    );
 
     for (const script of target.scripts) {
       script.setName(uniqueScriptName(camelCase(script.name)));
@@ -365,7 +469,7 @@ export default function toLeopard(
 
       // Parameter names aren't defined on a namespace at all, so must not conflict
       // with JavaScript reserved words.
-      const uniqueParamName = uniqueNameGenerator(JS_RESERVED_WORDS);
+      const uniqueParamName = uniqueNameFactory(JS_RESERVED_WORDS);
 
       for (const block of script.blocks) {
         if (block.opcode === OpCode.procedures_definition) {
