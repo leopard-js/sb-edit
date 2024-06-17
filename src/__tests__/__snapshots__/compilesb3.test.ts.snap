@@ -25,16 +25,13 @@ export default class Abby extends Sprite {
     this.sounds = [new Sound("pop", "./Abby/sounds/pop.wav")];
 
     this.triggers = [
-      new Trigger(Trigger.CLONE_START, this.startAsClone),
       new Trigger(Trigger.KEY_PRESSED, { key: "any" }, this.whenKeyAnyPressed),
+      new Trigger(Trigger.CLONE_START, this.startAsClone),
     ];
   }
 
-  *startAsClone() {
-    this.move(10);
-  }
-
   *whenKeyAnyPressed() {
+    this.move(10);
     this.direction += this.costumeNumber;
     this.direction -= 15;
     this.goto(this.random(-240, 240), this.random(-180, 180));
@@ -53,6 +50,20 @@ export default class Abby extends Sprite {
     this.rotationStyle = Sprite.RotationStyle.LEFT_RIGHT;
     this.createClone();
     this.deleteThisClone();
+  }
+
+  *startAsClone() {
+    this.clearPen();
+    this.stamp();
+    this.penDown = true;
+    this.penDown = false;
+    this.penColor = Color.rgb(217, 234, 14);
+    this.penColor.h += 10;
+    this.penColor.s += 10;
+    this.penColor.v = 50;
+    this.penColor.a = 1 - 50 / 100;
+    this.penSize += 1;
+    this.penSize = 1;
   }
 }
 ",
@@ -2746,6 +2757,23 @@ exports[`sb3 -> sb3 1`] = `
           "shadow": true,
           "topLevel": false,
         },
+        "/Z6e0K_+6Dcu4P#3W=R~": {
+          "fields": {},
+          "inputs": {
+            "COLOR": [
+              1,
+              [
+                9,
+                "#d9ea0e",
+              ],
+            ],
+          },
+          "next": "X,|5^=YxfWa(AM)GBN6O",
+          "opcode": "pen_setPenColorToColor",
+          "parent": "RdPud3sA(o$Qv=\`8Br~:",
+          "shadow": false,
+          "topLevel": false,
+        },
         "5E%:(%kXATQ\`\`=J*P$3X": {
           "fields": {},
           "inputs": {
@@ -2764,6 +2792,15 @@ exports[`sb3 -> sb3 1`] = `
           "topLevel": true,
           "x": 540,
           "y": 262,
+        },
+        "5JIzKGYBn^m\`7T^IUQO:": {
+          "fields": {},
+          "inputs": {},
+          "next": "FfJGzie|aJ@mJd?),\`y{",
+          "opcode": "pen_stamp",
+          "parent": "~+(mwv{9_r2x9azjY@Dp",
+          "shadow": false,
+          "topLevel": false,
         },
         "5huxfqvw)sp;a?=%^9|U": {
           "fields": {
@@ -2866,6 +2903,40 @@ exports[`sb3 -> sb3 1`] = `
           "shadow": true,
           "topLevel": false,
         },
+        "C:b=t|w5*^!k9],!-P@w": {
+          "fields": {},
+          "inputs": {
+            "COLOR_PARAM": [
+              1,
+              "C:b=t|w5*^!k9],!-P@w-COLOR_PARAM",
+            ],
+            "VALUE": [
+              1,
+              [
+                4,
+                "50",
+              ],
+            ],
+          },
+          "next": "]@u*Qks?fmS-lPeSgult",
+          "opcode": "pen_setPenColorParamTo",
+          "parent": "F_a,7}ZvndHsA4x/EA/I",
+          "shadow": false,
+          "topLevel": false,
+        },
+        "C:b=t|w5*^!k9],!-P@w-COLOR_PARAM": {
+          "fields": {
+            "colorParam": [
+              "transparency",
+            ],
+          },
+          "inputs": {},
+          "next": null,
+          "opcode": "pen_menu_colorParam",
+          "parent": "C:b=t|w5*^!k9],!-P@w",
+          "shadow": true,
+          "topLevel": false,
+        },
         "E.H7CDrEGv/MMA:~^fz~": {
           "fields": {},
           "inputs": {
@@ -2904,9 +2975,9 @@ exports[`sb3 -> sb3 1`] = `
               ],
             ],
           },
-          "next": null,
+          "next": "c{nSzgr2i2BG}.:KnZm%",
           "opcode": "motion_movesteps",
-          "parent": "zhIj8QSHe%g+Vg|xXRv8",
+          "parent": "k[(Q*B#WZ}w4Jg56LGdC",
           "shadow": false,
           "topLevel": false,
         },
@@ -2921,6 +2992,49 @@ exports[`sb3 -> sb3 1`] = `
           "next": null,
           "opcode": "looks_costumenumbername",
           "parent": "c{nSzgr2i2BG}.:KnZm%",
+          "shadow": false,
+          "topLevel": false,
+        },
+        "F_a,7}ZvndHsA4x/EA/I": {
+          "fields": {},
+          "inputs": {
+            "COLOR_PARAM": [
+              1,
+              "F_a,7}ZvndHsA4x/EA/I-COLOR_PARAM",
+            ],
+            "VALUE": [
+              1,
+              [
+                4,
+                "50",
+              ],
+            ],
+          },
+          "next": "C:b=t|w5*^!k9],!-P@w",
+          "opcode": "pen_setPenColorParamTo",
+          "parent": "vIgzh:FS3w-$zMkNQD@E",
+          "shadow": false,
+          "topLevel": false,
+        },
+        "F_a,7}ZvndHsA4x/EA/I-COLOR_PARAM": {
+          "fields": {
+            "colorParam": [
+              "brightness",
+            ],
+          },
+          "inputs": {},
+          "next": null,
+          "opcode": "pen_menu_colorParam",
+          "parent": "F_a,7}ZvndHsA4x/EA/I",
+          "shadow": true,
+          "topLevel": false,
+        },
+        "FfJGzie|aJ@mJd?),\`y{": {
+          "fields": {},
+          "inputs": {},
+          "next": "RdPud3sA(o$Qv=\`8Br~:",
+          "opcode": "pen_penDown",
+          "parent": "5JIzKGYBn^m\`7T^IUQO:",
           "shadow": false,
           "topLevel": false,
         },
@@ -2975,6 +3089,77 @@ exports[`sb3 -> sb3 1`] = `
           "shadow": false,
           "topLevel": false,
         },
+        "PG-[[9Mi=cEs}Drp.@$)": {
+          "fields": {},
+          "inputs": {},
+          "next": "~+(mwv{9_r2x9azjY@Dp",
+          "opcode": "control_start_as_clone",
+          "parent": null,
+          "shadow": false,
+          "topLevel": true,
+          "x": 541,
+          "y": 687,
+        },
+        "RdPud3sA(o$Qv=\`8Br~:": {
+          "fields": {},
+          "inputs": {},
+          "next": "/Z6e0K_+6Dcu4P#3W=R~",
+          "opcode": "pen_penUp",
+          "parent": "FfJGzie|aJ@mJd?),\`y{",
+          "shadow": false,
+          "topLevel": false,
+        },
+        "X,|5^=YxfWa(AM)GBN6O": {
+          "fields": {},
+          "inputs": {
+            "COLOR_PARAM": [
+              1,
+              "X,|5^=YxfWa(AM)GBN6O-COLOR_PARAM",
+            ],
+            "VALUE": [
+              1,
+              [
+                4,
+                "10",
+              ],
+            ],
+          },
+          "next": "vIgzh:FS3w-$zMkNQD@E",
+          "opcode": "pen_changePenColorParamBy",
+          "parent": "/Z6e0K_+6Dcu4P#3W=R~",
+          "shadow": false,
+          "topLevel": false,
+        },
+        "X,|5^=YxfWa(AM)GBN6O-COLOR_PARAM": {
+          "fields": {
+            "colorParam": [
+              "color",
+            ],
+          },
+          "inputs": {},
+          "next": null,
+          "opcode": "pen_menu_colorParam",
+          "parent": "X,|5^=YxfWa(AM)GBN6O",
+          "shadow": true,
+          "topLevel": false,
+        },
+        "X:8h*N#M$WD2v;QM#Tvc": {
+          "fields": {},
+          "inputs": {
+            "SIZE": [
+              1,
+              [
+                4,
+                "1",
+              ],
+            ],
+          },
+          "next": null,
+          "opcode": "pen_setPenSizeTo",
+          "parent": "]@u*Qks?fmS-lPeSgult",
+          "shadow": false,
+          "topLevel": false,
+        },
         "Y.?k2|Fgj(X+RaFzPulL": {
           "fields": {},
           "inputs": {
@@ -3007,6 +3192,23 @@ exports[`sb3 -> sb3 1`] = `
           "shadow": false,
           "topLevel": false,
         },
+        "]@u*Qks?fmS-lPeSgult": {
+          "fields": {},
+          "inputs": {
+            "SIZE": [
+              1,
+              [
+                4,
+                "1",
+              ],
+            ],
+          },
+          "next": "X:8h*N#M$WD2v;QM#Tvc",
+          "opcode": "pen_changePenSizeBy",
+          "parent": "C:b=t|w5*^!k9],!-P@w",
+          "shadow": false,
+          "topLevel": false,
+        },
         "_/B^gfbbm{+%Y25[(?tS": {
           "fields": {},
           "inputs": {},
@@ -3030,7 +3232,7 @@ exports[`sb3 -> sb3 1`] = `
           },
           "next": ";2./3bzgr@Ll|!1GFSpQ",
           "opcode": "motion_turnright",
-          "parent": "k[(Q*B#WZ}w4Jg56LGdC",
+          "parent": "E[jPr,oa^68!L8GR-MTq",
           "shadow": false,
           "topLevel": false,
         },
@@ -3068,7 +3270,7 @@ exports[`sb3 -> sb3 1`] = `
             ],
           },
           "inputs": {},
-          "next": "c{nSzgr2i2BG}.:KnZm%",
+          "next": "E[jPr,oa^68!L8GR-MTq",
           "opcode": "event_whenkeypressed",
           "parent": null,
           "shadow": false,
@@ -3093,16 +3295,48 @@ exports[`sb3 -> sb3 1`] = `
           "shadow": false,
           "topLevel": false,
         },
-        "zhIj8QSHe%g+Vg|xXRv8": {
+        "vIgzh:FS3w-$zMkNQD@E": {
+          "fields": {},
+          "inputs": {
+            "COLOR_PARAM": [
+              1,
+              "vIgzh:FS3w-$zMkNQD@E-COLOR_PARAM",
+            ],
+            "VALUE": [
+              1,
+              [
+                4,
+                "10",
+              ],
+            ],
+          },
+          "next": "F_a,7}ZvndHsA4x/EA/I",
+          "opcode": "pen_changePenColorParamBy",
+          "parent": "X,|5^=YxfWa(AM)GBN6O",
+          "shadow": false,
+          "topLevel": false,
+        },
+        "vIgzh:FS3w-$zMkNQD@E-COLOR_PARAM": {
+          "fields": {
+            "colorParam": [
+              "saturation",
+            ],
+          },
+          "inputs": {},
+          "next": null,
+          "opcode": "pen_menu_colorParam",
+          "parent": "vIgzh:FS3w-$zMkNQD@E",
+          "shadow": true,
+          "topLevel": false,
+        },
+        "~+(mwv{9_r2x9azjY@Dp": {
           "fields": {},
           "inputs": {},
-          "next": "E[jPr,oa^68!L8GR-MTq",
-          "opcode": "control_start_as_clone",
-          "parent": null,
+          "next": "5JIzKGYBn^m\`7T^IUQO:",
+          "opcode": "pen_clear",
+          "parent": "PG-[[9Mi=cEs}Drp.@$)",
           "shadow": false,
-          "topLevel": true,
-          "x": 9,
-          "y": -53,
+          "topLevel": false,
         },
         "~r*uX?#GQ6Ebl97}am/M": {
           "fields": {},
@@ -3193,10 +3427,8 @@ exports[`sb3 -> scratchblocks 1`] = `
 
 set drag mode [not draggable v]
 
-when I start as a clone
-move (10) steps
-
 when [any v] key pressed
+move (10) steps
 turn cw (costume [number v]) degrees
 turn ccw (15) degrees
 go to (random position v)
@@ -3212,7 +3444,20 @@ set y to (-23)
 if on edge, bounce
 set rotation style [left-right v]
 create clone of (myself v)
-delete this clone",
+delete this clone
+
+when I start as a clone
+erase all
+stamp
+pen down
+pen up
+set pen color to [#d9ea0e]
+change pen (color v) by (10)
+change pen (saturation v) by (10)
+set pen (brightness v) to (50)
+set pen (transparency v) to (50)
+change pen size by (1)
+set pen size to (1)",
   "Stage": "when green flag clicked
 switch backdrop to (backdrop1 v)
 switch backdrop to (next backdrop v) and wait
