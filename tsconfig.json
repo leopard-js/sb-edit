@@ -6,7 +6,8 @@
     "declaration": true,
     "outDir": "./lib",
     "strict": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "inlineSourceMap": true
   },
   "include": ["src"],
   "exclude": ["node_modules", "**/*.test.ts"]
