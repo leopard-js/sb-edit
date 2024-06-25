@@ -28,9 +28,9 @@ export default class Tests extends Sprite {
   *avoidAbscuring(times, i) {
     for (let i2 = 0; i2 < 1; i2++) {
       for (
-        let i2 = 0, times2 = this.x + 6 * this.toNumber(i);
-        i2 < times2;
-        i2++
+        let i3 = 0, times2 = this.x + 6 * this.toNumber(i);
+        i3 < times2;
+        i3++
       ) {
         this.x += this.toNumber(times);
         yield;
@@ -64,11 +64,11 @@ export default class Tests extends Sprite {
       this.x += 1;
       yield;
     }
-    for (let i = 0, times = 2 + 2 * 0.5; i < times; i++) {
+    for (let i2 = 0, times = 2 + 2 * 0.5; i2 < times; i2++) {
       this.x += 1;
       yield;
     }
-    for (let i = 0, times = this.x + 4; i < times; i++) {
+    for (let i3 = 0, times2 = this.x + 4; i3 < times2; i3++) {
       this.x += 1;
       yield;
     }
