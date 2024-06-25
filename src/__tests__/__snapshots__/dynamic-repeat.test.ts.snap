@@ -1,0 +1,76 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`dynamic-repeat.sb3 -> leopard 1`] = `
+"import {
+  Sprite,
+  Trigger,
+  Watcher,
+  Costume,
+  Color,
+  Sound,
+} from "https://unpkg.com/leopard@^1/dist/index.esm.js";
+
+export default class Tests extends Sprite {
+  constructor(...args) {
+    super(...args);
+
+    this.costumes = [
+      new Costume("Gobo-a", "./Tests/costumes/Gobo-a.svg", { x: 47, y: 55 }),
+    ];
+
+    this.sounds = [];
+
+    this.triggers = [
+      new Trigger(Trigger.GREEN_FLAG, this.whenGreenFlagClicked),
+    ];
+  }
+
+  *avoidAbscuring(times, i) {
+    for (let i = 0; i < 1; i++) {
+      for (let i = 0, times = this.x + 6 * this.toNumber(i); i < times; i++) {
+        this.x += this.toNumber(times);
+        yield;
+      }
+      yield;
+    }
+  }
+
+  *avoidAbscuring2(times1, times2, times3, times, i3, i2, i1, i) {
+    for (
+      let i = 0,
+        times =
+          this.x +
+          (this.toNumber(i) +
+            this.toNumber(i1) +
+            (this.toNumber(i2) + this.toNumber(i3)));
+      i < times;
+      i++
+    ) {
+      this.x +=
+        this.toNumber(times1) +
+        this.toNumber(times2) +
+        (this.toNumber(times3) + this.toNumber(times));
+      yield;
+    }
+  }
+
+  *whenGreenFlagClicked() {
+    this.x = 0;
+    for (let i = 0; i < 2; i++) {
+      this.x += 1;
+      yield;
+    }
+    for (let i = 0, times = 2 + 2 * 0.5; i < times; i++) {
+      this.x += 1;
+      yield;
+    }
+    for (let i = 0, times = this.x + 4; i < times; i++) {
+      this.x += 1;
+      yield;
+    }
+    yield* this.avoidAbscuring(1, 1);
+    yield* this.avoidAbscuring2(0.15, 0.3, 0.25, 0.3, 1, 1, 2, 4);
+  }
+}
+"
+`;
