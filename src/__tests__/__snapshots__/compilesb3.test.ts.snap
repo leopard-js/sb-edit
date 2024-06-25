@@ -31,6 +31,7 @@ export default class Abby extends Sprite {
   }
 
   *whenKeyAnyPressed() {
+    yield* this.inert();
     this.move(10);
     this.direction += this.costumeNumber;
     this.direction -= 15;
@@ -53,6 +54,7 @@ export default class Abby extends Sprite {
   }
 
   *startAsClone() {
+    yield* this.inert();
     this.clearPen();
     this.stamp();
     this.penDown = true;
@@ -64,6 +66,10 @@ export default class Abby extends Sprite {
     this.penColor.a = 1 - 50 / 100;
     this.penSize += 1;
     this.penSize = 1;
+  }
+
+  *inert() {
+    /* TODO: Implement stop all */ null;
   }
 }
 ",
@@ -153,6 +159,7 @@ export default class Stage extends StageBase {
   }
 
   *whenGreenFlagClicked() {
+    yield* this.inert();
     this.costume = "backdrop1";
     /* TODO: Implement looks_switchbackdroptoandwait */ null;
     this.costumeNumber++;
@@ -162,6 +169,7 @@ export default class Stage extends StageBase {
   }
 
   *whenKeySpacePressed() {
+    yield* this.inert();
     yield* this.playSoundUntilDone("pop");
     yield* this.startSound("pop");
     this.stopAllSounds();
@@ -173,6 +181,7 @@ export default class Stage extends StageBase {
   }
 
   *whenstageclicked() {
+    yield* this.inert();
     yield* this.askAndWait("What's your name?");
     yield* this.askAndWait(this.answer);
     yield* this.askAndWait(this.keyPressed("space"));
@@ -195,6 +204,7 @@ export default class Stage extends StageBase {
   }
 
   *whenbackdropswitchesto() {
+    yield* this.inert();
     yield* this.wait(1);
     while (!null) {
       yield;
@@ -221,6 +231,7 @@ export default class Stage extends StageBase {
   }
 
   *whengreaterthan() {
+    yield* this.inert();
     this.vars.CloudVar = this.vars.myVariable;
     this.vars.CloudVar++;
     this.vars.myVariable = 0;
@@ -230,6 +241,7 @@ export default class Stage extends StageBase {
   }
 
   *whenIReceiveMessage1() {
+    yield* this.inert();
     this.broadcast("message1");
     yield* this.broadcastAndWait("message1");
     yield* this.askAndWait(5 + this.random(8 / 4, 10));
@@ -257,6 +269,7 @@ export default class Stage extends StageBase {
   }
 
   *whengreaterthan2() {
+    yield* this.inert();
     this.vars.testList.push(this.arrayIncludes(this.vars.testList, "thing"));
     this.vars.testList.splice(0, 1);
     this.vars.testList = [];
@@ -272,6 +285,10 @@ export default class Stage extends StageBase {
     );
     this.watchers.testList.visible = true;
     this.watchers.testList.visible = false;
+  }
+
+  *inert() {
+    /* TODO: Implement stop all */ null;
   }
 }
 ",
@@ -341,6 +358,22 @@ exports[`sb3 -> sb3 1`] = `
   "targets": [
     {
       "blocks": {
+        "!WNYMl~ON5bJZB_G,B;,": {
+          "fields": {},
+          "inputs": {},
+          "mutation": {
+            "argumentids": "[]",
+            "children": [],
+            "proccode": "inert",
+            "tagName": "mutation",
+            "warp": "false",
+          },
+          "next": "lf/jXaV:8msmk:K\`CO8e",
+          "opcode": "procedures_call",
+          "parent": "b9$~^E]?q#)sfd{52!tw",
+          "shadow": false,
+          "topLevel": false,
+        },
         "#)^!zAFCLXjJMC$Ee{|5": {
           "fields": {},
           "inputs": {
@@ -362,6 +395,22 @@ exports[`sb3 -> sb3 1`] = `
           "next": null,
           "opcode": "operator_letter_of",
           "parent": "YrF~4pz4M;0%ACjBS61$",
+          "shadow": false,
+          "topLevel": false,
+        },
+        "#jKw4%iHyZZ#ofK]}ssK": {
+          "fields": {},
+          "inputs": {},
+          "mutation": {
+            "argumentids": "[]",
+            "children": [],
+            "proccode": "inert",
+            "tagName": "mutation",
+            "warp": "false",
+          },
+          "next": "J5Fio--_)G}!xY9@=uE}",
+          "opcode": "procedures_call",
+          "parent": "E:Fnx}.kWFjqH+D7-}@0",
           "shadow": false,
           "topLevel": false,
         },
@@ -569,7 +618,7 @@ exports[`sb3 -> sb3 1`] = `
           },
           "next": "qII!GzALU;oYO~7O5:~*",
           "opcode": "control_wait",
-          "parent": "3:GP{RA%%HDBF*QX$p41",
+          "parent": "6;jqA.yFpsjkSO$K2mb#",
           "shadow": false,
           "topLevel": false,
         },
@@ -736,7 +785,7 @@ exports[`sb3 -> sb3 1`] = `
           },
           "next": "8^#h+p*}RC1lX9pMF8R=",
           "opcode": "data_addtolist",
-          "parent": "38C@%O\`U+*JaX45^6M!w",
+          "parent": "=OGF^.JB)wcHZw/,{[un",
           "shadow": false,
           "topLevel": false,
         },
@@ -799,13 +848,13 @@ exports[`sb3 -> sb3 1`] = `
               ],
             ],
           },
-          "next": "1O%-^3G)YMorNcbLWm]u",
+          "next": "=OGF^.JB)wcHZw/,{[un",
           "opcode": "event_whengreaterthan",
           "parent": null,
           "shadow": false,
           "topLevel": true,
           "x": 677,
-          "y": 579,
+          "y": 635,
         },
         "3:GP{RA%%HDBF*QX$p41": {
           "fields": {
@@ -815,7 +864,7 @@ exports[`sb3 -> sb3 1`] = `
             ],
           },
           "inputs": {},
-          "next": "-x,+B=xsvb5Ww4SyDrb[",
+          "next": "6;jqA.yFpsjkSO$K2mb#",
           "opcode": "event_whenbackdropswitchesto",
           "parent": null,
           "shadow": false,
@@ -915,6 +964,22 @@ exports[`sb3 -> sb3 1`] = `
           "shadow": true,
           "topLevel": false,
         },
+        "6;jqA.yFpsjkSO$K2mb#": {
+          "fields": {},
+          "inputs": {},
+          "mutation": {
+            "argumentids": "[]",
+            "children": [],
+            "proccode": "inert",
+            "tagName": "mutation",
+            "warp": "false",
+          },
+          "next": "-x,+B=xsvb5Ww4SyDrb[",
+          "opcode": "procedures_call",
+          "parent": "3:GP{RA%%HDBF*QX$p41",
+          "shadow": false,
+          "topLevel": false,
+        },
         "8^#h+p*}RC1lX9pMF8R=": {
           "fields": {
             "LIST": [
@@ -953,6 +1018,40 @@ exports[`sb3 -> sb3 1`] = `
           "opcode": "sensing_askandwait",
           "parent": "g5c$[)Z%t-;7\`9a):qP[",
           "shadow": false,
+          "topLevel": false,
+        },
+        ":a4[mR)t:|l_:RS#c$MB": {
+          "fields": {},
+          "inputs": {
+            "custom_block": [
+              1,
+              ":a4[mR)t:|l_:RS#c$MB-prototype",
+            ],
+          },
+          "next": "cX]\`/pi/,08;z\`!o](iE",
+          "opcode": "procedures_definition",
+          "parent": null,
+          "shadow": false,
+          "topLevel": true,
+          "x": -474,
+          "y": 642,
+        },
+        ":a4[mR)t:|l_:RS#c$MB-prototype": {
+          "fields": {},
+          "inputs": {},
+          "mutation": {
+            "argumentdefaults": "[]",
+            "argumentids": "[]",
+            "argumentnames": "[]",
+            "children": [],
+            "proccode": "inert",
+            "tagName": "mutation",
+            "warp": "false",
+          },
+          "next": null,
+          "opcode": "procedures_prototype",
+          "parent": ":a4[mR)t:|l_:RS#c$MB",
+          "shadow": true,
           "topLevel": false,
         },
         ";8/(OEes28-+%oQ2XZ0!": {
@@ -1028,6 +1127,22 @@ exports[`sb3 -> sb3 1`] = `
           "shadow": false,
           "topLevel": false,
         },
+        "=OGF^.JB)wcHZw/,{[un": {
+          "fields": {},
+          "inputs": {},
+          "mutation": {
+            "argumentids": "[]",
+            "children": [],
+            "proccode": "inert",
+            "tagName": "mutation",
+            "warp": "false",
+          },
+          "next": "1O%-^3G)YMorNcbLWm]u",
+          "opcode": "procedures_call",
+          "parent": "38C@%O\`U+*JaX45^6M!w",
+          "shadow": false,
+          "topLevel": false,
+        },
         "?Ms$z}YO=-WhGr[\${ckY": {
           "fields": {
             "LIST": [
@@ -1080,7 +1195,7 @@ exports[`sb3 -> sb3 1`] = `
         "E:Fnx}.kWFjqH+D7-}@0": {
           "fields": {},
           "inputs": {},
-          "next": "J5Fio--_)G}!xY9@=uE}",
+          "next": "#jKw4%iHyZZ#ofK]}ssK",
           "opcode": "event_whenflagclicked",
           "parent": null,
           "shadow": false,
@@ -1204,7 +1319,7 @@ exports[`sb3 -> sb3 1`] = `
           },
           "next": "qMeX#+dX~Jbxal8janbT",
           "opcode": "looks_switchbackdropto",
-          "parent": "E:Fnx}.kWFjqH+D7-}@0",
+          "parent": "#jKw4%iHyZZ#ofK]}ssK",
           "shadow": false,
           "topLevel": false,
         },
@@ -1486,6 +1601,22 @@ exports[`sb3 -> sb3 1`] = `
           "shadow": false,
           "topLevel": false,
         },
+        "U=v:pMY+p_v#FG0;v=JV": {
+          "fields": {},
+          "inputs": {},
+          "mutation": {
+            "argumentids": "[]",
+            "children": [],
+            "proccode": "inert",
+            "tagName": "mutation",
+            "warp": "false",
+          },
+          "next": "}!GR4UvWt\${)92hJ]5dO",
+          "opcode": "procedures_call",
+          "parent": "{]jj23S=pi73PknR4!dd",
+          "shadow": false,
+          "topLevel": false,
+        },
         "UI9I^ZY8nech%]Cenyd%": {
           "fields": {},
           "inputs": {
@@ -1513,6 +1644,22 @@ exports[`sb3 -> sb3 1`] = `
           "shadow": true,
           "topLevel": false,
         },
+        "U}rz*i6V*,x3_t3GApOZ": {
+          "fields": {},
+          "inputs": {},
+          "mutation": {
+            "argumentids": "[]",
+            "children": [],
+            "proccode": "inert",
+            "tagName": "mutation",
+            "warp": "false",
+          },
+          "next": "e{a~iN_m{;|N%Na0545|",
+          "opcode": "procedures_call",
+          "parent": "V#;#}u6DE^b~6i?J94as",
+          "shadow": false,
+          "topLevel": false,
+        },
         "V#;#}u6DE^b~6i?J94as": {
           "fields": {
             "BROADCAST_OPTION": [
@@ -1521,7 +1668,7 @@ exports[`sb3 -> sb3 1`] = `
             ],
           },
           "inputs": {},
-          "next": "e{a~iN_m{;|N%Na0545|",
+          "next": "U}rz*i6V*,x3_t3GApOZ",
           "opcode": "event_whenbroadcastreceived",
           "parent": null,
           "shadow": false,
@@ -1772,7 +1919,7 @@ exports[`sb3 -> sb3 1`] = `
           },
           "next": "htXewO?quzPYaWB_*=[+",
           "opcode": "sound_playuntildone",
-          "parent": "g9~,Su,YK1739Nd$h5iI",
+          "parent": "nHNt9s)|1lwfChP}tBYR",
           "shadow": false,
           "topLevel": false,
         },
@@ -1851,7 +1998,7 @@ exports[`sb3 -> sb3 1`] = `
         "b9$~^E]?q#)sfd{52!tw": {
           "fields": {},
           "inputs": {},
-          "next": "lf/jXaV:8msmk:K\`CO8e",
+          "next": "!WNYMl~ON5bJZB_G,B;,",
           "opcode": "event_whenstageclicked",
           "parent": null,
           "shadow": false,
@@ -1921,6 +2068,20 @@ exports[`sb3 -> sb3 1`] = `
           "shadow": false,
           "topLevel": false,
         },
+        "cX]\`/pi/,08;z\`!o](iE": {
+          "fields": {
+            "STOP_OPTION": [
+              "all",
+              null,
+            ],
+          },
+          "inputs": {},
+          "next": null,
+          "opcode": "control_stop",
+          "parent": ":a4[mR)t:|l_:RS#c$MB",
+          "shadow": false,
+          "topLevel": false,
+        },
         "eSy1=B4^$x%|{~]:-h~;": {
           "fields": {},
           "inputs": {
@@ -1953,7 +2114,7 @@ exports[`sb3 -> sb3 1`] = `
           },
           "next": "y]@xG|s%S#qjX(6fy_hy",
           "opcode": "event_broadcast",
-          "parent": "V#;#}u6DE^b~6i?J94as",
+          "parent": "U}rz*i6V*,x3_t3GApOZ",
           "shadow": false,
           "topLevel": false,
         },
@@ -2024,7 +2185,7 @@ exports[`sb3 -> sb3 1`] = `
             ],
           },
           "inputs": {},
-          "next": "\`13nI%7Fxca2czeKkFEr",
+          "next": "nHNt9s)|1lwfChP}tBYR",
           "opcode": "event_whenkeypressed",
           "parent": null,
           "shadow": false,
@@ -2191,7 +2352,7 @@ exports[`sb3 -> sb3 1`] = `
           },
           "next": "VT3^QZ@hZ=8bH=~X3U]W",
           "opcode": "sensing_askandwait",
-          "parent": "b9$~^E]?q#)sfd{52!tw",
+          "parent": "!WNYMl~ON5bJZB_G,B;,",
           "shadow": false,
           "topLevel": false,
         },
@@ -2224,6 +2385,22 @@ exports[`sb3 -> sb3 1`] = `
           "next": null,
           "opcode": "argument_reporter_boolean",
           "parent": "Z9.MBu1Wgj+D3]}Db7~F",
+          "shadow": false,
+          "topLevel": false,
+        },
+        "nHNt9s)|1lwfChP}tBYR": {
+          "fields": {},
+          "inputs": {},
+          "mutation": {
+            "argumentids": "[]",
+            "children": [],
+            "proccode": "inert",
+            "tagName": "mutation",
+            "warp": "false",
+          },
+          "next": "\`13nI%7Fxca2czeKkFEr",
+          "opcode": "procedures_call",
+          "parent": "g9~,Su,YK1739Nd$h5iI",
           "shadow": false,
           "topLevel": false,
         },
@@ -2491,7 +2668,7 @@ exports[`sb3 -> sb3 1`] = `
               ],
             ],
           },
-          "next": "}!GR4UvWt\${)92hJ]5dO",
+          "next": "U=v:pMY+p_v#FG0;v=JV",
           "opcode": "event_whengreaterthan",
           "parent": null,
           "shadow": false,
@@ -2522,7 +2699,7 @@ exports[`sb3 -> sb3 1`] = `
           },
           "next": "1+Ae,O8h3A0g{6a.}eve",
           "opcode": "data_setvariableto",
-          "parent": "{]jj23S=pi73PknR4!dd",
+          "parent": "U=v:pMY+p_v#FG0;v=JV",
           "shadow": false,
           "topLevel": false,
         },
@@ -2975,7 +3152,7 @@ exports[`sb3 -> sb3 1`] = `
           },
           "next": "c{nSzgr2i2BG}.:KnZm%",
           "opcode": "motion_movesteps",
-          "parent": "k[(Q*B#WZ}w4Jg56LGdC",
+          "parent": "V=7M(*~K,mPxWkFlx6{d",
           "shadow": false,
           "topLevel": false,
         },
@@ -3090,7 +3267,7 @@ exports[`sb3 -> sb3 1`] = `
         "PG-[[9Mi=cEs}Drp.@$)": {
           "fields": {},
           "inputs": {},
-          "next": "~+(mwv{9_r2x9azjY@Dp",
+          "next": "WI6yQQ=C\`0TUj!WMtI.z",
           "opcode": "control_start_as_clone",
           "parent": null,
           "shadow": false,
@@ -3104,6 +3281,38 @@ exports[`sb3 -> sb3 1`] = `
           "next": "/Z6e0K_+6Dcu4P#3W=R~",
           "opcode": "pen_penUp",
           "parent": "FfJGzie|aJ@mJd?),\`y{",
+          "shadow": false,
+          "topLevel": false,
+        },
+        "V=7M(*~K,mPxWkFlx6{d": {
+          "fields": {},
+          "inputs": {},
+          "mutation": {
+            "argumentids": "[]",
+            "children": [],
+            "proccode": "inert",
+            "tagName": "mutation",
+            "warp": "false",
+          },
+          "next": "E[jPr,oa^68!L8GR-MTq",
+          "opcode": "procedures_call",
+          "parent": "k[(Q*B#WZ}w4Jg56LGdC",
+          "shadow": false,
+          "topLevel": false,
+        },
+        "WI6yQQ=C\`0TUj!WMtI.z": {
+          "fields": {},
+          "inputs": {},
+          "mutation": {
+            "argumentids": "[]",
+            "children": [],
+            "proccode": "inert",
+            "tagName": "mutation",
+            "warp": "false",
+          },
+          "next": "~+(mwv{9_r2x9azjY@Dp",
+          "opcode": "procedures_call",
+          "parent": "PG-[[9Mi=cEs}Drp.@$)",
           "shadow": false,
           "topLevel": false,
         },
@@ -3155,6 +3364,20 @@ exports[`sb3 -> sb3 1`] = `
           "next": null,
           "opcode": "pen_setPenSizeTo",
           "parent": "]@u*Qks?fmS-lPeSgult",
+          "shadow": false,
+          "topLevel": false,
+        },
+        "XpVs]U2uWJLF\`#7yYCTU": {
+          "fields": {
+            "STOP_OPTION": [
+              "all",
+              null,
+            ],
+          },
+          "inputs": {},
+          "next": null,
+          "opcode": "control_stop",
+          "parent": "c*n;7ks/$SI[EtxuazE9",
           "shadow": false,
           "topLevel": false,
         },
@@ -3216,6 +3439,40 @@ exports[`sb3 -> sb3 1`] = `
           "shadow": false,
           "topLevel": false,
         },
+        "c*n;7ks/$SI[EtxuazE9": {
+          "fields": {},
+          "inputs": {
+            "custom_block": [
+              1,
+              "c*n;7ks/$SI[EtxuazE9-prototype",
+            ],
+          },
+          "next": "XpVs]U2uWJLF\`#7yYCTU",
+          "opcode": "procedures_definition",
+          "parent": null,
+          "shadow": false,
+          "topLevel": true,
+          "x": 16,
+          "y": 1099,
+        },
+        "c*n;7ks/$SI[EtxuazE9-prototype": {
+          "fields": {},
+          "inputs": {},
+          "mutation": {
+            "argumentdefaults": "[]",
+            "argumentids": "[]",
+            "argumentnames": "[]",
+            "children": [],
+            "proccode": "inert",
+            "tagName": "mutation",
+            "warp": "false",
+          },
+          "next": null,
+          "opcode": "procedures_prototype",
+          "parent": "c*n;7ks/$SI[EtxuazE9",
+          "shadow": true,
+          "topLevel": false,
+        },
         "c{nSzgr2i2BG}.:KnZm%": {
           "fields": {},
           "inputs": {
@@ -3268,7 +3525,7 @@ exports[`sb3 -> sb3 1`] = `
             ],
           },
           "inputs": {},
-          "next": "E[jPr,oa^68!L8GR-MTq",
+          "next": "V=7M(*~K,mPxWkFlx6{d",
           "opcode": "event_whenkeypressed",
           "parent": null,
           "shadow": false,
@@ -3332,7 +3589,7 @@ exports[`sb3 -> sb3 1`] = `
           "inputs": {},
           "next": "5JIzKGYBn^m\`7T^IUQO:",
           "opcode": "pen_clear",
-          "parent": "PG-[[9Mi=cEs}Drp.@$)",
+          "parent": "WI6yQQ=C\`0TUj!WMtI.z",
           "shadow": false,
           "topLevel": false,
         },
@@ -3426,6 +3683,7 @@ exports[`sb3 -> scratchblocks 1`] = `
 set drag mode [not draggable v]
 
 when [any v] key pressed
+inert :: custom
 move (10) steps
 turn cw (costume [number v]) degrees
 turn ccw (15) degrees
@@ -3445,6 +3703,7 @@ create clone of (myself v)
 delete this clone
 
 when I start as a clone
+inert :: custom
 erase all
 stamp
 pen down
@@ -3455,8 +3714,12 @@ change pen (saturation v) by (10)
 set pen (brightness v) to (50)
 set pen (transparency v) to (50)
 change pen size by (1)
-set pen size to (1)",
+set pen size to (1)
+
+define inert
+stop [all v]",
   "Stage": "when green flag clicked
+inert :: custom
 switch backdrop to (backdrop1 v)
 switch backdrop to (next backdrop v) and wait
 next backdrop
@@ -3465,6 +3728,7 @@ set [color v] effect to (backdrop [name v]) :: looks
 clear graphic effects
 
 when [space v] key pressed
+inert :: custom
 play sound (pop v) until done
 start sound (pop v)
 stop all sounds
@@ -3475,6 +3739,7 @@ change volume by (-10)
 set volume to (100) %
 
 when stage clicked :: control hat
+inert :: custom
 ask [What's your name?] and wait
 ask (answer) and wait
 ask <key (space v) pressed?> and wait
@@ -3491,6 +3756,7 @@ ask (username) and wait
 reset timer
 
 when backdrop switches to [backdrop1 v]
+inert :: custom
 wait (1) seconds
 wait until <>
 create clone of ( v)
@@ -3508,6 +3774,7 @@ forever
 end
 
 when [loudness v] > (10)
+inert :: custom
 set [☁ cloud var v] to (my variable :: variables)
 change [☁ cloud var v] by (1)
 set [my variable v] to [0]
@@ -3516,6 +3783,7 @@ show variable [☁ cloud var v]
 hide variable [my variable v]
 
 when I receive [message1 v]
+inert :: custom
 broadcast (message1 v)
 broadcast (message1 v) and wait
 ask ((5) + (pick random ((8) / (4)) to (10))) and wait
@@ -3538,12 +3806,16 @@ if <boolean :: custom-arg> then
 end
 
 when [timer v] > ((my variable :: variables) * (2))
+inert :: custom
 add <[test list v] contains [thing] ? :: list> to [test list v]
 delete (1) of [test list v]
 delete all of [test list v]
 insert [thing] at (item # of [thing] in [test list v]) of [test list v]
 replace item (item (1) of [test list v]) of [test list v] with (length of [test list v])
 show list [test list v]
-hide list [test list v]",
+hide list [test list v]
+
+define inert
+stop [all v]",
 }
 `;
