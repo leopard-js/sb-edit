@@ -1333,7 +1333,17 @@ export default function toLeopard(
               ${warp ? "" : "yield;"}
             }`;
           } else {
-            blockSource = `for (let i = 0, times = ${times}; i < times; i++) {
+            let timesVar: string;
+            if (script && customBlockArgNameMap.has(script)) {
+              // Avoid overshadowing the name of a custom block input, which is just a normal
+              // local variable.
+              const argNames = customBlockArgNameMap.get(script)!;
+              timesVar = uniqueNameFactory(Object.values(argNames))("times");
+            } else {
+              timesVar = "times";
+            }
+
+            blockSource = `for (let i = 0, ${timesVar} = ${times}; i < ${timesVar}; i++) {
               ${substack};
               ${warp ? "" : "yield;"}
             }`;
