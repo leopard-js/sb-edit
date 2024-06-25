@@ -1327,23 +1327,32 @@ export default function toLeopard(
           const times = inputToJS(block.inputs.TIMES, InputShape.Number);
           const substack = inputToJS(block.inputs.SUBSTACK, InputShape.Stack);
 
+          // Note that although this is a useful-seeming utility function, it can't be
+          // factored out for general `blockToJS` usage. The variables in a `for` construct
+          // are only unique, disregarding all other blocks, *because* they are defined and
+          // accessed in a brand new scope, and deeper scopes can overshadow the name
+          // without causing any trouble.
+          let uniqueLocalVarName: (name: string) => string;
+          if (script && customBlockArgNameMap.has(script)) {
+            // Avoid overshadowing the name of a custom block input, which is just a normal
+            // local variable.
+            const argNames = customBlockArgNameMap.get(script)!;
+            uniqueLocalVarName = uniqueNameFactory(Object.values(argNames));
+          } else {
+            // Nothing to overshadow, the name provided will be unique. (Since we're only
+            // going to pass two names, right as part of this block!)
+            uniqueLocalVarName = (name: string) => name;
+          }
+
+          const iVar = uniqueLocalVarName("i");
           if (block.inputs.TIMES.type === "number") {
-            blockSource = `for (let i = 0; i < ${times}; i++) {
+            blockSource = `for (let ${iVar} = 0; ${iVar} < ${times}; ${iVar}++) {
               ${substack};
               ${warp ? "" : "yield;"}
             }`;
           } else {
-            let timesVar: string;
-            if (script && customBlockArgNameMap.has(script)) {
-              // Avoid overshadowing the name of a custom block input, which is just a normal
-              // local variable.
-              const argNames = customBlockArgNameMap.get(script)!;
-              timesVar = uniqueNameFactory(Object.values(argNames))("times");
-            } else {
-              timesVar = "times";
-            }
-
-            blockSource = `for (let i = 0, ${timesVar} = ${times}; i < ${timesVar}; i++) {
+            const timesVar = uniqueLocalVarName("times");
+            blockSource = `for (let ${iVar} = 0, ${timesVar} = ${times}; ${iVar} < ${timesVar}; ${iVar}++) {
               ${substack};
               ${warp ? "" : "yield;"}
             }`;
