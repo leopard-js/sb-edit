@@ -61,11 +61,10 @@ export default class Tests extends Sprite {
   *whenGreenFlagClicked() {
     this.x = 0;
     for (let i = 0; i < 2; i++) {
-      this.x += 1;
-      yield;
-    }
-    for (let i2 = 0, times = 2 + 2 * 0.5; i2 < times; i2++) {
-      this.x += 1;
+      for (let i2 = 0, times = 2 + 2; i2 < times; i2++) {
+        this.x += 1;
+        yield;
+      }
       yield;
     }
     for (let i3 = 0, times2 = this.x + 4; i3 < times2; i3++) {
