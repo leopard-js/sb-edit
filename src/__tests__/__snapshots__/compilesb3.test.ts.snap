@@ -122,7 +122,7 @@ export default class Stage extends StageBase {
 
     this.vars.myVariable = 0;
     this.vars.CloudVar = 20.1;
-    this.vars.testList = [];
+    this.vars.testList = [5];
 
     this.watchers.myVariable = new Watcher({
       label: "my variable",
@@ -2766,7 +2766,9 @@ exports[`sb3 -> sb3 1`] = `
       "lists": {
         "t#?\`dQ/p.7uf$qs[|gRQ": [
           "test list",
-          [],
+          [
+            "5",
+          ],
         ],
       },
       "name": "Stage",
