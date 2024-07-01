@@ -17,7 +17,10 @@ program
   .addOption(new Option("-it, --input-type <type>", "The type of input file").choices(["sb3"]))
   .requiredOption("-o, --output <path>", "The path to the output project")
   .addOption(new Option("-ot, --output-type <type>", "The type of output file").choices(["leopard", "leopard-zip"]))
-  .addOption(new Option("-t, --trace", "Show a detailed error trace"));
+  .addOption(new Option("-t, --trace", "Show a detailed error trace"))
+  .addOption(
+    new Option("--leopard-url <url>", "The URL to use for Leopard").default("https://unpkg.com/leopard@^1/dist/")
+  );
 
 program.parse();
 
@@ -27,6 +30,7 @@ const options: {
   output: string;
   outputType: "leopard" | "leopard-zip";
   trace: boolean | undefined;
+  leopardUrl: string;
 } = program.opts();
 
 let { input, inputType, output, outputType } = options;
@@ -164,7 +168,24 @@ async function run() {
   );
 
   function toLeopard() {
-    return project.toLeopard();
+    const { leopardUrl: leopardURL } = options;
+
+    let fileJS = "index.esm.js";
+    let fileCSS = "index.min.css";
+
+    let leopardJSURL, leopardCSSURL;
+
+    try {
+      leopardJSURL = String(new URL(fileJS, leopardURL));
+      leopardCSSURL = String(new URL(fileCSS, leopardURL));
+    } catch {
+      throw new Error(`Provided leopard-url isn't a valid URL base`);
+    }
+
+    return project.toLeopard({
+      leopardJSURL,
+      leopardCSSURL
+    });
   }
 
   switch (outputType) {
