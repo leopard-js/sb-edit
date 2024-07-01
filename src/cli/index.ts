@@ -163,11 +163,13 @@ async function run() {
     }
   );
 
+  function toLeopard() {
+    return project.toLeopard();
+  }
+
   switch (outputType) {
     case "leopard": {
-      const leopard = await writeStep(`${chalk.bold("Converting")} project to ${chalk.white("Leopard")}.`, () => {
-        return project.toLeopard();
-      });
+      const leopard = await writeStep(`${chalk.bold("Converting")} project to ${chalk.white("Leopard")}.`, toLeopard);
 
       const fullOutputPath = path.resolve(process.cwd(), output);
 
@@ -240,10 +242,7 @@ async function run() {
       break;
     }
     case "leopard-zip": {
-      const leopard = await writeStep(`${chalk.bold("Converting")} project to ${chalk.white("Leopard")}.`, () => {
-        const leopard = project.toLeopard();
-        return leopard;
-      });
+      const leopard = await writeStep(`${chalk.bold("Converting")} project to ${chalk.white("Leopard")}.`, toLeopard);
 
       const fullOutputPath = path.resolve(process.cwd(), output);
 
