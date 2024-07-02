@@ -279,7 +279,7 @@ export default class Stage extends StageBase {
       "thing"
     );
     this.vars.testList.splice(
-      this.itemOf(this.vars.testList, 0) - 1,
+      this.toNumber(this.itemOf(this.vars.testList, 0)) - 1,
       1,
       this.vars.testList.length
     );
