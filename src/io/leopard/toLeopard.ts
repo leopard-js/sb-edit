@@ -282,6 +282,15 @@ const LEOPARD_RESERVED_SPRITE_PROPERTIES = [
   "stamp"
 ];
 
+/**
+ * Desirable traits are the basic attributes controlling what syntax
+ * is returned for any given block (or primitive value). Provide a
+ * valid combination of traits to `inputToJS` to constrain the types
+ * of values that will be proivded to that input.
+ *
+ * An empty list of desirable traits indicates any value at all
+ * (including `undefined`) is acceptable in the current context.
+ */
 enum DesirableTraits {
   /**
    * Indicates an exact boolean (true/false) value is desired.
@@ -309,11 +318,23 @@ enum DesirableTraits {
 
   /**
    * Indicates a string value is desired (typeof x === 'string').
+   *
+   * This must be specified if a number value is *not* desired;
+   * if left unspecified (declaring any value is acceptable),
+   * inputs with values such as "1.234", regardless if they are
+   * string or number inputs in Scratch, will be converted to
+   * number primitives (such as the number 1.234).
    */
   IsString,
 
   /**
-   * Indicates a series of stack blocks is desired.
+   * Indicates a series of stack blocks is desired. It may be
+   * empty, contain a single block, or contain multiple blocks.
+   *
+   * In JavaScript, there's generally no difference between a
+   * "function" for reporting values and a "command" for doing
+   * side-effects, so blocks are returned without any special
+   * syntax if a stack is desired.
    */
   IsStack,
 
@@ -335,6 +356,15 @@ enum DesirableTraits {
   IsCastToZero
 }
 
+/**
+ * Satisfying traits are the basic attributes that tell what kind
+ * of value would be returned by a given block. They're mainly used
+ * to aid the value casting which occurs at the end of `blocktoJS`.
+ *
+ * An empty list of satisfying traits indicates no particular type
+ * of value is guaranteed, i.e. this block could have any value,
+ * or the type of its value is totally indeterminate.
+ */
 enum SatisfyingTraits {
   /**
    * Indicates an exact boolean (true/false) value is satisfied.
@@ -359,6 +389,13 @@ enum SatisfyingTraits {
    * Indicates a string value is satisfied (typeof x === 'string').
    */
   IsString,
+
+  /**
+   * Indicates a stack block is satisfied. This isn't generally
+   * apropos to any special meaning in Leopard or in current
+   * conversion code.
+   */
+  IsStack,
 
   /**
    * Indicates that the satisfied number value isn't NaN - i.e,
@@ -387,69 +424,6 @@ type SatisfyingTraitCombo =
   | [SatisfyingTraits.IsIndex]
   | [SatisfyingTraits.IsString]
   | [SatisfyingTraits.IsStack];
-
-/**
- * Input shapes are the basic attribute controlling which of a set of syntaxes
- * is returned for any given block (or primitive value). Provide an input shape
- * to inputToJS to specify what kind of value should be provided as the value
- * in that input. If the content of input does not match the desired shape, for
- * example because it is a block which returns a different type than desired,
- * it will be automatically cast to the correct type for use in the block.
- */
-enum InputShape {
-  /**
-   * Generic shape indicating that any kind of input is acceptable. The input
-   * will never be cast, and may be null, undefined, or any JavaScript value.
-   */
-  Any = "Any",
-
-  /**
-   * Number input shape. If the input block isn't guaranteed to be a number,
-   * it is automatically wrapped with this.toNumber(), which has particular
-   * behavior to match Scratch.
-   */
-  Number = "Number",
-
-  /**
-   * Special "index" shape, representing an arbitrary number which has been
-   * decremented (decreased by 1). Scratch lists are 1-based while JavaScript
-   * arrays and strings are indexed starting from 0, so all indexes converted
-   * from Scratch must be decreased to match. The "index" shape allows number
-   * primitives to be statically decremented, and blocks which include a plus
-   * or minus operator to automtaically "absorb" the following decrement.
-   */
-  Index = "Index",
-
-  /**
-   * String input shape. If the input block isn't guaranteed to be a string,
-   * it is automatically wrapped with this.toString(), which is just a wrapper
-   * around the built-in String() op but is written so for consistency.
-   *
-   * The string input shape also guarantees that primitive values which could
-   * be statically converted to a number, e.g. the string "1.234", will NOT be
-   * converted.
-   */
-  String = "String",
-
-  /**
-   * Boolean input shape. If the input block isn't guaranteed to be a boolean,
-   * it is automatically wrapped with this.toBoolean(), which has particular
-   * behavior to match Scratch. Note that Scratch doesn't have a concept of
-   * boolean primitives (no "true" or "false" blocks, nor a "switch" type
-   * control for directly inputting true/false as in Snap!).
-   */
-  Boolean = "Boolean",
-
-  /**
-   * "Stack" block, referring to blocks which can be put one after another and
-   * together represent a sequence of steps. Stack inputs may be empty and
-   * otherwise are one or more blocks. In JavaScript, there's no fundamental
-   * difference between a "function" for reporting values and a "command" for
-   * applying effects, so no additional syntax is required to cast any given
-   * input value to a stack.
-   */
-  Stack = "Stack"
-}
 
 function uniqueNameFactory(reservedNames: string[] | Set<string> = []) {
   const usedNames: Set<string> = new Set(reservedNames);
