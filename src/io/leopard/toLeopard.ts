@@ -2103,7 +2103,7 @@ export default function toLeopard(
 
         case OpCode.operator_mathop: {
           const num = inputToJS(block.inputs.NUM, InputShape.ZeroCastNumber);
-          const val = parseNumber(num);
+          const val = parseNumber(block.inputs.NUM);
 
           const isNotInfinity = typeof val === "number";
           const infinityIsNaN = isNotInfinity ? InputShape.ZeroCastNumber : InputShape.StrictlyCastNumber;
