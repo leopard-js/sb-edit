@@ -282,6 +282,112 @@ const LEOPARD_RESERVED_SPRITE_PROPERTIES = [
   "stamp"
 ];
 
+enum DesirableTraits {
+  /**
+   * Indicates an exact boolean (true/false) value is desired.
+   */
+  IsBoolean,
+
+  /**
+   * Indicates a number value is desired (typeof x === 'number').
+   * By default, this indicates it's OK to leave NaN as it is.
+   * Other non-number values will be cast to zero, but if the
+   * value is NaN to begin with, that will be left as-is.
+   *
+   * Behavior can be customized by specifying, alongside IsNumber,
+   * IsCastToNaN or IsCastToZero.
+   */
+  IsNumber,
+
+  /**
+   * Indicates an index value is desired - this is a normal number,
+   * but decremented by one compared to its value in Scratch.
+   *
+   * The traits for customizing IsNumber don't apply to IsIndex.
+   */
+  IsIndex,
+
+  /**
+   * Indicates a string value is desired (typeof x === 'string').
+   */
+  IsString,
+
+  /**
+   * Indicates a series of stack blocks is desired.
+   */
+  IsStack,
+
+  /**
+   * Indicates that if a value can't be converted to a number
+   * (according to `toNumber(expr, true)` rules), NaN should be
+   * returned. NaN itself is also returned as NaN.
+   *
+   * May only be specified alongside IsNumber.
+   */
+  IsCastToNaN,
+
+  /**
+   * Indicates that if a value can't be converted to a number,
+   * or if the value is NaN itself, zero shuold be returned.
+   *
+   * May only be specifeid alongside IsNumber.
+   */
+  IsCastToZero
+}
+
+enum SatisfyingTraits {
+  /**
+   * Indicates an exact boolean (true/false) value is satisfied.
+   */
+  IsBoolean,
+
+  /**
+   * Indicates a number value is satisfied (typeof x === 'number').
+   * By default, this implies the number value may be NaN, but this
+   * can be ruled out by specifying, alongside IsNumber, IsNotNaN.
+   */
+  IsNumber,
+
+  /**
+   * Indicates an index is satisfied. Within the definition for a
+   * particular reporter, this means the reporter already took care
+   * of decrementing its numeric return value by one.
+   */
+  IsIndex,
+
+  /**
+   * Indicates a string value is satisfied (typeof x === 'string').
+   */
+  IsString,
+
+  /**
+   * Indicates that the satisfied number value isn't NaN - i.e,
+   * it's a non-NaN number.
+   *
+   * May only be specified alongside IsNumber.
+   */
+  IsNotNaN
+}
+
+type DesirableTraitCombo =
+  | []
+  | [DesirableTraits.IsBoolean]
+  | [DesirableTraits.IsNumber]
+  | [DesirableTraits.IsNumber, DesirableTraits.IsCastToNaN]
+  | [DesirableTraits.IsNumber, DesirableTraits.IsCastToZero]
+  | [DesirableTraits.IsIndex]
+  | [DesirableTraits.IsStack]
+  | [DesirableTraits.IsString];
+
+type SatisfyingTraitCombo =
+  | []
+  | [SatisfyingTraits.IsBoolean]
+  | [SatisfyingTraits.IsNumber]
+  | [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN]
+  | [SatisfyingTraits.IsIndex]
+  | [SatisfyingTraits.IsString]
+  | [SatisfyingTraits.IsStack];
+
 /**
  * Input shapes are the basic attribute controlling which of a set of syntaxes
  * is returned for any given block (or primitive value). Provide an input shape
@@ -686,7 +792,7 @@ export default function toLeopard(
       }
     }
 
-    function blockToJS(block: Block, desiredInputShape?: InputShape): string {
+    function blockToJS(block: Block, desiredInputShape?: InputShape, desiredTraits: DesirableTraitCombo = []): string {
       const warp =
         script && script.hat && script.hat.opcode === OpCode.procedures_definition && script.hat.inputs.WARP.value;
 
@@ -715,6 +821,7 @@ export default function toLeopard(
       const stage = "this" + (target.isStage ? "" : ".stage");
 
       let satisfiesInputShape: InputShape;
+      let satisfiesTraits: SatisfyingTraitCombo = [];
       let blockSource: string;
 
       makeBlockSource: switch (block.opcode) {
@@ -2494,31 +2601,73 @@ export default function toLeopard(
         }
       }
 
-      switch (desiredInputShape) {
-        case satisfiesInputShape: {
-          return blockSource;
+      if (!desiredTraits.length) {
+        return blockSource;
+      }
+
+      if (desiredTraits[0] === DesirableTraits.IsStack) {
+        return blockSource;
+      }
+
+      if (desiredTraits[0] === DesirableTraits.IsNumber) {
+        if (desiredTraits[1] === DesirableTraits.IsCastToNaN) {
+          if (satisfiesTraits.length && satisfiesTraits[0] === SatisfyingTraits.IsNumber) {
+            return blockSource;
+          }
+
+          return `this.toNumber(${blockSource}, true)`;
         }
 
-        case InputShape.Number: {
+        if (desiredTraits[1] === DesirableTraits.IsCastToZero) {
+          if (
+            satisfiesTraits.length &&
+            satisfiesTraits[0] === SatisfyingTraits.IsNumber &&
+            satisfiesTraits[1] === SatisfyingTraits.IsNotNaN
+          ) {
+            return blockSource;
+          }
+
           return `this.toNumber(${blockSource})`;
         }
 
-        case InputShape.Index: {
-          return `(${blockSource}) - 1`;
-        }
-
-        case InputShape.Boolean: {
-          return `this.toBoolean(${blockSource})`;
-        }
-
-        case InputShape.String: {
-          return `this.toString(${blockSource})`;
-        }
-
-        default: {
+        if (satisfiesTraits.length && satisfiesTraits[0] === SatisfyingTraits.IsNumber) {
           return blockSource;
         }
+
+        return `this.toNumber(${blockSource})`;
       }
+
+      if (desiredTraits[0] === DesirableTraits.IsIndex) {
+        if (satisfiesTraits.length) {
+          if (satisfiesTraits[0] === SatisfyingTraits.IsIndex) {
+            return blockSource;
+          }
+
+          if (satisfiesTraits[0] === SatisfyingTraits.IsNumber && satisfiesTraits[1] === SatisfyingTraits.IsNotNaN) {
+            return `(${blockSource}) - 1`;
+          }
+        }
+
+        return `this.toNumber(${blockSource}) - 1`;
+      }
+
+      if (desiredTraits[0] === DesirableTraits.IsString) {
+        if (satisfiesTraits.length && satisfiesTraits[0] === SatisfyingTraits.IsString) {
+          return blockSource;
+        }
+
+        return `this.toString(${blockSource})`;
+      }
+
+      if (desiredTraits[0] === DesirableTraits.IsBoolean) {
+        if (satisfiesTraits.length && satisfiesTraits[0] === SatisfyingTraits.IsBoolean) {
+          return blockSource;
+        }
+
+        return `this.toBoolean(${blockSource})`;
+      }
+
+      return blockSource;
     }
   }
 
