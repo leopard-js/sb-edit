@@ -433,6 +433,12 @@ export default function toLeopard(
   // Leopard names (JS function arguments, which are identifiers).
   let customBlockArgNameMap: Map<Script, { [key: string]: string }> = new Map();
 
+  // Maps scripts to a function (from uniqueNameFactory) which produces unique
+  // names based on the provided default names. This is for "unqualified"
+  // identifiers, which basically means ordinary variables. That namespace is
+  // shared with custom block arguments!
+  let uniqueLocalVarNameMap: Map<Script, (name: string) => string> = new Map();
+
   // Maps variables and lists' Scratch IDs to corresponding Leopard names
   // (JS properties on `this.vars`). This is shared across all sprites, so
   // that global (stage) variables' IDs map to the same name regardless what
@@ -482,6 +488,8 @@ export default function toLeopard(
           }
         }
       }
+
+      uniqueLocalVarNameMap.set(script, uniqueNameFactory(Object.values(argNameMap)));
     }
   }
 
@@ -590,6 +598,17 @@ export default function toLeopard(
   }
 
   function blockToJSWithContext(block: Block, target: Target, script?: Script): string {
+    // This will be shared by all contained blockToJS calls, which should include
+    // all following/descendant relative to the provided one. Officially local names
+    // should be unique to the script, but if we don't have a script, they will still
+    // be unique to these "nearby" blocks (part of the same blockToJSWithContext call).
+    let uniqueLocalVarName: (name: string) => string;
+    if (script && uniqueLocalVarNameMap.has(script)) {
+      uniqueLocalVarName = uniqueLocalVarNameMap.get(script)!;
+    } else {
+      uniqueLocalVarName = uniqueNameFactory();
+    }
+
     return blockToJS(block);
 
     function increase(leftSide: string, input: BlockInput.Any, allowIncrementDecrement: boolean): string {
@@ -1324,13 +1343,29 @@ export default function toLeopard(
         case OpCode.control_repeat: {
           satisfiesInputShape = InputShape.Stack;
 
+          const timesIsStatic = block.inputs.TIMES.type === "number";
+
+          // Of course we convert blocks in a descending recursive hierarchy,
+          // but we still need to make sure we get the relevant local var names
+          // *before* processing the substack - which might include more "repeat"
+          // blocks!
+          const iVar = uniqueLocalVarName("i");
+          const timesVar = timesIsStatic ? null : uniqueLocalVarName("times");
+
           const times = inputToJS(block.inputs.TIMES, InputShape.Number);
           const substack = inputToJS(block.inputs.SUBSTACK, InputShape.Stack);
 
-          blockSource = `for (let i = 0; i < ${times}; i++) {
-            ${substack};
-            ${warp ? "" : "yield;"}
-          }`;
+          if (timesIsStatic) {
+            blockSource = `for (let ${iVar} = 0; ${iVar} < ${times}; ${iVar}++) {
+              ${substack};
+              ${warp ? "" : "yield;"}
+            }`;
+          } else {
+            blockSource = `for (let ${iVar} = 0, ${timesVar} = ${times}; ${iVar} < ${timesVar}; ${iVar}++) {
+              ${substack};
+              ${warp ? "" : "yield;"}
+            }`;
+          }
 
           break;
         }
