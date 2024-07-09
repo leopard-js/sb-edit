@@ -283,67 +283,147 @@ const LEOPARD_RESERVED_SPRITE_PROPERTIES = [
 ];
 
 /**
- * Input shapes are the basic attribute controlling which of a set of syntaxes
- * is returned for any given block (or primitive value). Provide an input shape
- * to inputToJS to specify what kind of value should be provided as the value
- * in that input. If the content of input does not match the desired shape, for
- * example because it is a block which returns a different type than desired,
- * it will be automatically cast to the correct type for use in the block.
+ * Desirable traits are the basic attributes controlling what syntax
+ * is returned for any given block (or primitive value). Provide a
+ * valid combination of traits to `inputToJS` to constrain the types
+ * of values that will be proivded to that input.
+ *
+ * An empty list of desirable traits indicates any value at all
+ * (including `undefined`) is acceptable in the current context.
  */
-enum InputShape {
+enum DesirableTraits {
   /**
-   * Generic shape indicating that any kind of input is acceptable. The input
-   * will never be cast, and may be null, undefined, or any JavaScript value.
+   * Indicates an exact boolean (true/false) value is desired.
    */
-  Any = "Any",
+  IsBoolean,
 
   /**
-   * Number input shape. If the input block isn't guaranteed to be a number,
-   * it is automatically wrapped with this.toNumber(), which has particular
-   * behavior to match Scratch.
-   */
-  Number = "Number",
-
-  /**
-   * Special "index" shape, representing an arbitrary number which has been
-   * decremented (decreased by 1). Scratch lists are 1-based while JavaScript
-   * arrays and strings are indexed starting from 0, so all indexes converted
-   * from Scratch must be decreased to match. The "index" shape allows number
-   * primitives to be statically decremented, and blocks which include a plus
-   * or minus operator to automtaically "absorb" the following decrement.
-   */
-  Index = "Index",
-
-  /**
-   * String input shape. If the input block isn't guaranteed to be a string,
-   * it is automatically wrapped with this.toString(), which is just a wrapper
-   * around the built-in String() op but is written so for consistency.
+   * Indicates a number value is desired (typeof x === 'number').
+   * By default, this indicates it's OK to leave NaN as it is.
+   * Other non-number values will be cast to zero, but if the
+   * value is NaN to begin with, that will be left as-is.
    *
-   * The string input shape also guarantees that primitive values which could
-   * be statically converted to a number, e.g. the string "1.234", will NOT be
-   * converted.
+   * Behavior can be customized by specifying, alongside IsNumber,
+   * IsCastToNaN or IsCastToZero.
    */
-  String = "String",
+  IsNumber,
 
   /**
-   * Boolean input shape. If the input block isn't guaranteed to be a boolean,
-   * it is automatically wrapped with this.toBoolean(), which has particular
-   * behavior to match Scratch. Note that Scratch doesn't have a concept of
-   * boolean primitives (no "true" or "false" blocks, nor a "switch" type
-   * control for directly inputting true/false as in Snap!).
+   * Indicates an index value is desired - this is a normal number,
+   * but decremented by one compared to its value in Scratch.
+   *
+   * The traits for customizing IsNumber don't apply to IsIndex.
    */
-  Boolean = "Boolean",
+  IsIndex,
 
   /**
-   * "Stack" block, referring to blocks which can be put one after another and
-   * together represent a sequence of steps. Stack inputs may be empty and
-   * otherwise are one or more blocks. In JavaScript, there's no fundamental
-   * difference between a "function" for reporting values and a "command" for
-   * applying effects, so no additional syntax is required to cast any given
-   * input value to a stack.
+   * Indicates a string value is desired (typeof x === 'string').
+   *
+   * This must be specified if a number value is *not* desired;
+   * if left unspecified (declaring any value is acceptable),
+   * inputs with values such as "1.234", regardless if they are
+   * string or number inputs in Scratch, will be converted to
+   * number primitives (such as the number 1.234).
    */
-  Stack = "Stack"
+  IsString,
+
+  /**
+   * Indicates a series of stack blocks is desired. It may be
+   * empty, contain a single block, or contain multiple blocks.
+   *
+   * In JavaScript, there's generally no difference between a
+   * "function" for reporting values and a "command" for doing
+   * side-effects, so blocks are returned without any special
+   * syntax if a stack is desired.
+   */
+  IsStack,
+
+  /**
+   * Indicates that if a value can't be converted to a number
+   * (according to `toNumber(expr, true)` rules), NaN should be
+   * returned. NaN itself is also returned as NaN.
+   *
+   * May only be specified alongside IsNumber.
+   */
+  IsCastToNaN,
+
+  /**
+   * Indicates that if a value can't be converted to a number,
+   * or if the value is NaN itself, zero shuold be returned.
+   *
+   * May only be specifeid alongside IsNumber.
+   */
+  IsCastToZero
 }
+
+/**
+ * Satisfying traits are the basic attributes that tell what kind
+ * of value would be returned by a given block. They're mainly used
+ * to aid the value casting which occurs at the end of `blocktoJS`.
+ *
+ * An empty list of satisfying traits indicates no particular type
+ * of value is guaranteed, i.e. this block could have any value,
+ * or the type of its value is totally indeterminate.
+ */
+enum SatisfyingTraits {
+  /**
+   * Indicates an exact boolean (true/false) value is satisfied.
+   */
+  IsBoolean,
+
+  /**
+   * Indicates a number value is satisfied (typeof x === 'number').
+   * By default, this implies the number value may be NaN, but this
+   * can be ruled out by specifying, alongside IsNumber, IsNotNaN.
+   */
+  IsNumber,
+
+  /**
+   * Indicates an index is satisfied. Within the definition for a
+   * particular reporter, this means the reporter already took care
+   * of decrementing its numeric return value by one.
+   */
+  IsIndex,
+
+  /**
+   * Indicates a string value is satisfied (typeof x === 'string').
+   */
+  IsString,
+
+  /**
+   * Indicates a stack block is satisfied. This isn't generally
+   * apropos to any special meaning in Leopard or in current
+   * conversion code.
+   */
+  IsStack,
+
+  /**
+   * Indicates that the satisfied number value isn't NaN - i.e,
+   * it's a non-NaN number.
+   *
+   * May only be specified alongside IsNumber.
+   */
+  IsNotNaN
+}
+
+type DesirableTraitCombo =
+  | []
+  | [DesirableTraits.IsBoolean]
+  | [DesirableTraits.IsNumber]
+  | [DesirableTraits.IsNumber, DesirableTraits.IsCastToNaN]
+  | [DesirableTraits.IsNumber, DesirableTraits.IsCastToZero]
+  | [DesirableTraits.IsIndex]
+  | [DesirableTraits.IsStack]
+  | [DesirableTraits.IsString];
+
+type SatisfyingTraitCombo =
+  | []
+  | [SatisfyingTraits.IsBoolean]
+  | [SatisfyingTraits.IsNumber]
+  | [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN]
+  | [SatisfyingTraits.IsIndex]
+  | [SatisfyingTraits.IsString]
+  | [SatisfyingTraits.IsStack];
 
 function uniqueNameFactory(reservedNames: string[] | Set<string> = []) {
   const usedNames: Set<string> = new Set(reservedNames);
@@ -500,10 +580,10 @@ export default function toLeopard(
 
   function staticBlockInputToLiteral(
     value: string | number | boolean | object | null,
-    desiredInputShape?: InputShape
+    desiredTraits: DesirableTraitCombo = []
   ): string {
     // Short-circuit for string inputs. These must never return number syntax.
-    if (desiredInputShape === InputShape.String) {
+    if (desiredTraits.length && desiredTraits[0] === DesirableTraits.IsString) {
       return JSON.stringify(value);
     }
 
@@ -511,7 +591,7 @@ export default function toLeopard(
     // These are all OK to return JavaScript number literals for.
     const asNum = Number(value as string);
     if (!isNaN(asNum) && value !== "") {
-      if (desiredInputShape === InputShape.Index) {
+      if (desiredTraits.length && desiredTraits[0] === DesirableTraits.IsIndex) {
         return JSON.stringify(asNum - 1);
       } else {
         return JSON.stringify(asNum);
@@ -558,7 +638,7 @@ export default function toLeopard(
         const value =
           valueInput.type === "block"
             ? `() => ${blockToJSWithContext(valueInput.value, target)}`
-            : staticBlockInputToLiteral(valueInput.value, InputShape.Number);
+            : staticBlockInputToLiteral(valueInput.value, [DesirableTraits.IsNumber]);
         return triggerInitStr(`${hat.inputs.WHENGREATERTHANMENU.value}_GREATER_THAN`, {
           VALUE: value
         });
@@ -595,7 +675,7 @@ export default function toLeopard(
     function increase(leftSide: string, input: BlockInput.Any, allowIncrementDecrement: boolean): string {
       const n = parseNumber(input);
       if (typeof n !== "number") {
-        return `${leftSide} += ${inputToJS(input, InputShape.Number)}`;
+        return `${leftSide} += ${inputToJS(input, [DesirableTraits.IsNumber, DesirableTraits.IsCastToZero])}`;
       }
 
       if (allowIncrementDecrement && n === 1) {
@@ -612,7 +692,7 @@ export default function toLeopard(
     function decrease(leftSide: string, input: BlockInput.Any, allowIncrementDecrement: boolean) {
       const n = parseNumber(input);
       if (typeof n !== "number") {
-        return `${leftSide} -= ${inputToJS(input, InputShape.Number)}`;
+        return `${leftSide} -= ${inputToJS(input, [DesirableTraits.IsNumber, DesirableTraits.IsCastToZero])}`;
       }
 
       if (allowIncrementDecrement && n === 1) {
@@ -652,12 +732,12 @@ export default function toLeopard(
         const { r, g, b } = input.value;
         return `Color.rgb(${r}, ${g}, ${b})`;
       } else {
-        const num = inputToJS(input, InputShape.Number);
+        const num = inputToJS(input, [DesirableTraits.IsNumber, DesirableTraits.IsCastToZero]);
         return `Color.num(${num})`;
       }
     }
 
-    function inputToJS(input: BlockInput.Any, desiredInputShape: InputShape): string {
+    function inputToJS(input: BlockInput.Any, desiredTraits: DesirableTraitCombo = []): string {
       // TODO: Right now, inputs can be completely undefined if imported from
       // the .sb3 format (because sb3 is weird). This little check will replace
       // undefined inputs with the value `null`. In theory, this should
@@ -668,8 +748,8 @@ export default function toLeopard(
 
       switch (input.type) {
         case "block": {
-          const inputSource = blockToJS(input.value, desiredInputShape);
-          if (desiredInputShape === InputShape.Stack) {
+          const inputSource = blockToJS(input.value, desiredTraits);
+          if (desiredTraits.length && desiredTraits[0] === DesirableTraits.IsStack) {
             return inputSource;
           } else {
             return `(${inputSource})`;
@@ -681,12 +761,12 @@ export default function toLeopard(
         }
 
         default: {
-          return staticBlockInputToLiteral(input.value, desiredInputShape);
+          return staticBlockInputToLiteral(input.value, desiredTraits);
         }
       }
     }
 
-    function blockToJS(block: Block, desiredInputShape?: InputShape): string {
+    function blockToJS(block: Block, desiredTraits: DesirableTraitCombo = []): string {
       const warp =
         script && script.hat && script.hat.opcode === OpCode.procedures_definition && script.hat.inputs.WARP.value;
 
@@ -714,21 +794,21 @@ export default function toLeopard(
 
       const stage = "this" + (target.isStage ? "" : ".stage");
 
-      let satisfiesInputShape: InputShape;
+      let satisfiesTraits: SatisfyingTraitCombo = [];
       let blockSource: string;
 
       makeBlockSource: switch (block.opcode) {
         case OpCode.motion_movesteps: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
-          const steps = inputToJS(block.inputs.STEPS, InputShape.Number);
+          const steps = inputToJS(block.inputs.STEPS, [DesirableTraits.IsNumber]);
           blockSource = `this.move(${steps})`;
 
           break;
         }
 
         case OpCode.motion_turnright: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           blockSource = increase(`this.direction`, block.inputs.DEGREES, false);
 
@@ -736,7 +816,7 @@ export default function toLeopard(
         }
 
         case OpCode.motion_turnleft: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           blockSource = decrease(`this.direction`, block.inputs.DEGREES, false);
 
@@ -744,7 +824,7 @@ export default function toLeopard(
         }
 
         case OpCode.motion_goto: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           let x: string;
           let y: string;
@@ -775,19 +855,19 @@ export default function toLeopard(
         }
 
         case OpCode.motion_gotoxy: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
-          const x = inputToJS(block.inputs.X, InputShape.Number);
-          const y = inputToJS(block.inputs.Y, InputShape.Number);
+          const x = inputToJS(block.inputs.X, [DesirableTraits.IsNumber]);
+          const y = inputToJS(block.inputs.Y, [DesirableTraits.IsNumber]);
           blockSource = `this.goto(${x}, ${y})`;
 
           break;
         }
 
         case OpCode.motion_glideto: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
-          const secs = inputToJS(block.inputs.SECS, InputShape.Number);
+          const secs = inputToJS(block.inputs.SECS, [DesirableTraits.IsNumber]);
 
           let x: string;
           let y: string;
@@ -818,27 +898,27 @@ export default function toLeopard(
         }
 
         case OpCode.motion_glidesecstoxy: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
-          const secs = inputToJS(block.inputs.SECS, InputShape.Number);
-          const x = inputToJS(block.inputs.X, InputShape.Number);
-          const y = inputToJS(block.inputs.Y, InputShape.Number);
+          const secs = inputToJS(block.inputs.SECS, [DesirableTraits.IsNumber]);
+          const x = inputToJS(block.inputs.X, [DesirableTraits.IsNumber]);
+          const y = inputToJS(block.inputs.Y, [DesirableTraits.IsNumber]);
           blockSource = `yield* this.glide(${secs}, ${x}, ${y})`;
 
           break;
         }
 
         case OpCode.motion_pointindirection: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
-          const direction = inputToJS(block.inputs.DIRECTION, InputShape.Number);
+          const direction = inputToJS(block.inputs.DIRECTION, [DesirableTraits.IsNumber, DesirableTraits.IsCastToZero]);
           blockSource = `this.direction = ${direction}`;
 
           break;
         }
 
         case OpCode.motion_pointtowards: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           let x: string;
           let y: string;
@@ -863,7 +943,7 @@ export default function toLeopard(
         }
 
         case OpCode.motion_changexby: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           blockSource = increase(`this.x`, block.inputs.DX, false);
 
@@ -871,16 +951,16 @@ export default function toLeopard(
         }
 
         case OpCode.motion_setx: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
-          const x = inputToJS(block.inputs.X, InputShape.Number);
+          const x = inputToJS(block.inputs.X, [DesirableTraits.IsNumber, DesirableTraits.IsCastToZero]);
           blockSource = `this.x = ${x}`;
 
           break;
         }
 
         case OpCode.motion_changeyby: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           blockSource = increase(`this.y`, block.inputs.DY, false);
 
@@ -888,16 +968,16 @@ export default function toLeopard(
         }
 
         case OpCode.motion_sety: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
-          const y = inputToJS(block.inputs.Y, InputShape.Number);
+          const y = inputToJS(block.inputs.Y, [DesirableTraits.IsNumber, DesirableTraits.IsCastToZero]);
           blockSource = `this.y = ${y}`;
 
           break;
         }
 
         case OpCode.motion_ifonedgebounce: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           blockSource = `this.ifOnEdgeBounce()`;
 
@@ -905,7 +985,7 @@ export default function toLeopard(
         }
 
         case OpCode.motion_setrotationstyle: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           let style: string;
           switch (block.inputs.STYLE.value) {
@@ -931,7 +1011,7 @@ export default function toLeopard(
         }
 
         case OpCode.motion_xposition: {
-          satisfiesInputShape = InputShape.Number;
+          satisfiesTraits = [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN];
 
           blockSource = `this.x`;
 
@@ -939,7 +1019,7 @@ export default function toLeopard(
         }
 
         case OpCode.motion_yposition: {
-          satisfiesInputShape = InputShape.Number;
+          satisfiesTraits = [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN];
 
           blockSource = `this.y`;
 
@@ -947,7 +1027,7 @@ export default function toLeopard(
         }
 
         case OpCode.motion_direction: {
-          satisfiesInputShape = InputShape.Number;
+          satisfiesTraits = [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN];
 
           blockSource = `this.direction`;
 
@@ -958,7 +1038,7 @@ export default function toLeopard(
         case OpCode.motion_scroll_right:
         case OpCode.motion_scroll_up:
         case OpCode.motion_align_scene: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           blockSource = ``;
 
@@ -967,7 +1047,7 @@ export default function toLeopard(
 
         case OpCode.motion_xscroll:
         case OpCode.motion_yscroll: {
-          satisfiesInputShape = InputShape.Any;
+          satisfiesTraits = [];
 
           blockSource = `undefined`; // Compatibility with Scratch 3.0 \:)/
 
@@ -975,54 +1055,54 @@ export default function toLeopard(
         }
 
         case OpCode.looks_sayforsecs: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
-          const message = inputToJS(block.inputs.MESSAGE, InputShape.Any);
-          const secs = inputToJS(block.inputs.SECS, InputShape.Number);
+          const message = inputToJS(block.inputs.MESSAGE);
+          const secs = inputToJS(block.inputs.SECS, [DesirableTraits.IsNumber]);
           blockSource = `yield* this.sayAndWait(${message}, ${secs})`;
 
           break;
         }
 
         case OpCode.looks_say: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
-          const message = inputToJS(block.inputs.MESSAGE, InputShape.Any);
+          const message = inputToJS(block.inputs.MESSAGE);
           blockSource = `this.say(${message})`;
 
           break;
         }
 
         case OpCode.looks_thinkforsecs: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
-          const message = inputToJS(block.inputs.MESSAGE, InputShape.Any);
-          const secs = inputToJS(block.inputs.SECS, InputShape.Number);
+          const message = inputToJS(block.inputs.MESSAGE);
+          const secs = inputToJS(block.inputs.SECS, [DesirableTraits.IsNumber]);
           blockSource = `yield* this.thinkAndWait(${message}, ${secs})`;
 
           break;
         }
 
         case OpCode.looks_think: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
-          const message = inputToJS(block.inputs.MESSAGE, InputShape.Any);
+          const message = inputToJS(block.inputs.MESSAGE);
           blockSource = `this.think(${message})`;
 
           break;
         }
 
         case OpCode.looks_switchcostumeto: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
-          const costume = inputToJS(block.inputs.COSTUME, InputShape.Any);
+          const costume = inputToJS(block.inputs.COSTUME);
           blockSource = `this.costume = ${costume}`;
 
           break;
         }
 
         case OpCode.looks_nextcostume: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           blockSource = `this.costumeNumber++`;
 
@@ -1030,16 +1110,16 @@ export default function toLeopard(
         }
 
         case OpCode.looks_switchbackdropto: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
-          const backdrop = inputToJS(block.inputs.BACKDROP, InputShape.Any);
+          const backdrop = inputToJS(block.inputs.BACKDROP);
           blockSource = `${stage}.costume = ${backdrop}`;
 
           break;
         }
 
         case OpCode.looks_nextbackdrop: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           blockSource = `${stage}.costumeNumber++`;
 
@@ -1047,7 +1127,7 @@ export default function toLeopard(
         }
 
         case OpCode.looks_changesizeby: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           blockSource = increase(`this.size`, block.inputs.CHANGE, false);
 
@@ -1055,16 +1135,16 @@ export default function toLeopard(
         }
 
         case OpCode.looks_setsizeto: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
-          const size = inputToJS(block.inputs.SIZE, InputShape.Number);
+          const size = inputToJS(block.inputs.SIZE, [DesirableTraits.IsNumber, DesirableTraits.IsCastToZero]);
           blockSource = `this.size = ${size}`;
 
           break;
         }
 
         case OpCode.looks_changeeffectby: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           const effect = block.inputs.EFFECT.value.toLowerCase();
           blockSource = increase(`this.effects.${effect}`, block.inputs.CHANGE, false);
@@ -1073,17 +1153,17 @@ export default function toLeopard(
         }
 
         case OpCode.looks_seteffectto: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           const effect = block.inputs.EFFECT.value.toLowerCase();
-          const value = inputToJS(block.inputs.VALUE, InputShape.Number);
+          const value = inputToJS(block.inputs.VALUE, [DesirableTraits.IsNumber, DesirableTraits.IsCastToZero]);
           blockSource = `this.effects.${effect} = ${value}`;
 
           break;
         }
 
         case OpCode.looks_cleargraphiceffects: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           blockSource = `this.effects.clear()`;
 
@@ -1091,7 +1171,7 @@ export default function toLeopard(
         }
 
         case OpCode.looks_show: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           blockSource = `this.visible = true`;
 
@@ -1099,7 +1179,7 @@ export default function toLeopard(
         }
 
         case OpCode.looks_hide: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           blockSource = `this.visible = false`;
 
@@ -1107,7 +1187,7 @@ export default function toLeopard(
         }
 
         case OpCode.looks_gotofrontback: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           switch (block.inputs.FRONT_BACK.value) {
             case "front": {
@@ -1126,9 +1206,9 @@ export default function toLeopard(
         }
 
         case OpCode.looks_goforwardbackwardlayers: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
-          const num = inputToJS(block.inputs.NUM, InputShape.Number);
+          const num = inputToJS(block.inputs.NUM, [DesirableTraits.IsNumber, DesirableTraits.IsCastToZero]);
 
           switch (block.inputs.FORWARD_BACKWARD.value) {
             case "forward": {
@@ -1150,7 +1230,7 @@ export default function toLeopard(
         case OpCode.looks_hideallsprites:
         case OpCode.looks_changestretchby:
         case OpCode.looks_setstretchto: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           blockSource = ``;
 
@@ -1160,14 +1240,14 @@ export default function toLeopard(
         case OpCode.looks_costumenumbername: {
           switch (block.inputs.NUMBER_NAME.value) {
             case "name": {
-              satisfiesInputShape = InputShape.String;
+              satisfiesTraits = [SatisfyingTraits.IsString];
               blockSource = `this.costume.name`;
               break;
             }
 
             case "number":
             default: {
-              satisfiesInputShape = InputShape.Number;
+              satisfiesTraits = [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN];
               blockSource = `this.costumeNumber`;
               break;
             }
@@ -1179,14 +1259,14 @@ export default function toLeopard(
         case OpCode.looks_backdropnumbername: {
           switch (block.inputs.NUMBER_NAME.value) {
             case "name": {
-              satisfiesInputShape = InputShape.String;
+              satisfiesTraits = [SatisfyingTraits.IsString];
               blockSource = `${stage}.costume.name`;
               break;
             }
 
             case "number":
             default: {
-              satisfiesInputShape = InputShape.Number;
+              satisfiesTraits = [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN];
               blockSource = `${stage}.costumeNumber`;
               break;
             }
@@ -1196,7 +1276,7 @@ export default function toLeopard(
         }
 
         case OpCode.looks_size: {
-          satisfiesInputShape = InputShape.Number;
+          satisfiesTraits = [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN];
 
           blockSource = `this.size`;
 
@@ -1204,34 +1284,34 @@ export default function toLeopard(
         }
 
         case OpCode.sound_playuntildone: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
-          const sound = inputToJS(block.inputs.SOUND_MENU, InputShape.Any);
+          const sound = inputToJS(block.inputs.SOUND_MENU);
           blockSource = `yield* this.playSoundUntilDone(${sound})`;
 
           break;
         }
 
         case OpCode.sound_play: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
-          const sound = inputToJS(block.inputs.SOUND_MENU, InputShape.Any);
+          const sound = inputToJS(block.inputs.SOUND_MENU);
           blockSource = `yield* this.startSound(${sound})`;
 
           break;
         }
 
         case OpCode.sound_setvolumeto: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
-          const volume = inputToJS(block.inputs.VOLUME, InputShape.Number);
+          const volume = inputToJS(block.inputs.VOLUME, [DesirableTraits.IsNumber, DesirableTraits.IsCastToZero]);
           blockSource = `this.audioEffects.volume = ${volume}`;
 
           break;
         }
 
         case OpCode.sound_changevolumeby: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           blockSource = increase(`this.audioEffects.volume`, block.inputs.VOLUME, false);
 
@@ -1239,7 +1319,7 @@ export default function toLeopard(
         }
 
         case OpCode.sound_volume: {
-          satisfiesInputShape = InputShape.Number;
+          satisfiesTraits = [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN];
 
           blockSource = `this.audioEffects.volume`;
 
@@ -1247,15 +1327,15 @@ export default function toLeopard(
         }
 
         case OpCode.sound_seteffectto: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
-          const value = inputToJS(block.inputs.VALUE, InputShape.Number);
+          const value = inputToJS(block.inputs.VALUE, [DesirableTraits.IsNumber, DesirableTraits.IsCastToZero]);
 
           if (block.inputs.EFFECT.type === "soundEffect") {
             const effect = block.inputs.EFFECT.value.toLowerCase();
             blockSource = `this.audioEffects.${effect} = ${value}`;
           } else {
-            const effect = inputToJS(block.inputs.EFFECT, InputShape.Any);
+            const effect = inputToJS(block.inputs.EFFECT);
             blockSource = `this.audioEffects[${effect}] = ${value}`;
           }
 
@@ -1263,7 +1343,7 @@ export default function toLeopard(
         }
 
         case OpCode.sound_changeeffectby: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           const value = block.inputs.VALUE;
 
@@ -1271,7 +1351,7 @@ export default function toLeopard(
             const effect = block.inputs.EFFECT.value.toLowerCase();
             blockSource = increase(`this.audioEffects.${effect}`, value, false);
           } else {
-            const effect = inputToJS(block.inputs.EFFECT, InputShape.Any);
+            const effect = inputToJS(block.inputs.EFFECT);
             blockSource = increase(`this.audioEffects[${effect}]`, value, false);
           }
 
@@ -1279,7 +1359,7 @@ export default function toLeopard(
         }
 
         case OpCode.sound_cleareffects: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           blockSource = `this.audioEffects.clear()`;
 
@@ -1287,7 +1367,7 @@ export default function toLeopard(
         }
 
         case OpCode.sound_stopallsounds: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           blockSource = `this.stopAllSounds()`;
 
@@ -1295,37 +1375,37 @@ export default function toLeopard(
         }
 
         case OpCode.event_broadcast: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
-          const message = inputToJS(block.inputs.BROADCAST_INPUT, InputShape.String);
+          const message = inputToJS(block.inputs.BROADCAST_INPUT, [DesirableTraits.IsString]);
           blockSource = `this.broadcast(${message})`;
 
           break;
         }
 
         case OpCode.event_broadcastandwait: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
-          const message = inputToJS(block.inputs.BROADCAST_INPUT, InputShape.String);
+          const message = inputToJS(block.inputs.BROADCAST_INPUT, [DesirableTraits.IsString]);
           blockSource = `yield* this.broadcastAndWait(${message})`;
 
           break;
         }
 
         case OpCode.control_wait: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
-          const duration = inputToJS(block.inputs.DURATION, InputShape.Number);
+          const duration = inputToJS(block.inputs.DURATION, [DesirableTraits.IsNumber]);
           blockSource = `yield* this.wait(${duration})`;
 
           break;
         }
 
         case OpCode.control_repeat: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
-          const times = inputToJS(block.inputs.TIMES, InputShape.Number);
-          const substack = inputToJS(block.inputs.SUBSTACK, InputShape.Stack);
+          const times = inputToJS(block.inputs.TIMES, [DesirableTraits.IsNumber]);
+          const substack = inputToJS(block.inputs.SUBSTACK, [DesirableTraits.IsStack]);
 
           blockSource = `for (let i = 0; i < ${times}; i++) {
             ${substack};
@@ -1336,9 +1416,9 @@ export default function toLeopard(
         }
 
         case OpCode.control_forever: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
-          const substack = inputToJS(block.inputs.SUBSTACK, InputShape.Stack);
+          const substack = inputToJS(block.inputs.SUBSTACK, [DesirableTraits.IsStack]);
 
           blockSource = `while (true) {
             ${substack};
@@ -1349,10 +1429,10 @@ export default function toLeopard(
         }
 
         case OpCode.control_if: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
-          const condition = inputToJS(block.inputs.CONDITION, InputShape.Boolean);
-          const substack = inputToJS(block.inputs.SUBSTACK, InputShape.Stack);
+          const condition = inputToJS(block.inputs.CONDITION, [DesirableTraits.IsBoolean]);
+          const substack = inputToJS(block.inputs.SUBSTACK, [DesirableTraits.IsStack]);
 
           blockSource = `if (${condition}) {
             ${substack}
@@ -1362,11 +1442,11 @@ export default function toLeopard(
         }
 
         case OpCode.control_if_else: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
-          const condition = inputToJS(block.inputs.CONDITION, InputShape.Boolean);
-          const substack1 = inputToJS(block.inputs.SUBSTACK, InputShape.Stack);
-          const substack2 = inputToJS(block.inputs.SUBSTACK2, InputShape.Stack);
+          const condition = inputToJS(block.inputs.CONDITION, [DesirableTraits.IsBoolean]);
+          const substack1 = inputToJS(block.inputs.SUBSTACK, [DesirableTraits.IsStack]);
+          const substack2 = inputToJS(block.inputs.SUBSTACK2, [DesirableTraits.IsStack]);
 
           blockSource = `if (${condition}) {
             ${substack1}
@@ -1378,19 +1458,19 @@ export default function toLeopard(
         }
 
         case OpCode.control_wait_until: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
-          const condition = inputToJS(block.inputs.CONDITION, InputShape.Boolean);
+          const condition = inputToJS(block.inputs.CONDITION, [DesirableTraits.IsBoolean]);
           blockSource = `while (!${condition}) { yield; }`;
 
           break;
         }
 
         case OpCode.control_repeat_until: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
-          const condition = inputToJS(block.inputs.CONDITION, InputShape.Boolean);
-          const substack = inputToJS(block.inputs.SUBSTACK, InputShape.Stack);
+          const condition = inputToJS(block.inputs.CONDITION, [DesirableTraits.IsBoolean]);
+          const substack = inputToJS(block.inputs.SUBSTACK, [DesirableTraits.IsStack]);
 
           blockSource = `while (!${condition}) {
             ${substack}
@@ -1401,10 +1481,10 @@ export default function toLeopard(
         }
 
         case OpCode.control_while: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
-          const condition = inputToJS(block.inputs.CONDITION, InputShape.Boolean);
-          const substack = inputToJS(block.inputs.SUBSTACK, InputShape.Stack);
+          const condition = inputToJS(block.inputs.CONDITION, [DesirableTraits.IsBoolean]);
+          const substack = inputToJS(block.inputs.SUBSTACK, [DesirableTraits.IsStack]);
 
           blockSource = `while (${condition}) {
             ${substack}
@@ -1415,10 +1495,10 @@ export default function toLeopard(
         }
 
         case OpCode.control_for_each: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
-          const value = inputToJS(block.inputs.VALUE, InputShape.Number);
-          const substack = inputToJS(block.inputs.SUBSTACK, InputShape.Stack);
+          const value = inputToJS(block.inputs.VALUE, [DesirableTraits.IsNumber]);
+          const substack = inputToJS(block.inputs.SUBSTACK, [DesirableTraits.IsStack]);
 
           // TODO: Verify compatibility if variable changes during evaluation
           blockSource = `for (${selectedVarSource} = 1; ${selectedVarSource} <= ${value}; ${selectedVarSource}++) {
@@ -1430,15 +1510,15 @@ export default function toLeopard(
         }
 
         case OpCode.control_all_at_once: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
-          blockSource = inputToJS(block.inputs.SUBSTACK, InputShape.Stack);
+          blockSource = inputToJS(block.inputs.SUBSTACK, [DesirableTraits.IsStack]);
 
           break;
         }
 
         case OpCode.control_stop: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           switch (block.inputs.STOP_OPTION.value) {
             case "this script": {
@@ -1456,7 +1536,7 @@ export default function toLeopard(
         }
 
         case OpCode.control_create_clone_of: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           let target: string;
           switch (block.inputs.CLONE_OPTION.value) {
@@ -1477,7 +1557,7 @@ export default function toLeopard(
         }
 
         case OpCode.control_delete_this_clone: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           blockSource = `this.deleteThisClone()`;
 
@@ -1485,7 +1565,7 @@ export default function toLeopard(
         }
 
         case OpCode.control_get_counter: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           blockSource = `${stage}.__counter`;
 
@@ -1493,7 +1573,7 @@ export default function toLeopard(
         }
 
         case OpCode.control_incr_counter: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           blockSource = `${stage}.__counter++`;
 
@@ -1501,7 +1581,7 @@ export default function toLeopard(
         }
 
         case OpCode.control_clear_counter: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           blockSource = `${stage}.__counter = 0`;
 
@@ -1509,7 +1589,7 @@ export default function toLeopard(
         }
 
         case OpCode.sensing_touchingobject: {
-          satisfiesInputShape = InputShape.Boolean;
+          satisfiesTraits = [SatisfyingTraits.IsBoolean];
 
           let target: string;
           switch (block.inputs.TOUCHINGOBJECTMENU.value) {
@@ -1536,7 +1616,7 @@ export default function toLeopard(
         }
 
         case OpCode.sensing_touchingcolor: {
-          satisfiesInputShape = InputShape.Boolean;
+          satisfiesTraits = [SatisfyingTraits.IsBoolean];
 
           const color = colorInputToJS(block.inputs.COLOR);
           blockSource = `this.touching(${color})`;
@@ -1545,7 +1625,7 @@ export default function toLeopard(
         }
 
         case OpCode.sensing_coloristouchingcolor: {
-          satisfiesInputShape = InputShape.Boolean;
+          satisfiesTraits = [SatisfyingTraits.IsBoolean];
 
           const color1 = colorInputToJS(block.inputs.COLOR);
           const color2 = colorInputToJS(block.inputs.COLOR2);
@@ -1555,7 +1635,7 @@ export default function toLeopard(
         }
 
         case OpCode.sensing_distanceto: {
-          satisfiesInputShape = InputShape.Number;
+          satisfiesTraits = [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN];
 
           let x: string;
           let y: string;
@@ -1580,16 +1660,16 @@ export default function toLeopard(
         }
 
         case OpCode.sensing_askandwait: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
-          const question = inputToJS(block.inputs.QUESTION, InputShape.Any);
+          const question = inputToJS(block.inputs.QUESTION);
           blockSource = `yield* this.askAndWait(${question})`;
 
           break;
         }
 
         case OpCode.sensing_answer: {
-          satisfiesInputShape = InputShape.String;
+          satisfiesTraits = [SatisfyingTraits.IsString];
 
           blockSource = `this.answer`;
 
@@ -1597,16 +1677,16 @@ export default function toLeopard(
         }
 
         case OpCode.sensing_keypressed: {
-          satisfiesInputShape = InputShape.Boolean;
+          satisfiesTraits = [SatisfyingTraits.IsBoolean];
 
-          const key = inputToJS(block.inputs.KEY_OPTION, InputShape.String);
+          const key = inputToJS(block.inputs.KEY_OPTION, [DesirableTraits.IsString]);
           blockSource = `this.keyPressed(${key})`;
 
           break;
         }
 
         case OpCode.sensing_mousedown: {
-          satisfiesInputShape = InputShape.Boolean;
+          satisfiesTraits = [SatisfyingTraits.IsBoolean];
 
           blockSource = `this.mouse.down`;
 
@@ -1614,7 +1694,7 @@ export default function toLeopard(
         }
 
         case OpCode.sensing_mousex: {
-          satisfiesInputShape = InputShape.Number;
+          satisfiesTraits = [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN];
 
           blockSource = `this.mouse.x`;
 
@@ -1622,7 +1702,7 @@ export default function toLeopard(
         }
 
         case OpCode.sensing_mousey: {
-          satisfiesInputShape = InputShape.Number;
+          satisfiesTraits = [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN];
 
           blockSource = `this.mouse.y`;
 
@@ -1630,7 +1710,7 @@ export default function toLeopard(
         }
 
         case OpCode.sensing_loudness: {
-          satisfiesInputShape = InputShape.Number;
+          satisfiesTraits = [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN];
 
           blockSource = `this.loudness`;
 
@@ -1638,7 +1718,7 @@ export default function toLeopard(
         }
 
         case OpCode.sensing_timer: {
-          satisfiesInputShape = InputShape.Number;
+          satisfiesTraits = [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN];
 
           blockSource = `this.timer`;
 
@@ -1646,7 +1726,7 @@ export default function toLeopard(
         }
 
         case OpCode.sensing_resettimer: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           blockSource = `this.restartTimer()`;
 
@@ -1657,51 +1737,51 @@ export default function toLeopard(
           let propName: string | null;
           switch (block.inputs.PROPERTY.value) {
             case "x position": {
-              satisfiesInputShape = InputShape.Number;
+              satisfiesTraits = [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN];
               propName = "x";
               break;
             }
 
             case "y position": {
-              satisfiesInputShape = InputShape.Number;
+              satisfiesTraits = [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN];
               propName = "y";
               break;
             }
 
             case "direction": {
-              satisfiesInputShape = InputShape.Number;
+              satisfiesTraits = [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN];
               propName = "direction";
               break;
             }
 
             case "costume #":
             case "backdrop #": {
-              satisfiesInputShape = InputShape.Number;
+              satisfiesTraits = [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN];
               propName = "costumeNumber";
               break;
             }
 
             case "costume name":
             case "backdrop name": {
-              satisfiesInputShape = InputShape.String;
+              satisfiesTraits = [SatisfyingTraits.IsString];
               propName = "costume.name";
               break;
             }
 
             case "size": {
-              satisfiesInputShape = InputShape.Number;
+              satisfiesTraits = [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN];
               propName = "size";
               break;
             }
 
             case "volume": {
-              satisfiesInputShape = InputShape.Number;
+              satisfiesTraits = [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN];
               propName = "audioEffects.volume";
               break;
             }
 
             default: {
-              satisfiesInputShape = InputShape.Any;
+              satisfiesTraits = [];
 
               let varOwner: Target = project.stage;
               if (block.inputs.OBJECT.value !== "_stage_") {
@@ -1714,7 +1794,7 @@ export default function toLeopard(
               // "of" block gets variables by name, not ID, using lookupVariableByNameAndType in scratch-vm.
               const variable = varOwner.variables.find(variable => variable.name === block.inputs.PROPERTY.value);
               if (!variable) {
-                satisfiesInputShape = InputShape.Number;
+                satisfiesTraits = [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN];
                 blockSource = `(0 /* ${varOwner.name} doesn't have a "${block.inputs.PROPERTY.value}" variable */)`;
                 break makeBlockSource;
               }
@@ -1741,7 +1821,7 @@ export default function toLeopard(
         }
 
         case OpCode.sensing_current: {
-          satisfiesInputShape = InputShape.Number;
+          satisfiesTraits = [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN];
 
           switch (block.inputs.CURRENTMENU.value) {
             case "YEAR": {
@@ -1780,7 +1860,7 @@ export default function toLeopard(
             }
 
             default: {
-              satisfiesInputShape = InputShape.String;
+              satisfiesTraits = [SatisfyingTraits.IsString];
               blockSource = `""`;
               break;
             }
@@ -1790,7 +1870,7 @@ export default function toLeopard(
         }
 
         case OpCode.sensing_dayssince2000: {
-          satisfiesInputShape = InputShape.Number;
+          satisfiesTraits = [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN];
 
           blockSource = `((new Date().getTime() - new Date(2000, 0, 1)) / 1000 / 60 + new Date().getTimezoneOffset()) / 60 / 24`;
 
@@ -1798,7 +1878,7 @@ export default function toLeopard(
         }
 
         case OpCode.sensing_username: {
-          satisfiesInputShape = InputShape.String;
+          satisfiesTraits = [SatisfyingTraits.IsString];
 
           blockSource = `(/* no username */ "")`;
 
@@ -1806,7 +1886,7 @@ export default function toLeopard(
         }
 
         case OpCode.sensing_userid: {
-          satisfiesInputShape = InputShape.Any;
+          satisfiesTraits = [];
 
           blockSource = `undefined`; // Obsolete no-op block.
 
@@ -1814,12 +1894,10 @@ export default function toLeopard(
         }
 
         case OpCode.operator_add: {
-          satisfiesInputShape = InputShape.Number;
+          const num1 = inputToJS(block.inputs.NUM1, [DesirableTraits.IsNumber, DesirableTraits.IsCastToZero]);
+          const num2 = inputToJS(block.inputs.NUM2, [DesirableTraits.IsNumber, DesirableTraits.IsCastToZero]);
 
-          const num1 = inputToJS(block.inputs.NUM1, InputShape.Number);
-          const num2 = inputToJS(block.inputs.NUM2, InputShape.Number);
-
-          if (desiredInputShape === InputShape.Index) {
+          if (desiredTraits.length && desiredTraits[0] === DesirableTraits.IsIndex) {
             // Attempt to fulfill a desired index input by subtracting 1 from either side
             // of the block. If neither side can be parsed as a number (i.e. both inputs
             // are filled with blocks), this clause just falls back to the normal number
@@ -1827,115 +1905,127 @@ export default function toLeopard(
             let val1 = parseNumber(block.inputs.NUM1);
             let val2 = parseNumber(block.inputs.NUM2);
             if (typeof val2 === "number") {
-              satisfiesInputShape = InputShape.Index;
+              satisfiesTraits = [SatisfyingTraits.IsIndex];
               blockSource = --val2 ? `${num1} + ${val2}` : num1;
               break;
             } else if (typeof val1 === "number") {
-              satisfiesInputShape = InputShape.Index;
+              satisfiesTraits = [SatisfyingTraits.IsIndex];
               blockSource = --val1 ? `${val1} + ${num2}` : num2;
               break;
             }
           }
 
+          satisfiesTraits = [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN];
           blockSource = `${num1} + ${num2}`;
 
           break;
         }
 
         case OpCode.operator_subtract: {
-          satisfiesInputShape = InputShape.Number;
+          const num1 = inputToJS(block.inputs.NUM1, [DesirableTraits.IsNumber, DesirableTraits.IsCastToZero]);
+          const num2 = inputToJS(block.inputs.NUM2, [DesirableTraits.IsNumber, DesirableTraits.IsCastToZero]);
 
-          const num1 = inputToJS(block.inputs.NUM1, InputShape.Number);
-          const num2 = inputToJS(block.inputs.NUM2, InputShape.Number);
-
-          if (desiredInputShape === InputShape.Index) {
+          if (desiredTraits.length && desiredTraits[0] === DesirableTraits.IsIndex) {
             // Do basically the same thing as the addition operator does, but with
             // specifics for subtraction: increment the right-hand or decrement the
             // left-hand.
             let val1 = parseNumber(block.inputs.NUM1);
             let val2 = parseNumber(block.inputs.NUM2);
             if (typeof val2 === "number") {
-              satisfiesInputShape = InputShape.Index;
+              satisfiesTraits = [SatisfyingTraits.IsIndex];
               blockSource = ++val2 ? `${num1} - ${val2}` : num1;
               break;
             } else if (typeof val1 === "number") {
-              satisfiesInputShape = InputShape.Index;
+              satisfiesTraits = [SatisfyingTraits.IsIndex];
               blockSource = --val1 ? `${val1} - ${num2}` : `-${num2}`;
               break;
             }
           }
 
+          satisfiesTraits = [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN];
           blockSource = `${num1} - ${num2}`;
 
           break;
         }
 
         case OpCode.operator_multiply: {
-          satisfiesInputShape = InputShape.Number;
+          satisfiesTraits = [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN];
 
-          const num1 = inputToJS(block.inputs.NUM1, InputShape.Number);
-          const num2 = inputToJS(block.inputs.NUM2, InputShape.Number);
+          const num1 = inputToJS(block.inputs.NUM1, [DesirableTraits.IsNumber, DesirableTraits.IsCastToZero]);
+          const num2 = inputToJS(block.inputs.NUM2, [DesirableTraits.IsNumber, DesirableTraits.IsCastToZero]);
+
           blockSource = `${num1} * ${num2}`;
 
           break;
         }
 
         case OpCode.operator_divide: {
-          satisfiesInputShape = InputShape.Number;
+          // Division returns NaN if zero is divided by zero. We can rule that
+          // out if there a non-zero primitive on either side of the operation.
 
-          const num1 = inputToJS(block.inputs.NUM1, InputShape.Number);
-          const num2 = inputToJS(block.inputs.NUM2, InputShape.Number);
+          const val1 = parseNumber(block.inputs.NUM1);
+          const val2 = parseNumber(block.inputs.NUM2);
+
+          if ((typeof val1 === "number" && val1 !== 0) || (typeof val2 === "number" && val2 !== 0)) {
+            satisfiesTraits = [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN];
+          } else {
+            satisfiesTraits = [SatisfyingTraits.IsNumber];
+          }
+
+          const num1 = inputToJS(block.inputs.NUM1, [DesirableTraits.IsNumber, DesirableTraits.IsCastToZero]);
+          const num2 = inputToJS(block.inputs.NUM2, [DesirableTraits.IsNumber, DesirableTraits.IsCastToZero]);
+
           blockSource = `${num1} / ${num2}`;
 
           break;
         }
 
         case OpCode.operator_random: {
-          satisfiesInputShape = InputShape.Number;
+          satisfiesTraits = [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN];
 
-          const from = inputToJS(block.inputs.FROM, InputShape.Number);
-          const to = inputToJS(block.inputs.TO, InputShape.Number);
+          const from = inputToJS(block.inputs.FROM, [DesirableTraits.IsNumber, DesirableTraits.IsCastToZero]);
+          const to = inputToJS(block.inputs.TO, [DesirableTraits.IsNumber, DesirableTraits.IsCastToZero]);
           blockSource = `this.random(${from}, ${to})`;
 
           break;
         }
 
         case OpCode.operator_gt: {
-          satisfiesInputShape = InputShape.Boolean;
+          satisfiesTraits = [SatisfyingTraits.IsBoolean];
 
-          const operand1 = inputToJS(block.inputs.OPERAND1, InputShape.Any);
-          const operand2 = inputToJS(block.inputs.OPERAND2, InputShape.Any);
+          const operand1 = inputToJS(block.inputs.OPERAND1);
+          const operand2 = inputToJS(block.inputs.OPERAND2);
           blockSource = `this.compare(${operand1}, ${operand2}) > 0`;
 
           break;
         }
 
         case OpCode.operator_lt: {
-          satisfiesInputShape = InputShape.Boolean;
+          satisfiesTraits = [SatisfyingTraits.IsBoolean];
 
-          const operand1 = inputToJS(block.inputs.OPERAND1, InputShape.Any);
-          const operand2 = inputToJS(block.inputs.OPERAND2, InputShape.Any);
+          const operand1 = inputToJS(block.inputs.OPERAND1);
+          const operand2 = inputToJS(block.inputs.OPERAND2);
           blockSource = `this.compare(${operand1}, ${operand2}) < 0`;
 
           break;
         }
 
         case OpCode.operator_equals: {
-          satisfiesInputShape = InputShape.Boolean;
+          satisfiesTraits = [SatisfyingTraits.IsBoolean];
 
           // If both sides are blocks, we can't make any assumptions about what kind of
           // values are being compared.(*) Use the custom .compare() function to ensure
           // compatibility with Scratch's equals block.
           //
           // (*) This is theoretically false, but we currently don't have a way to inspect
-          // the returned InputShape of a block input to see if both sides match up.
+          // the returned satisfied traits of a block input to see if both sides match up.
 
           if (
             (block.inputs.OPERAND1 as BlockInput.Any).type === "block" &&
             (block.inputs.OPERAND2 as BlockInput.Any).type === "block"
           ) {
-            const operand1 = inputToJS(block.inputs.OPERAND1, InputShape.Any);
-            const operand2 = inputToJS(block.inputs.OPERAND2, InputShape.Any);
+            const operand1 = inputToJS(block.inputs.OPERAND1);
+            const operand2 = inputToJS(block.inputs.OPERAND2);
             blockSource = `this.compare(${operand1}, ${operand2}) === 0`;
             break;
           }
@@ -1945,14 +2035,14 @@ export default function toLeopard(
 
           const val1 = parseNumber(block.inputs.OPERAND1);
           if (typeof val1 === "number") {
-            const operand2 = inputToJS(block.inputs.OPERAND2, InputShape.Number);
+            const operand2 = inputToJS(block.inputs.OPERAND2, [DesirableTraits.IsNumber, DesirableTraits.IsCastToNaN]);
             blockSource = `${val1} === ${operand2}`;
             break;
           }
 
           const val2 = parseNumber(block.inputs.OPERAND2);
           if (typeof val2 === "number") {
-            const operand1 = inputToJS(block.inputs.OPERAND1, InputShape.Number);
+            const operand1 = inputToJS(block.inputs.OPERAND1, [DesirableTraits.IsNumber, DesirableTraits.IsCastToNaN]);
             blockSource = `${operand1} === ${val2}`;
             break;
           }
@@ -1961,172 +2051,216 @@ export default function toLeopard(
           // Compare both sides as strings.
 
           // TODO: Shouldn't this be case-insensitive?
-          const operand1 = inputToJS(block.inputs.OPERAND1, InputShape.String);
-          const operand2 = inputToJS(block.inputs.OPERAND2, InputShape.String);
+          const operand1 = inputToJS(block.inputs.OPERAND1, [DesirableTraits.IsString]);
+          const operand2 = inputToJS(block.inputs.OPERAND2, [DesirableTraits.IsString]);
           blockSource = `${operand1} === ${operand2}`;
 
           break;
         }
 
         case OpCode.operator_and: {
-          satisfiesInputShape = InputShape.Boolean;
+          satisfiesTraits = [SatisfyingTraits.IsBoolean];
 
-          const operand1 = inputToJS(block.inputs.OPERAND1, InputShape.Boolean);
-          const operand2 = inputToJS(block.inputs.OPERAND2, InputShape.Boolean);
+          const operand1 = inputToJS(block.inputs.OPERAND1, [DesirableTraits.IsBoolean]);
+          const operand2 = inputToJS(block.inputs.OPERAND2, [DesirableTraits.IsBoolean]);
           blockSource = `${operand1} && ${operand2}`;
 
           break;
         }
 
         case OpCode.operator_or: {
-          satisfiesInputShape = InputShape.Boolean;
+          satisfiesTraits = [SatisfyingTraits.IsBoolean];
 
-          const operand1 = inputToJS(block.inputs.OPERAND1, InputShape.Boolean);
-          const operand2 = inputToJS(block.inputs.OPERAND2, InputShape.Boolean);
+          const operand1 = inputToJS(block.inputs.OPERAND1, [DesirableTraits.IsBoolean]);
+          const operand2 = inputToJS(block.inputs.OPERAND2, [DesirableTraits.IsBoolean]);
           blockSource = `${operand1} || ${operand2}`;
 
           break;
         }
 
         case OpCode.operator_not: {
-          satisfiesInputShape = InputShape.Boolean;
+          satisfiesTraits = [SatisfyingTraits.IsBoolean];
 
-          const operand = inputToJS(block.inputs.OPERAND, InputShape.Boolean);
+          const operand = inputToJS(block.inputs.OPERAND, [DesirableTraits.IsBoolean]);
           blockSource = `!${operand}`;
 
           break;
         }
 
         case OpCode.operator_join: {
-          satisfiesInputShape = InputShape.String;
+          satisfiesTraits = [SatisfyingTraits.IsString];
 
-          const string1 = inputToJS(block.inputs.STRING1, InputShape.String);
-          const string2 = inputToJS(block.inputs.STRING2, InputShape.String);
+          const string1 = inputToJS(block.inputs.STRING1, [DesirableTraits.IsString]);
+          const string2 = inputToJS(block.inputs.STRING2, [DesirableTraits.IsString]);
           blockSource = `${string1} + ${string2}`;
 
           break;
         }
 
         case OpCode.operator_letter_of: {
-          satisfiesInputShape = InputShape.String;
+          satisfiesTraits = [SatisfyingTraits.IsString];
 
-          const string = inputToJS(block.inputs.STRING, InputShape.Any);
-          const letter = inputToJS(block.inputs.LETTER, InputShape.Index);
+          const string = inputToJS(block.inputs.STRING);
+          const letter = inputToJS(block.inputs.LETTER, [DesirableTraits.IsIndex]);
           blockSource = `this.letterOf(${string}, ${letter})`;
 
           break;
         }
 
         case OpCode.operator_length: {
-          satisfiesInputShape = InputShape.Number;
+          satisfiesTraits = [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN];
 
-          const string = inputToJS(block.inputs.STRING, InputShape.Any);
+          const string = inputToJS(block.inputs.STRING);
           blockSource = `${string}.length`;
 
           break;
         }
 
         case OpCode.operator_contains: {
-          satisfiesInputShape = InputShape.Boolean;
+          satisfiesTraits = [SatisfyingTraits.IsBoolean];
 
-          const string1 = inputToJS(block.inputs.STRING1, InputShape.String);
-          const string2 = inputToJS(block.inputs.STRING2, InputShape.String);
+          const string1 = inputToJS(block.inputs.STRING1, [DesirableTraits.IsString]);
+          const string2 = inputToJS(block.inputs.STRING2, [DesirableTraits.IsString]);
           blockSource = `this.stringIncludes(${string1}, ${string2})`;
 
           break;
         }
 
         case OpCode.operator_mod: {
-          satisfiesInputShape = InputShape.Number;
+          // Modulo returns NaN if the divisor is zero or the dividend is Infinity.
 
-          const num1 = inputToJS(block.inputs.NUM1, InputShape.Number);
-          const num2 = inputToJS(block.inputs.NUM2, InputShape.Number);
+          const val1 = parseNumber(block.inputs.NUM1);
+          const val2 = parseNumber(block.inputs.NUM2);
+
+          // The divisor isn't zero if it's a non-zero primitive.
+          const divisorIsNotZero = typeof val2 === "number" && val2 !== 0;
+
+          // The dividend isn't infinity if it's a primitive.
+          const dividendIsNotInfinity = typeof val1 === "number";
+
+          if (divisorIsNotZero && dividendIsNotInfinity) {
+            satisfiesTraits = [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN];
+          } else {
+            satisfiesTraits = [SatisfyingTraits.IsNumber];
+          }
+
+          const num1 = inputToJS(block.inputs.NUM1, [DesirableTraits.IsNumber, DesirableTraits.IsCastToZero]);
+          const num2 = inputToJS(block.inputs.NUM2, [DesirableTraits.IsNumber, DesirableTraits.IsCastToZero]);
+
           blockSource = `${num1} % ${num2}`;
 
           break;
         }
 
         case OpCode.operator_round: {
-          satisfiesInputShape = InputShape.Number;
+          satisfiesTraits = [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN];
 
-          const num = inputToJS(block.inputs.NUM, InputShape.Number);
+          const num = inputToJS(block.inputs.NUM, [DesirableTraits.IsNumber, DesirableTraits.IsCastToZero]);
           blockSource = `Math.round(${num})`;
 
           break;
         }
 
         case OpCode.operator_mathop: {
-          // TODO: Verify this is true for all ops.
-          satisfiesInputShape = InputShape.Number;
+          const num = inputToJS(block.inputs.NUM, [DesirableTraits.IsNumber, DesirableTraits.IsCastToZero]);
+          const val = parseNumber(block.inputs.NUM);
 
-          const num = inputToJS(block.inputs.NUM, InputShape.Number);
+          const isNotInfinity = typeof val === "number";
+          const infinityIsNaN = (
+            isNotInfinity ? [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN] : [SatisfyingTraits.IsNumber]
+          ) satisfies SatisfyingTraitCombo;
+
+          const isNotNegative = typeof val === "number" && val >= 0;
+          const negativeIsNaN = (
+            isNotNegative ? [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN] : [SatisfyingTraits.IsNumber]
+          ) satisfies SatisfyingTraitCombo;
+
+          const magnitudeIsOneOrLower = typeof val === "number" && Math.abs(val) <= 1;
+          const magnitudeAboveOneIsNaN = (
+            magnitudeIsOneOrLower ? [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN] : [SatisfyingTraits.IsNumber]
+          ) satisfies SatisfyingTraitCombo;
+
           switch (block.inputs.OPERATOR.value) {
             case "abs": {
+              satisfiesTraits = [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN];
               blockSource = `Math.abs(${num})`;
               break;
             }
 
             case "floor": {
+              satisfiesTraits = [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN];
               blockSource = `Math.floor(${num})`;
               break;
             }
 
             case "ceiling": {
+              satisfiesTraits = [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN];
               blockSource = `Math.ceil(${num})`;
               break;
             }
 
             case "sqrt": {
+              satisfiesTraits = negativeIsNaN;
               blockSource = `Math.sqrt(${num})`;
               break;
             }
 
             case "sin": {
+              satisfiesTraits = infinityIsNaN;
               blockSource = `Math.sin(this.degToRad(${num}))`;
               break;
             }
 
             case "cos": {
+              satisfiesTraits = infinityIsNaN;
               blockSource = `Math.cos(this.degToRad(${num}))`;
               break;
             }
 
             case "tan": {
+              satisfiesTraits = infinityIsNaN;
               blockSource = `this.scratchTan(${num})`;
               break;
             }
 
             case "asin": {
+              satisfiesTraits = magnitudeAboveOneIsNaN;
               blockSource = `this.radToDeg(Math.asin(${num}))`;
               break;
             }
 
             case "acos": {
+              satisfiesTraits = magnitudeAboveOneIsNaN;
               blockSource = `this.radToDeg(Math.acos(${num}))`;
               break;
             }
 
             case "atan": {
+              satisfiesTraits = [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN];
               blockSource = `this.radToDeg(Math.atan(${num}))`;
               break;
             }
 
             case "ln": {
+              satisfiesTraits = infinityIsNaN;
               blockSource = `Math.log(${num})`;
               break;
             }
 
             case "log": {
+              satisfiesTraits = infinityIsNaN;
               blockSource = `Math.log10(${num})`;
               break;
             }
 
             case "e ^": {
+              satisfiesTraits = [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN];
               blockSource = `Math.E ** ${num}`;
               break;
             }
 
             case "10 ^": {
+              satisfiesTraits = [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN];
               blockSource = `10 ** ${num}`;
               break;
             }
@@ -2137,7 +2271,7 @@ export default function toLeopard(
 
         case OpCode.data_variable: {
           // TODO: Is this wrong?
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           blockSource = selectedVarSource;
 
@@ -2145,16 +2279,16 @@ export default function toLeopard(
         }
 
         case OpCode.data_setvariableto: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
-          const value = inputToJS(block.inputs.VALUE, InputShape.Any);
+          const value = inputToJS(block.inputs.VALUE);
           blockSource = `${selectedVarSource} = ${value}`;
 
           break;
         }
 
         case OpCode.data_changevariableby: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           blockSource = increase(selectedVarSource, block.inputs.VALUE, true);
 
@@ -2162,7 +2296,7 @@ export default function toLeopard(
         }
 
         case OpCode.data_showvariable: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           blockSource = `${selectedWatcherSource}.visible = true`;
 
@@ -2170,7 +2304,7 @@ export default function toLeopard(
         }
 
         case OpCode.data_hidevariable: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           blockSource = `${selectedWatcherSource}.visible = false`;
 
@@ -2178,7 +2312,7 @@ export default function toLeopard(
         }
 
         case OpCode.data_listcontents: {
-          satisfiesInputShape = InputShape.String;
+          satisfiesTraits = [SatisfyingTraits.IsString];
 
           // TODO: This isn't nuanced how Scratch works.
           blockSource = `${selectedVarSource}.join(" ")`;
@@ -2187,16 +2321,16 @@ export default function toLeopard(
         }
 
         case OpCode.data_addtolist: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
-          const item = inputToJS(block.inputs.ITEM, InputShape.Any);
+          const item = inputToJS(block.inputs.ITEM);
           blockSource = `${selectedVarSource}.push(${item})`;
 
           break;
         }
 
         case OpCode.data_deleteoflist: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           switch (block.inputs.INDEX.value) {
             case "all": {
@@ -2210,7 +2344,7 @@ export default function toLeopard(
             }
 
             default: {
-              const index = inputToJS(block.inputs.INDEX, InputShape.Index);
+              const index = inputToJS(block.inputs.INDEX, [DesirableTraits.IsIndex]);
               blockSource = `${selectedVarSource}.splice(${index}, 1)`;
               break;
             }
@@ -2220,7 +2354,7 @@ export default function toLeopard(
         }
 
         case OpCode.data_deletealloflist: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           blockSource = `${selectedVarSource} = []`;
 
@@ -2228,27 +2362,27 @@ export default function toLeopard(
         }
 
         case OpCode.data_insertatlist: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
-          const index = inputToJS(block.inputs.INDEX, InputShape.Index);
-          const item = inputToJS(block.inputs.ITEM, InputShape.Any);
+          const index = inputToJS(block.inputs.INDEX, [DesirableTraits.IsIndex]);
+          const item = inputToJS(block.inputs.ITEM);
           blockSource = `${selectedVarSource}.splice(${index}, 0, ${item})`;
 
           break;
         }
 
         case OpCode.data_replaceitemoflist: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
-          const index = inputToJS(block.inputs.INDEX, InputShape.Index);
-          const item = inputToJS(block.inputs.ITEM, InputShape.Any);
+          const index = inputToJS(block.inputs.INDEX, [DesirableTraits.IsIndex]);
+          const item = inputToJS(block.inputs.ITEM);
           blockSource = `${selectedVarSource}.splice(${index}, 1, ${item})`;
 
           break;
         }
 
         case OpCode.data_itemoflist: {
-          satisfiesInputShape = InputShape.Any;
+          satisfiesTraits = [];
 
           switch (block.inputs.INDEX.value) {
             case "last": {
@@ -2257,7 +2391,7 @@ export default function toLeopard(
             }
 
             default: {
-              const index = inputToJS(block.inputs.INDEX, InputShape.Index);
+              const index = inputToJS(block.inputs.INDEX, [DesirableTraits.IsIndex]);
               blockSource = `this.itemOf(${selectedVarSource}, ${index})`;
               break;
             }
@@ -2267,13 +2401,13 @@ export default function toLeopard(
         }
 
         case OpCode.data_itemnumoflist: {
-          const item = inputToJS(block.inputs.ITEM, InputShape.Any);
+          const item = inputToJS(block.inputs.ITEM);
 
-          if (desiredInputShape === InputShape.Index) {
-            satisfiesInputShape = InputShape.Index;
+          if (desiredTraits.length && desiredTraits[0] === DesirableTraits.IsIndex) {
+            satisfiesTraits = [SatisfyingTraits.IsIndex];
             blockSource = `this.indexInArray(${selectedVarSource}, ${item})`;
           } else {
-            satisfiesInputShape = InputShape.Number;
+            satisfiesTraits = [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN];
             blockSource = `this.indexInArray(${selectedVarSource}, ${item}) + 1`;
           }
 
@@ -2281,7 +2415,7 @@ export default function toLeopard(
         }
 
         case OpCode.data_lengthoflist: {
-          satisfiesInputShape = InputShape.Number;
+          satisfiesTraits = [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN];
 
           blockSource = `${selectedVarSource}.length`;
 
@@ -2289,16 +2423,16 @@ export default function toLeopard(
         }
 
         case OpCode.data_listcontainsitem: {
-          satisfiesInputShape = InputShape.Boolean;
+          satisfiesTraits = [SatisfyingTraits.IsBoolean];
 
-          const item = inputToJS(block.inputs.ITEM, InputShape.Any);
+          const item = inputToJS(block.inputs.ITEM);
           blockSource = `this.arrayIncludes(${selectedVarSource}, ${item})`;
 
           break;
         }
 
         case OpCode.data_showlist: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           blockSource = `${selectedWatcherSource}.visible = true`;
 
@@ -2306,7 +2440,7 @@ export default function toLeopard(
         }
 
         case OpCode.data_hidelist: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           blockSource = `${selectedWatcherSource}.visible = false`;
 
@@ -2314,7 +2448,7 @@ export default function toLeopard(
         }
 
         case OpCode.procedures_call: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           // Get name of custom block script with given PROCCODE:
           // TODO: what if it doesn't exist?
@@ -2326,8 +2460,12 @@ export default function toLeopard(
               script.hat.inputs.PROCCODE.value === block.inputs.PROCCODE.value
           )!.name;
 
-          // TODO: Boolean inputs should provide appropriate desiredInputShape instead of "any"
-          const procArgs = block.inputs.INPUTS.value.map(input => inputToJS(input, InputShape.Any)).join(", ");
+          // TODO: We don't differentiate between input kinds here - all are treated as "any".
+          // This is ostensibly "fine" because Scratch only lets you drop boolean blocks into
+          // boolean inputs, so casting should never be necessary, but *if it were,* we'd be
+          // letting non-boolean values slip through here. We should compare with the input
+          // types of the procedure and provide [DesirableTraits.IsBoolean] when applicable.
+          const procArgs = block.inputs.INPUTS.value.map(input => inputToJS(input)).join(", ");
 
           // Warp-mode procedures execute all child procedures in warp mode as well
           if (warp) {
@@ -2343,7 +2481,7 @@ export default function toLeopard(
         case OpCode.argument_reporter_boolean: {
           // Argument reporters dragged outside their script return 0
           if (!script) {
-            satisfiesInputShape = InputShape.Number;
+            satisfiesTraits = [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN];
             blockSource = `0`;
             break;
           }
@@ -2352,15 +2490,15 @@ export default function toLeopard(
           // The procedure definition that this argument reporter was dragged out of doesn't exist (it's in another
           // sprite, or deleted). Scratch returns 0 here.
           if (!argNames) {
-            satisfiesInputShape = InputShape.Number;
+            satisfiesTraits = [SatisfyingTraits.IsNumber, SatisfyingTraits.IsNotNaN];
             blockSource = `0`;
             break;
           }
 
           if (block.opcode === OpCode.argument_reporter_boolean) {
-            satisfiesInputShape = InputShape.Boolean;
+            satisfiesTraits = [SatisfyingTraits.IsBoolean];
           } else {
-            satisfiesInputShape = InputShape.Any;
+            satisfiesTraits = [];
           }
 
           blockSource = argNames[block.inputs.VALUE.value];
@@ -2369,7 +2507,7 @@ export default function toLeopard(
         }
 
         case OpCode.pen_clear: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           blockSource = `this.clearPen()`;
 
@@ -2377,7 +2515,7 @@ export default function toLeopard(
         }
 
         case OpCode.pen_stamp: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           blockSource = `this.stamp()`;
 
@@ -2385,7 +2523,7 @@ export default function toLeopard(
         }
 
         case OpCode.pen_penDown: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           blockSource = `this.penDown = true`;
 
@@ -2393,7 +2531,7 @@ export default function toLeopard(
         }
 
         case OpCode.pen_penUp: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           blockSource = `this.penDown = false`;
 
@@ -2401,7 +2539,7 @@ export default function toLeopard(
         }
 
         case OpCode.pen_setPenColorToColor: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           const color = colorInputToJS(block.inputs.COLOR);
           blockSource = `this.penColor = ${color}`;
@@ -2410,7 +2548,7 @@ export default function toLeopard(
         }
 
         case OpCode.pen_changePenColorParamBy: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           switch (block.inputs.COLOR_PARAM.value) {
             case "color": {
@@ -2429,7 +2567,7 @@ export default function toLeopard(
             }
 
             case "transparency": {
-              const value = inputToJS(block.inputs.VALUE, InputShape.Number);
+              const value = inputToJS(block.inputs.VALUE, [DesirableTraits.IsNumber, DesirableTraits.IsCastToZero]);
               blockSource = `this.penColor.a -= ${value} / 100`;
               break;
             }
@@ -2439,9 +2577,9 @@ export default function toLeopard(
         }
 
         case OpCode.pen_setPenColorParamTo: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
-          const value = inputToJS(block.inputs.VALUE, InputShape.Number);
+          const value = inputToJS(block.inputs.VALUE, [DesirableTraits.IsNumber, DesirableTraits.IsCastToZero]);
 
           switch (block.inputs.COLOR_PARAM.value) {
             case "color": {
@@ -2469,16 +2607,16 @@ export default function toLeopard(
         }
 
         case OpCode.pen_setPenSizeTo: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
-          const size = inputToJS(block.inputs.SIZE, InputShape.Number);
+          const size = inputToJS(block.inputs.SIZE, [DesirableTraits.IsNumber, DesirableTraits.IsCastToZero]);
           blockSource = `this.penSize = ${size}`;
 
           break;
         }
 
         case OpCode.pen_changePenSizeBy: {
-          satisfiesInputShape = InputShape.Stack;
+          satisfiesTraits = [SatisfyingTraits.IsStack];
 
           blockSource = increase(`this.penSize`, block.inputs.SIZE, false);
 
@@ -2486,7 +2624,7 @@ export default function toLeopard(
         }
 
         default: {
-          satisfiesInputShape = InputShape.Any;
+          satisfiesTraits = [];
 
           blockSource = `/* TODO: Implement ${block.opcode} */ null`;
 
@@ -2494,31 +2632,73 @@ export default function toLeopard(
         }
       }
 
-      switch (desiredInputShape) {
-        case satisfiesInputShape: {
-          return blockSource;
+      if (!desiredTraits.length) {
+        return blockSource;
+      }
+
+      if (desiredTraits[0] === DesirableTraits.IsStack) {
+        return blockSource;
+      }
+
+      if (desiredTraits[0] === DesirableTraits.IsNumber) {
+        if (desiredTraits[1] === DesirableTraits.IsCastToNaN) {
+          if (satisfiesTraits.length && satisfiesTraits[0] === SatisfyingTraits.IsNumber) {
+            return blockSource;
+          }
+
+          return `this.toNumber(${blockSource}, true)`;
         }
 
-        case InputShape.Number: {
+        if (desiredTraits[1] === DesirableTraits.IsCastToZero) {
+          if (
+            satisfiesTraits.length &&
+            satisfiesTraits[0] === SatisfyingTraits.IsNumber &&
+            satisfiesTraits[1] === SatisfyingTraits.IsNotNaN
+          ) {
+            return blockSource;
+          }
+
           return `this.toNumber(${blockSource})`;
         }
 
-        case InputShape.Index: {
-          return `(${blockSource}) - 1`;
-        }
-
-        case InputShape.Boolean: {
-          return `this.toBoolean(${blockSource})`;
-        }
-
-        case InputShape.String: {
-          return `this.toString(${blockSource})`;
-        }
-
-        default: {
+        if (satisfiesTraits.length && satisfiesTraits[0] === SatisfyingTraits.IsNumber) {
           return blockSource;
         }
+
+        return `this.toNumber(${blockSource})`;
       }
+
+      if (desiredTraits[0] === DesirableTraits.IsIndex) {
+        if (satisfiesTraits.length) {
+          if (satisfiesTraits[0] === SatisfyingTraits.IsIndex) {
+            return blockSource;
+          }
+
+          if (satisfiesTraits[0] === SatisfyingTraits.IsNumber && satisfiesTraits[1] === SatisfyingTraits.IsNotNaN) {
+            return `(${blockSource}) - 1`;
+          }
+        }
+
+        return `this.toNumber(${blockSource}) - 1`;
+      }
+
+      if (desiredTraits[0] === DesirableTraits.IsString) {
+        if (satisfiesTraits.length && satisfiesTraits[0] === SatisfyingTraits.IsString) {
+          return blockSource;
+        }
+
+        return `this.toString(${blockSource})`;
+      }
+
+      if (desiredTraits[0] === DesirableTraits.IsBoolean) {
+        if (satisfiesTraits.length && satisfiesTraits[0] === SatisfyingTraits.IsBoolean) {
+          return blockSource;
+        }
+
+        return `this.toBoolean(${blockSource})`;
+      }
+
+      return blockSource;
     }
   }
 
