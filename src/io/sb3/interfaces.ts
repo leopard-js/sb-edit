@@ -435,8 +435,6 @@ export const inputPrimitiveOrShadowMap = {
   [OpCode.looks_seteffectto]: { VALUE: BIS.MATH_NUM_PRIMITIVE },
   [OpCode.looks_changesizeby]: { CHANGE: BIS.MATH_NUM_PRIMITIVE },
   [OpCode.looks_setsizeto]: { SIZE: BIS.MATH_NUM_PRIMITIVE },
-  [OpCode.looks_changeeffectby]: { CHANGE: BIS.MATH_NUM_PRIMITIVE },
-  [OpCode.looks_seteffectto]: { VALUE: BIS.MATH_NUM_PRIMITIVE },
   [OpCode.looks_cleargraphiceffects]: {},
   [OpCode.looks_gotofrontback]: {},
   [OpCode.looks_goforwardbackwardlayers]: { NUM: BIS.MATH_NUM_PRIMITIVE },
