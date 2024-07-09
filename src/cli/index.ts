@@ -36,7 +36,10 @@ const options: {
 let { input, inputType, output, outputType } = options;
 
 class InferTypeError extends Error {
-  constructor(public readonly stage: "input" | "output", message: string) {
+  constructor(
+    public readonly stage: "input" | "output",
+    message: string
+  ) {
     super(message);
     this.name = "InferTypeError";
     Object.setPrototypeOf(this, InferTypeError.prototype);

@@ -71,8 +71,8 @@ export interface ProceduresCallMutation {
 type MutationFor<Op extends OpCode> = Op extends OpCode.procedures_prototype
   ? ProceduresPrototypeMutation
   : Op extends OpCode.procedures_call
-  ? ProceduresCallMutation
-  : Mutation | undefined;
+    ? ProceduresCallMutation
+    : Mutation | undefined;
 
 export interface Block<Op extends OpCode = OpCode> {
   opcode: Op;

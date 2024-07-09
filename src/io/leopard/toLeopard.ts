@@ -577,9 +577,9 @@ export default function toLeopard(
     if (script.hat && script.hat.opcode === OpCode.procedures_definition) {
       return `
         * ${script.name}(${script.hat.inputs.ARGUMENTS.value
-        .filter(arg => arg.type !== "label")
-        .map(arg => arg.name)
-        .join(", ")}) {
+          .filter(arg => arg.type !== "label")
+          .map(arg => arg.name)
+          .join(", ")}) {
           ${body}
         }
       `;
