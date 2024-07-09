@@ -4,7 +4,9 @@ import Block from "../../Block";
 import * as BlockInput from "../../BlockInput";
 import { OpCode } from "../../OpCode";
 
-import * as prettier from "prettier";
+// TODO: Upgrade to Prettier v3, which formats asynchronously
+// Or https://github.com/prettier/prettier-synchronized if it's OK to be Node-only
+import * as prettier from "prettier2";
 import Target from "../../Target";
 import { List, Variable } from "../../Data";
 

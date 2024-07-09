@@ -210,6 +210,8 @@ async function run() {
               case "ENOTDIR":
                 throw new StepError("Output path is a file, not a directory.");
               default:
+                // TODO: Switch the above to `if (err instanceof Error)`
+                // eslint-disable-next-line @typescript-eslint/only-throw-error
                 throw err;
             }
           } else {
@@ -337,7 +339,7 @@ function chalkBox(lines: string[]): string {
   return outputStr;
 }
 
-run().catch(err => {
+run().catch((err: unknown) => {
   if (err instanceof Error) {
     console.error(err.stack);
   }

@@ -3,6 +3,7 @@
     "lib": ["es2019", "dom"],
     "target": "es5",
     "module": "commonjs",
+    "moduleResolution": "Node10",
     "declaration": true,
     "outDir": "./lib",
     "strict": true,

@@ -121,7 +121,7 @@ export interface Target {
     [key: string]: string;
   };
   blocks: {
-    [key: string]: Block<OpCode>;
+    [key: string]: Block;
   };
   comments: {
     [key: string]: Comment;
