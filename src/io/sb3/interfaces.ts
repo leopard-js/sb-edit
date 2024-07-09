@@ -71,8 +71,8 @@ export interface ProceduresCallMutation {
 type MutationFor<Op extends OpCode> = Op extends OpCode.procedures_prototype
   ? ProceduresPrototypeMutation
   : Op extends OpCode.procedures_call
-  ? ProceduresCallMutation
-  : Mutation | undefined;
+    ? ProceduresCallMutation
+    : Mutation | undefined;
 
 export interface Block<Op extends OpCode = OpCode> {
   opcode: Op;
@@ -121,7 +121,7 @@ export interface Target {
     [key: string]: string;
   };
   blocks: {
-    [key: string]: Block<OpCode>;
+    [key: string]: Block;
   };
   comments: {
     [key: string]: Comment;
@@ -435,8 +435,6 @@ export const inputPrimitiveOrShadowMap = {
   [OpCode.looks_seteffectto]: { VALUE: BIS.MATH_NUM_PRIMITIVE },
   [OpCode.looks_changesizeby]: { CHANGE: BIS.MATH_NUM_PRIMITIVE },
   [OpCode.looks_setsizeto]: { SIZE: BIS.MATH_NUM_PRIMITIVE },
-  [OpCode.looks_changeeffectby]: { CHANGE: BIS.MATH_NUM_PRIMITIVE },
-  [OpCode.looks_seteffectto]: { VALUE: BIS.MATH_NUM_PRIMITIVE },
   [OpCode.looks_cleargraphiceffects]: {},
   [OpCode.looks_gotofrontback]: {},
   [OpCode.looks_goforwardbackwardlayers]: { NUM: BIS.MATH_NUM_PRIMITIVE },

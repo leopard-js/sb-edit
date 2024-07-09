@@ -4,7 +4,9 @@ import Block from "../../Block";
 import * as BlockInput from "../../BlockInput";
 import { OpCode } from "../../OpCode";
 
-import * as prettier from "prettier";
+// TODO: Upgrade to Prettier v3, which formats asynchronously
+// Or https://github.com/prettier/prettier-synchronized if it's OK to be Node-only
+import * as prettier from "prettier2";
 import Target from "../../Target";
 import { List, Variable } from "../../Data";
 
@@ -583,9 +585,9 @@ export default function toLeopard(
     if (script.hat && script.hat.opcode === OpCode.procedures_definition) {
       return `
         * ${script.name}(${script.hat.inputs.ARGUMENTS.value
-        .filter(arg => arg.type !== "label")
-        .map(arg => arg.name)
-        .join(", ")}) {
+          .filter(arg => arg.type !== "label")
+          .map(arg => arg.name)
+          .join(", ")}) {
           ${body}
         }
       `;
