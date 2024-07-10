@@ -4,7 +4,7 @@ import Target, { Sprite, Stage } from "../../Target";
 import * as BlockInput from "../../BlockInput";
 import * as sb3 from "./interfaces";
 import { OpCode } from "../../OpCode";
-import { ScratchConverter } from "./scratch-conversion.mjs"
+import ScratchConverter from "./scratch-conversion";
 
 const BIS = sb3.BlockInputStatus;
 
@@ -1040,9 +1040,11 @@ export default function toPatch(project: Project, options: Partial<ToPatchOption
     };
   }
 
-  const patchConverter = new ScratchConverter();
+  const json = JSON.stringify(serializeProject(project));
+
+  const patchConverter = new ScratchConverter(json);
 
   return {
-    json: JSON.stringify(serializeProject(project))
+    json: patchConverter.getPatchProjectJson()
   };
 }

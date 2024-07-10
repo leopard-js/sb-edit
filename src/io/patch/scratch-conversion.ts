@@ -1,20 +1,15 @@
-import JSZip from "jszip";
-
-import ConversionLayer from "./conversion-layer.mjs";
+import ConversionLayer from "./conversion-layer";
 import Scratch3EventBlocks from "../blocks/scratch3_event.mjs";
 
-import PatchTargetThread from "./patch-target-thread.mjs";
+import ScratchConversionControl from "./scratch-conversion-control";
+import ScratchConversionOperator from "./scratch-conversion-operator";
 
-import ScratchConversionControl from "./scratch-conversion-control.mjs";
-import ScratchConversionOperator from "./scratch-conversion-operator.mjs";
-
-import { processInputs } from "./scratch-conversion-helper.mjs";
+import { processInputs } from "./scratch-conversion-helper";
 import Scratch3ControlBlocks from "../blocks/scratch3_control.mjs";
+import { PatchScratchProjectJSON } from "./patch-interfaces";
 
 export default class ScratchConverter {
-  data = null;
-
-  scratchJson = null;
+  data: string = "";
 
   scratchControlConverter = new ScratchConversionControl();
 
@@ -22,65 +17,14 @@ export default class ScratchConverter {
 
   /**
    *
-   * @param {ArrayBuffer} scratchData An ArrayBuffer representation of the .sb3 file to convert
+   * @param {String} scratchData An ArrayBuffer representation of the .sb3 file to convert
    */
-  constructor(scratchData) {
+  constructor(scratchData: string) {
     this.data = scratchData;
   }
 
-  /**
-   * Returns a .ptch1 patch project represented as an array buffer
-   *
-   * @returns {ArrayBuffer} The Patch project (.ptch1) represented as an array buffer
-   */
-  async getPatchArrayBuffer() {
-    const scratchZip = await JSZip.loadAsync(this.data).then(newZip => newZip);
-
-    const projectJson = await this.getPatchProjectJsonBlob(scratchZip).then(blob => blob);
-    if (!projectJson) {
-      return null;
-    }
-
-    const zip = new JSZip();
-
-    zip.file("project.json", projectJson);
-
-    const scratchFilesKeys = Object.keys(scratchZip.files);
-
-    const filePromises = [];
-
-    // eslint-disable-next-line no-restricted-syntax
-    for (const key of scratchFilesKeys) {
-      if (key !== "project.json") {
-        // TODO: consider checking if the file is an actual media file?
-        filePromises.push(
-          scratchZip.files[key].async("arraybuffer").then(arrayBuffer => ({ key: key, arrayBuffer: arrayBuffer }))
-        );
-      }
-    }
-
-    const files = await Promise.all(filePromises);
-    files.forEach(file => {
-      zip.file(file.key, file.arrayBuffer);
-    });
-
-    const zippedProject = await zip.generateAsync({ type: "arraybuffer" }).then(content => content);
-    return zippedProject;
-  }
-
-  /**
-   *
-   * @param {JSZip} zip
-   * @returns {Blob}
-   */
-  async getPatchProjectJsonBlob(zip) {
-    if (!zip.files["project.json"]) {
-      console.error("Couldn't find the project.json file in the scratch project. Abort.");
-      return null;
-    }
-
-    const jsonDataString = await zip.files["project.json"].async("text").then(text => text);
-    const vmState = JSON.parse(jsonDataString);
+  getPatchProjectJson() {
+    const vmState = JSON.parse(this.data) as PatchScratchProjectJSON;
 
     // This function will convert each target's blocks and local variables into Patch code.
     // Then, it will remove the blocks from the JSON (not strictly necessary) and handle backgrounds and other
@@ -112,16 +56,19 @@ export default class ScratchConverter {
     // TODO: global variables
     const baseJson = { vmstate: vmState, globalVariables: [] };
 
-    // Step 4: convert this back to a blob, make everything a child of "vmstate", and return it.
-    const newJsonBlob = new Blob([JSON.stringify(baseJson)], { type: "application/json" });
-    return newJsonBlob;
+    return JSON.stringify(baseJson);
   }
 
-  convertBlocksPart(blocks, hatId, nextId, patchApi, patchApiKeys) {
+  convertBlocksPart(
+    blocks: { [id: string]: Block },
+    hatId: string,
+    nextId: string,
+    patchApi: typeof ConversionLayer.patchApi,
+    patchApiKeys: string[]
+  ) {
     const thread = new PatchTargetThread();
 
     thread.triggerEventId = blocks[hatId].opcode;
-    console.log("blocks[hatId].opcode", blocks[hatId].opcode);
     // TODO: triggerEventOption
     const hatFieldsKeys = Object.keys(blocks[hatId].fields);
     if (hatFieldsKeys && hatFieldsKeys.length > 0) {
@@ -313,20 +260,21 @@ export default class ScratchConverter {
    * @param {Object.<string, [Number, String]>} variables
    * @returns {PatchTargetThread[]} An array of object representations of the patch threads
    */
-  convertTargetBlocks(blocks, variables) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  convertTargetBlocks(blocks: { [id: string]: Block }, variables: { [id: string]: number | string }) {
     // TODO: convert variables
     // https://en.scratch-wiki.info/wiki/Scratch_File_Format#Blocks
 
     const blocksKeys = Object.keys(blocks);
 
-    const returnVal = [];
+    const returnVal: PatchTargetThread[] = [];
 
     const eventBlocks = new Scratch3EventBlocks({ on: () => {}, startHats: () => {} });
     const controlBlocks = new Scratch3ControlBlocks({ on: () => {}, startHats: () => {} });
 
     const hats = Object.keys({ ...eventBlocks.getHats(), ...controlBlocks.getHats() });
 
-    const hatLocations = [];
+    const hatLocations: string[] = [];
 
     blocksKeys.forEach(blockId => {
       const block = blocks[blockId];

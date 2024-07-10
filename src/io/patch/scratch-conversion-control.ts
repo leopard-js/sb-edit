@@ -1,7 +1,4 @@
-import PatchTargetThread from "./patch-target-thread.mjs";
-import ScratchBlock from "./scratch-block.mjs";
-
-import { indentLines, processInputs } from "./scratch-conversion-helper.mjs";
+import { indentLines, processInputs } from "./scratch-conversion-helper";
 
 export default class ScratchConversionControl {
   /**
@@ -14,7 +11,14 @@ export default class ScratchConversionControl {
    * @param {*} partialConverterThis
    * @returns {string}
    */
-  convertControlBlock(blocks, currentBlockId, patchApi, patchApiKeys, partialConverter, partialConverterThis) {
+  convertControlBlock(
+    blocks: any,
+    currentBlockId: any,
+    patchApi: any,
+    patchApiKeys: any,
+    partialConverter: any,
+    partialConverterThis: any
+  ) {
     const convertBlocksPart = partialConverter.bind(partialConverterThis);
 
     const currentBlock = blocks[currentBlockId];
