@@ -329,7 +329,25 @@ async function run() {
           }
         }
 
-        await fs.writeFile(fullOutputPath, patch.json);
+        const zip = new JSZip();
+
+        zip.file("project.json", Buffer.from(patch.json));
+
+        for (const target of [project.stage, ...project.sprites]) {
+          for (const costume of target.costumes) {
+            const filename = `${costume.md5}.${costume.ext}`;
+            const asset = Buffer.from(costume.asset as ArrayBuffer);
+            zip.file(filename, asset);
+          }
+
+          for (const sound of target.sounds) {
+            const filename = `${sound.md5}.${sound.ext}`;
+            const asset = Buffer.from(sound.asset as ArrayBuffer);
+            zip.file(filename, asset);
+          }
+        }
+
+        zip.generateNodeStream({ type: "nodebuffer", streamFiles: true }).pipe(createWriteStream(fullOutputPath));
       });
 
       break;
