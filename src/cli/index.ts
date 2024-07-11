@@ -73,6 +73,8 @@ try {
       throw new InferTypeError("output", "Scratch 3.0 output projects are not currently supported.");
     } else if (path.extname(output) === "") {
       outputType = "leopard";
+    } else if (output.endsWith(".ptch1")) {
+      outputType = "patch";
     } else {
       throw new InferTypeError("output", "Could not infer output type.");
     }
