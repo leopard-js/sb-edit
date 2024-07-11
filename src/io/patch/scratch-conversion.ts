@@ -184,44 +184,6 @@ export default class ScratchConverter {
           false
         );
 
-        /* for (let i = 0; i < inputsKeys.length; i++) {
-               const inputsKey = inputsKeys[i];
-
-               // Add options to change this based on language later.
-               if (patchArgs !== "") {
-                  patchArgs += ", ";
-               }
-
-               // TODO: validate this more
-               let newArg = "";
-
-               const argType = getArgType(currentBlock.inputs[inputsKey])
-
-               switch (argType) {
-                  case 0: {
-                     newArg = `${currentBlock.inputs[inputsKey][1][1]}`;
-                     break;
-                  }
-                  case 1: {
-                     newArg = `"${currentBlock.inputs[inputsKey][1][1]}"`;
-                     break;
-                  }
-                  case 2: {
-                     // Nested block
-                     const subThread = this.convertBlocksPart(blocks, currentBlockId, currentBlock.inputs[inputsKey][1], patchApi, patchApiKeys);
-                     // remove the newline
-                     newArg = subThread.script.substring(0, subThread.script.length - 1);
-                     break;
-                  }
-                  default: {
-                     console.error("Unknown argType.");
-                     break;
-                  }
-               }
-
-               patchArgs += newArg;
-            } */
-
         let patchCode = "";
 
         const conversionLayerResult = patchApi[patchKey];
@@ -277,7 +239,6 @@ export default class ScratchConverter {
           }
 
           // Handle a special case: Patch implements the Ask block differently
-          // TODO: should this be a global variable?
           if (currentBlock.opcode === "sensing_askandwait") {
             patchKey = `_patchAnswer = ${patchKey}`;
           }
@@ -312,11 +273,6 @@ export default class ScratchConverter {
     const blocksKeys = Object.keys(blocks);
 
     const returnVal: PatchTargetThread[] = [];
-
-    /*const eventBlocks = new Scratch3EventBlocks({ on: () => {}, startHats: () => {} });
-    const controlBlocks = new Scratch3ControlBlocks({ on: () => {}, startHats: () => {} });
-
-    const hats = Object.keys({ ...eventBlocks.getHats(), ...controlBlocks.getHats() });*/
 
     const hats = Object.keys({ ...EventHats, ...ControlHats });
 

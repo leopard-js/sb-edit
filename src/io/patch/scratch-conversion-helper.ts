@@ -72,10 +72,6 @@ function needsParentheses(code: string) {
     return false;
   }
 
-  /* const forbiddenChars = ["<", ">", "=", "{", "}", ":", "+", "-", "*", "/", "^", "%", "!", "and", "or", "not", "[", "]", "|"]
-    if (code.includes("<") || code.includes(">") || code.includes("="))
-    return false; */
-
   return true;
 }
 

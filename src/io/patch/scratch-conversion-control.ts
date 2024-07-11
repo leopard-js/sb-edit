@@ -4,16 +4,6 @@ import ScratchConverter from "./scratch-conversion";
 import { indentLines, processInputs } from "./scratch-conversion-helper";
 
 export default class ScratchConversionControl {
-  /**
-   *
-   * @param {Object.<string, ScratchBlock>} blocks
-   * @param {string} blockId
-   * @param {Object.<string, {opcode: string, parameters: string[], exampleParameters: {}}} patchApi
-   * @param {string[]} patchApiKeys
-   * @param {*} partialConverter
-   * @param {*} partialConverterThis
-   * @returns {string}
-   */
   convertControlBlock(
     blocks: { [key: string]: PatchScratchBlock },
     currentBlockId: string,
@@ -40,8 +30,6 @@ export default class ScratchConversionControl {
           patchApiKeys
         ).script;
         SUBSTACK = SUBSTACK.substring(0, SUBSTACK.length - 1);
-        // Add options to change this based on language later.
-        // TODO: change this to game loop if/when game loop is added
         script += "\n";
         script += "while True:";
         script += indentLines(SUBSTACK);
@@ -106,11 +94,6 @@ export default class ScratchConversionControl {
         break;
       }
       case "control_repeat": {
-        // leave the underscore as an underscore
-        // for _ in range(n):
-        /* let SUBSTACK = convertBlocksPart(blocks, currentBlockId, currentBlock.inputs.SUBSTACK[1], patchApi, patchApiKeys).script;
-            SUBSTACK = SUBSTACK.substring(0, SUBSTACK.length - 1);
-            let TIMES = currentBlock.inputs.TIMES */
         const { SUBSTACK } = processInputs(
           blocks,
           currentBlockId,
