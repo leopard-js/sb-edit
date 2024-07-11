@@ -16,7 +16,9 @@ program
   .requiredOption("-i, --input <path>", "The path to the input project")
   .addOption(new Option("-it, --input-type <type>", "The type of input file").choices(["sb3"]))
   .requiredOption("-o, --output <path>", "The path to the output project")
-  .addOption(new Option("-ot, --output-type <type>", "The type of output file").choices(["leopard", "leopard-zip"]))
+  .addOption(
+    new Option("-ot, --output-type <type>", "The type of output file").choices(["leopard", "leopard-zip", "patch"])
+  )
   .addOption(new Option("-t, --trace", "Show a detailed error trace"))
   .addOption(
     new Option("--leopard-url <url>", "The URL to use for Leopard").default("https://unpkg.com/leopard@^1/dist/")
@@ -28,7 +30,7 @@ const options: {
   input: string;
   inputType: "sb3";
   output: string;
-  outputType: "leopard" | "leopard-zip";
+  outputType: "leopard" | "leopard-zip" | "patch";
   trace: boolean | undefined;
   leopardUrl: string;
 } = program.opts();
@@ -71,6 +73,8 @@ try {
       throw new InferTypeError("output", "Scratch 3.0 output projects are not currently supported.");
     } else if (path.extname(output) === "") {
       outputType = "leopard";
+    } else if (output.endsWith(".ptch1")) {
+      outputType = "patch";
     } else {
       throw new InferTypeError("output", "Could not infer output type.");
     }
@@ -188,6 +192,10 @@ async function run() {
     });
   }
 
+  function toPatch() {
+    return project.toPatch({});
+  }
+
   switch (outputType) {
     case "leopard": {
       const leopard = await writeStep(`${chalk.bold("Converting")} project to ${chalk.white("Leopard")}.`, toLeopard);
@@ -295,6 +303,47 @@ async function run() {
 
           for (const sound of target.sounds) {
             const filename = `${target.name}/sounds/${sound.name}.${sound.ext}`;
+            const asset = Buffer.from(sound.asset as ArrayBuffer);
+            zip.file(filename, asset);
+          }
+        }
+
+        zip.generateNodeStream({ type: "nodebuffer", streamFiles: true }).pipe(createWriteStream(fullOutputPath));
+      });
+
+      break;
+    }
+    case "patch": {
+      const patch = await writeStep(`${chalk.bold("Converting")} project to ${chalk.white("Patch")}.`, toPatch);
+
+      const fullOutputPath = path.resolve(process.cwd(), output);
+
+      await writeStep(`${chalk.bold("Exporting")} project to zip file ${chalk.white(fullOutputPath)}.`, async () => {
+        // First, check if file name is already taken
+        try {
+          await fs.access(fullOutputPath);
+          throw new StepError("Output file already exists.");
+        } catch (err) {
+          if (err instanceof Object && "code" in err && err.code === "ENOENT") {
+            // File does not exist, good
+          } else {
+            throw err;
+          }
+        }
+
+        const zip = new JSZip();
+
+        zip.file("project.json", Buffer.from(patch.json));
+
+        for (const target of [project.stage, ...project.sprites]) {
+          for (const costume of target.costumes) {
+            const filename = `${costume.md5}.${costume.ext}`;
+            const asset = Buffer.from(costume.asset as ArrayBuffer);
+            zip.file(filename, asset);
+          }
+
+          for (const sound of target.sounds) {
+            const filename = `${sound.md5}.${sound.ext}`;
             const asset = Buffer.from(sound.asset as ArrayBuffer);
             zip.file(filename, asset);
           }
