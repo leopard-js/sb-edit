@@ -16,7 +16,9 @@ program
   .requiredOption("-i, --input <path>", "The path to the input project")
   .addOption(new Option("-it, --input-type <type>", "The type of input file").choices(["sb3"]))
   .requiredOption("-o, --output <path>", "The path to the output project")
-  .addOption(new Option("-ot, --output-type <type>", "The type of output file").choices(["leopard", "leopard-zip"]))
+  .addOption(
+    new Option("-ot, --output-type <type>", "The type of output file").choices(["leopard", "leopard-zip", "patch"])
+  )
   .addOption(new Option("-t, --trace", "Show a detailed error trace"))
   .addOption(
     new Option("--leopard-url <url>", "The URL to use for Leopard").default("https://unpkg.com/leopard@^1/dist/")
@@ -28,7 +30,7 @@ const options: {
   input: string;
   inputType: "sb3";
   output: string;
-  outputType: "leopard" | "leopard-zip";
+  outputType: "leopard" | "leopard-zip" | "patch";
   trace: boolean | undefined;
   leopardUrl: string;
 } = program.opts();
@@ -188,6 +190,10 @@ async function run() {
     });
   }
 
+  function toPatch() {
+    return project.toPatch({});
+  }
+
   switch (outputType) {
     case "leopard": {
       const leopard = await writeStep(`${chalk.bold("Converting")} project to ${chalk.white("Leopard")}.`, toLeopard);
@@ -301,6 +307,29 @@ async function run() {
         }
 
         zip.generateNodeStream({ type: "nodebuffer", streamFiles: true }).pipe(createWriteStream(fullOutputPath));
+      });
+
+      break;
+    }
+    case "patch": {
+      const patch = await writeStep(`${chalk.bold("Converting")} project to ${chalk.white("Patch")}.`, toPatch);
+
+      const fullOutputPath = path.resolve(process.cwd(), output);
+
+      await writeStep(`${chalk.bold("Exporting")} project to zip file ${chalk.white(fullOutputPath)}.`, async () => {
+        // First, check if file name is already taken
+        try {
+          await fs.access(fullOutputPath);
+          throw new StepError("Output file already exists.");
+        } catch (err) {
+          if (err instanceof Object && "code" in err && err.code === "ENOENT") {
+            // File does not exist, good
+          } else {
+            throw err;
+          }
+        }
+
+        await fs.writeFile(fullOutputPath, patch.json);
       });
 
       break;

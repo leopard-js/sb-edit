@@ -1,5 +1,24 @@
+import { PatchScratchBlock, PatchTargetThread } from "./patch-interfaces";
+
+export interface ConversionLayerType {
+  [key: string]: {
+    opcode: string;
+    parameters: string[];
+    returnParametersInstead?: string[];
+    returnInstead?: string[];
+  };
+}
+
+export type PartialConverterType = (
+  blocks: { [id: string]: PatchScratchBlock },
+  hatId: string,
+  nextId: string,
+  patchApi: ConversionLayerType,
+  patchApiKeys: string[]
+) => PatchTargetThread;
+
 export default class ConversionLayer {
-  static patchApi = {
+  static patchApi: ConversionLayerType = {
     // Motion blocks:
     move: {
       opcode: "motion_movesteps",

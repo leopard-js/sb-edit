@@ -1,12 +1,54 @@
-import ConversionLayer from "./conversion-layer";
-import Scratch3EventBlocks from "../blocks/scratch3_event.mjs";
+import ConversionLayer, { ConversionLayerType } from "./conversion-layer";
 
 import ScratchConversionControl from "./scratch-conversion-control";
 import ScratchConversionOperator from "./scratch-conversion-operator";
 
 import { processInputs } from "./scratch-conversion-helper";
-import Scratch3ControlBlocks from "../blocks/scratch3_control.mjs";
-import { PatchScratchProjectJSON } from "./patch-interfaces";
+import { PatchScratchBlock, PatchScratchProjectJSON, PatchTargetThread } from "./patch-interfaces";
+
+const EventHats = {
+  event_whenflagclicked: {
+    label: "When Flag Clicked",
+    restartExistingThreads: true
+  },
+  event_whenkeypressed: {
+    label: "When Key Pressed",
+    restartExistingThreads: false
+  },
+  event_whenthisspriteclicked: {
+    label: "When This Sprite Clicked",
+    restartExistingThreads: true
+  },
+  event_whentouchingobject: {
+    label: "When Touching",
+    restartExistingThreads: false,
+    edgeActivated: true
+  },
+  event_whenstageclicked: {
+    label: "When Stage Clicked",
+    restartExistingThreads: true
+  },
+  event_whenbackdropswitchesto: {
+    label: "When Backdrop Switches To",
+    restartExistingThreads: true
+  },
+  event_whengreaterthan: {
+    label: "When Greater Than",
+    restartExistingThreads: false,
+    edgeActivated: true
+  },
+  event_whenbroadcastreceived: {
+    label: "When Broadcast Received",
+    restartExistingThreads: true
+  }
+};
+
+const ControlHats = {
+  control_start_as_clone: {
+    restartExistingThreads: false,
+    label: "When I Start As Clone"
+  }
+};
 
 export default class ScratchConverter {
   data: string = "";
@@ -34,7 +76,7 @@ export default class ScratchConverter {
 
     // Step 1: blocks + variables to code; then add code
     for (let i = 0; i < vmState.targets.length; i++) {
-      vmState.targets[i].threads = this.convertTargetBlocks(vmState.targets[i].blocks, vmState.targets[i].variables);
+      vmState.targets[i].threads = this.convertTargetBlocks(vmState.targets[i].blocks, {}); //vmState.targets[i].variables);
     }
 
     // Step 2: remove blocks (this isn't strictly necessary) and variables + broadcasts (this is necessary)
@@ -60,10 +102,10 @@ export default class ScratchConverter {
   }
 
   convertBlocksPart(
-    blocks: { [id: string]: Block },
+    blocks: { [id: string]: PatchScratchBlock },
     hatId: string,
     nextId: string,
-    patchApi: typeof ConversionLayer.patchApi,
+    patchApi: ConversionLayerType,
     patchApiKeys: string[]
   ) {
     const thread = new PatchTargetThread();
@@ -109,6 +151,7 @@ export default class ScratchConverter {
             currentBlockId,
             patchApi,
             patchApiKeys,
+            // eslint-disable-next-line @typescript-eslint/unbound-method
             this.convertBlocksPart,
             this
           );
@@ -119,6 +162,7 @@ export default class ScratchConverter {
             currentBlockId,
             patchApi,
             patchApiKeys,
+            // eslint-disable-next-line @typescript-eslint/unbound-method
             this.convertBlocksPart,
             this
           );
@@ -181,7 +225,7 @@ export default class ScratchConverter {
         let patchCode = "";
 
         const conversionLayerResult = patchApi[patchKey];
-        if (conversionLayerResult.hasOwnProperty("returnInstead")) {
+        if (conversionLayerResult.returnInstead) {
           let patchArgs = "";
           for (let i = 0; i < conversionLayerResult.returnInstead.length; i++) {
             const val = conversionLayerResult.returnInstead[i];
@@ -195,7 +239,7 @@ export default class ScratchConverter {
           }
 
           patchCode = `${patchArgs}\n`;
-        } else if (conversionLayerResult.hasOwnProperty("returnParametersInstead")) {
+        } else if (conversionLayerResult.returnParametersInstead) {
           let patchArgs = "";
           for (let i = 0; i < conversionLayerResult.returnParametersInstead.length; i++) {
             const parameter = conversionLayerResult.returnParametersInstead[i]; // .toUpperCase();
@@ -246,7 +290,7 @@ export default class ScratchConverter {
       }
 
       // Next block
-      currentBlockId = currentBlock.next;
+      currentBlockId = currentBlock.next as string;
     }
 
     return thread;
@@ -261,7 +305,7 @@ export default class ScratchConverter {
    * @returns {PatchTargetThread[]} An array of object representations of the patch threads
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  convertTargetBlocks(blocks: { [id: string]: Block }, variables: { [id: string]: number | string }) {
+  convertTargetBlocks(blocks: { [key: string]: PatchScratchBlock }, variables: { [key: string]: number | string }) {
     // TODO: convert variables
     // https://en.scratch-wiki.info/wiki/Scratch_File_Format#Blocks
 
@@ -269,10 +313,12 @@ export default class ScratchConverter {
 
     const returnVal: PatchTargetThread[] = [];
 
-    const eventBlocks = new Scratch3EventBlocks({ on: () => {}, startHats: () => {} });
+    /*const eventBlocks = new Scratch3EventBlocks({ on: () => {}, startHats: () => {} });
     const controlBlocks = new Scratch3ControlBlocks({ on: () => {}, startHats: () => {} });
 
-    const hats = Object.keys({ ...eventBlocks.getHats(), ...controlBlocks.getHats() });
+    const hats = Object.keys({ ...eventBlocks.getHats(), ...controlBlocks.getHats() });*/
+
+    const hats = Object.keys({ ...EventHats, ...ControlHats });
 
     const hatLocations: string[] = [];
 
@@ -287,7 +333,7 @@ export default class ScratchConverter {
     const patchApiKeys = Object.keys(patchApi);
 
     hatLocations.forEach(hatId => {
-      const returnValPart = this.convertBlocksPart(blocks, hatId, blocks[hatId].next, patchApi, patchApiKeys);
+      const returnValPart = this.convertBlocksPart(blocks, hatId, blocks[hatId].next as string, patchApi, patchApiKeys);
 
       if (returnValPart.script.includes("math.")) {
         returnValPart.script = `import math\n\n${returnValPart.script}`;

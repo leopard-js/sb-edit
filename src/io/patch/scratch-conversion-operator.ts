@@ -1,3 +1,5 @@
+import { ConversionLayerType, PartialConverterType } from "./conversion-layer";
+import { PatchScratchBlock } from "./patch-interfaces";
 import { processInputs } from "./scratch-conversion-helper";
 
 export default class ScratchConversionOperator {
@@ -12,12 +14,14 @@ export default class ScratchConversionOperator {
    * @returns {string}
    */
   convertOperatorBlock(
-    blocks: any,
-    currentBlockId: any,
-    patchApi: any,
-    patchApiKeys: any,
-    partialConverter: any,
-    partialConverterThis: any
+    blocks: {
+      [key: string]: PatchScratchBlock;
+    },
+    currentBlockId: string,
+    patchApi: ConversionLayerType,
+    patchApiKeys: string[],
+    partialConverter: PartialConverterType,
+    partialConverterThis: unknown
   ) {
     const convertBlocksPart = partialConverter.bind(partialConverterThis);
 
@@ -226,7 +230,7 @@ export default class ScratchConversionOperator {
           true
         );
 
-        script += `${STRING}[${LETTER - 1}]`;
+        script += `${STRING}[${parseInt(LETTER) - 1}]`;
         break;
       }
       case "operator_length": {
@@ -311,7 +315,7 @@ export default class ScratchConversionOperator {
         // Remove the quotation marks that processInputs adds
         const formattedOperator = OPERATOR.substring(1, OPERATOR.length - 1);
 
-        const mathOpsDict: any = {
+        const mathOpsDict: { [key: string]: string } = {
           abs: `abs(${NUM})`,
           ceiling: `math.ceil(${NUM})`,
           sqrt: `math.sqrt(${NUM})`,

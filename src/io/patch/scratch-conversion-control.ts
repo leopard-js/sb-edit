@@ -1,3 +1,6 @@
+import { ConversionLayerType, PartialConverterType } from "./conversion-layer";
+import { PatchScratchBlock } from "./patch-interfaces";
+import ScratchConverter from "./scratch-conversion";
 import { indentLines, processInputs } from "./scratch-conversion-helper";
 
 export default class ScratchConversionControl {
@@ -12,12 +15,12 @@ export default class ScratchConversionControl {
    * @returns {string}
    */
   convertControlBlock(
-    blocks: any,
-    currentBlockId: any,
-    patchApi: any,
-    patchApiKeys: any,
-    partialConverter: any,
-    partialConverterThis: any
+    blocks: { [key: string]: PatchScratchBlock },
+    currentBlockId: string,
+    patchApi: ConversionLayerType,
+    patchApiKeys: string[],
+    partialConverter: PartialConverterType,
+    partialConverterThis: ScratchConverter
   ) {
     const convertBlocksPart = partialConverter.bind(partialConverterThis);
 
@@ -32,7 +35,7 @@ export default class ScratchConversionControl {
         let SUBSTACK = convertBlocksPart(
           blocks,
           currentBlockId,
-          currentBlock.inputs.SUBSTACK[1],
+          currentBlock.inputs.SUBSTACK[1] as string,
           patchApi,
           patchApiKeys
         ).script;
@@ -50,7 +53,7 @@ export default class ScratchConversionControl {
         let CONDITION = convertBlocksPart(
           blocks,
           currentBlockId,
-          currentBlock.inputs.CONDITION[1],
+          currentBlock.inputs.CONDITION[1] as string,
           patchApi,
           patchApiKeys
         ).script;
@@ -58,7 +61,7 @@ export default class ScratchConversionControl {
         let SUBSTACK = convertBlocksPart(
           blocks,
           currentBlockId,
-          currentBlock.inputs.SUBSTACK[1],
+          currentBlock.inputs.SUBSTACK[1] as string,
           patchApi,
           patchApiKeys
         ).script;
@@ -74,7 +77,7 @@ export default class ScratchConversionControl {
         let CONDITION = convertBlocksPart(
           blocks,
           currentBlockId,
-          currentBlock.inputs.CONDITION[1],
+          currentBlock.inputs.CONDITION[1] as string,
           patchApi,
           patchApiKeys
         ).script;
@@ -82,7 +85,7 @@ export default class ScratchConversionControl {
         let SUBSTACK = convertBlocksPart(
           blocks,
           currentBlockId,
-          currentBlock.inputs.SUBSTACK[1],
+          currentBlock.inputs.SUBSTACK[1] as string,
           patchApi,
           patchApiKeys
         ).script;
@@ -90,7 +93,7 @@ export default class ScratchConversionControl {
         let SUBSTACK2 = convertBlocksPart(
           blocks,
           currentBlockId,
-          currentBlock.inputs.SUBSTACK2[1],
+          currentBlock.inputs.SUBSTACK2[1] as string,
           patchApi,
           patchApiKeys
         ).script;

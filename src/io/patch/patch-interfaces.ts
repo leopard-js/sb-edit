@@ -1,5 +1,5 @@
 import { TextToSpeechLanguage } from "../../Project";
-import { Block, Costume, List, Sound, Variable } from "./interfaces";
+import { BlockField, Costume, List, Monitor, Sound, Variable } from "./interfaces";
 
 export class PatchTargetThread {
   // The text that makes up the generated code of the thread
@@ -10,6 +10,28 @@ export class PatchTargetThread {
 
   // The (optional) option for the hat
   triggerEventOption: string = "";
+}
+
+export type PatchScratchBlockInput = [number, string | (number | string)[]];
+
+export interface PatchScratchBlock {
+  opcode: string;
+
+  next?: string | null;
+  parent?: string | null;
+
+  inputs: {
+    [key: string]: PatchScratchBlockInput;
+  };
+  fields: {
+    [key: string]: BlockField;
+  };
+
+  shadow: boolean;
+  topLevel: boolean;
+
+  x?: number;
+  y?: number;
 }
 
 export interface PatchTarget {
@@ -25,7 +47,7 @@ export interface PatchTarget {
     [key: string]: string;
   };
   blocks: {
-    [key: string]: PatchScratchBlock<string>;
+    [key: string]: PatchScratchBlock;
   };
   comments: {
     [key: string]: Comment;
@@ -35,6 +57,7 @@ export interface PatchTarget {
   sounds: Sound[];
   volume: number;
   layerOrder: number;
+  threads?: PatchTargetThread[];
 }
 
 export interface Stage extends PatchTarget {
@@ -58,4 +81,5 @@ export interface Sprite extends PatchTarget {
 
 export interface PatchScratchProjectJSON {
   targets: PatchTarget[];
+  monitors?: Monitor[];
 }

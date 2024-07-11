@@ -1,5 +1,8 @@
+import { ConversionLayerType, PartialConverterType } from "./conversion-layer";
+import { PatchScratchBlock, PatchScratchBlockInput } from "./patch-interfaces";
+
 // 0: number, 1: string, 2: nested, -1: error
-export function getArgType(inputJson: any) {
+export function getArgType(inputJson: PatchScratchBlockInput) {
   const argType = inputJson[1][0];
   // See here for meanings of the numbers: https://en.scratch-wiki.info/wiki/Scratch_File_Format#Blocks
 
@@ -77,16 +80,20 @@ function needsParentheses(code: string) {
 }
 
 export function processInputs(
-  blocks: any,
-  currentBlockId: any,
-  currentBlock: any,
-  patchApi: any,
-  patchApiKeys: any,
-  convertBlocksPart: any,
+  blocks: {
+    [key: string]: PatchScratchBlock;
+  },
+  currentBlockId: string,
+  currentBlock: PatchScratchBlock,
+  patchApi: ConversionLayerType,
+  patchApiKeys: string[],
+  convertBlocksPart: PartialConverterType,
   autoParentheses = false,
   tryMakeNum = false
 ) {
-  const returnVal: any = {};
+  const returnVal: {
+    [key: string]: string;
+  } = {};
 
   const inputsKeys = Object.keys(currentBlock.inputs);
   for (let i = 0; i < inputsKeys.length; i++) {
@@ -100,7 +107,13 @@ export function processInputs(
     } else if (argType === 1) {
       arg = `"${currentBlock.inputs[inputsKey][1][1]}"`;
     } else if (argType === 2) {
-      arg = convertBlocksPart(blocks, currentBlockId, currentBlock.inputs[inputsKey][1], patchApi, patchApiKeys).script;
+      arg = convertBlocksPart(
+        blocks,
+        currentBlockId,
+        currentBlock.inputs[inputsKey][1] as string,
+        patchApi,
+        patchApiKeys
+      ).script;
       arg = arg.substring(0, arg.length - 1);
       if (autoParentheses && needsParentheses(arg)) {
         arg = `(${arg})`;
