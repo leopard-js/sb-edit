@@ -1,5 +1,5 @@
 import { TextToSpeechLanguage } from "../../Project";
-import { BlockField, Costume, List, Monitor, Sound, Variable } from "./interfaces";
+import { BlockField, Costume, List, Monitor, Sound } from "./interfaces";
 
 export class PatchTargetThread {
   // The text that makes up the generated code of the thread
@@ -38,7 +38,7 @@ export interface PatchTarget {
   isStage: boolean;
   name: string;
   variables: {
-    [key: string]: Variable;
+    [key: string]: [string, string | number];
   };
   lists: {
     [key: string]: List;
