@@ -1,5 +1,10 @@
-import { ConversionLayerType, PartialConverterType } from "./conversion-layer";
-import { PatchScratchBlock, PatchScratchBlockInput } from "./patch-interfaces";
+import { PatchScratchBlockInput, PatchTarget } from "./patch-interfaces";
+import { PatchTargetThread } from "./patch-interfaces";
+
+import patchApi from "./conversion-layer";
+import convertControlBlock from "./scratch-conversion-control";
+import convertOperatorBlock from "./scratch-conversion-operator";
+import convertDataBlock from "./scratch-conversion-data";
 
 // 0: number, 1: string, 2: nested, -1: error
 export function getArgType(inputJson: PatchScratchBlockInput) {
@@ -76,20 +81,16 @@ function needsParentheses(code: string) {
 }
 
 export function processInputs(
-  blocks: {
-    [key: string]: PatchScratchBlock;
-  },
+  target: PatchTarget,
   currentBlockId: string,
-  currentBlock: PatchScratchBlock,
-  patchApi: ConversionLayerType,
-  patchApiKeys: string[],
-  convertBlocksPart: PartialConverterType,
   autoParentheses = false,
   tryMakeNum = false
 ) {
   const returnVal: {
     [key: string]: string;
   } = {};
+
+  const currentBlock = target.blocks[currentBlockId];
 
   const inputsKeys = Object.keys(currentBlock.inputs);
   for (let i = 0; i < inputsKeys.length; i++) {
@@ -103,13 +104,8 @@ export function processInputs(
     } else if (argType === 1) {
       arg = `"${currentBlock.inputs[inputsKey][1][1]}"`;
     } else if (argType === 2) {
-      arg = convertBlocksPart(
-        blocks,
-        currentBlockId,
-        currentBlock.inputs[inputsKey][1] as string,
-        patchApi,
-        patchApiKeys
-      ).script;
+      // TODO: check this line
+      arg = convertBlocksPart(target, currentBlockId, currentBlock.inputs[inputsKey][1] as string).script;
       arg = arg.substring(0, arg.length - 1);
       if (autoParentheses && needsParentheses(arg)) {
         arg = `(${arg})`;
@@ -138,4 +134,141 @@ export function processInputs(
   }
 
   return returnVal;
+}
+
+export function convertBlocksPart(target: PatchTarget, hatId: string, nextId: string) {
+  const thread = new PatchTargetThread();
+  const { blocks } = target;
+
+  thread.triggerEventId = blocks[hatId].opcode;
+  // TODO: triggerEventOption
+  const hatFieldsKeys = Object.keys(blocks[hatId].fields);
+  if (hatFieldsKeys && hatFieldsKeys.length > 0) {
+    if (blocks[hatId].opcode === "event_whenkeypressed") {
+      // eslint-disable-next-line prefer-destructuring
+      thread.triggerEventOption = blocks[hatId].fields[hatFieldsKeys[0]][0].toUpperCase();
+    } else {
+      // eslint-disable-next-line prefer-destructuring
+      thread.triggerEventOption = blocks[hatId].fields[hatFieldsKeys[0]][0];
+    }
+  }
+
+  // Convert code
+  let currentBlockId = nextId;
+  while (currentBlockId) {
+    const currentBlock = blocks[currentBlockId];
+    // Store a copy of the opcode so we don't have to keep doing currentBlock.opcode
+    const { opcode } = currentBlock;
+
+    // TODO: figure out nested blocks
+
+    const patchApiKeys = Object.keys(patchApi);
+
+    // Convert the block
+    // Duplicates shouldn't exist in the translation API, but if they do the first entry will be used
+    let patchKey = null;
+    for (let i = 0; i < patchApiKeys.length; i++) {
+      const key = patchApiKeys[i];
+
+      if (patchApi[key].opcode === opcode) {
+        patchKey = key;
+        break;
+      }
+    }
+
+    if (!patchKey) {
+      if (opcode.substring(0, 8) === "control_") {
+        const conversionResult = convertControlBlock(
+          target,
+          currentBlockId,
+          processInputs,
+          indentLines,
+          convertBlocksPart
+        );
+        thread.script += `${conversionResult}\n`;
+      } else if (opcode.substring(0, 9) === "operator_") {
+        const conversionResult = convertOperatorBlock(target, currentBlockId, processInputs);
+        thread.script += `${conversionResult}\n`;
+      } else if (opcode.substring(0, 5) === "data_") {
+        const conversionResult = convertDataBlock(target, currentBlockId, processInputs);
+        thread.script += `${conversionResult}\n`;
+      } else {
+        // Couldn't find the opcode in the map.
+        console.error("Error translating from scratch to patch. Unable to find the key for the opcode %s.", opcode);
+      }
+    } else {
+      // const inputsKeys = Object.keys(currentBlock.inputs);
+      const detectedArgs = processInputs(target, currentBlockId, true, false);
+
+      let patchCode = "";
+
+      const conversionLayerResult = patchApi[patchKey];
+      if (conversionLayerResult.returnInstead) {
+        let patchArgs = "";
+        for (let i = 0; i < conversionLayerResult.returnInstead.length; i++) {
+          const val = conversionLayerResult.returnInstead[i];
+
+          // Add options to change this based on language later.
+          if (patchArgs !== "") {
+            patchArgs += ", ";
+          }
+
+          patchArgs += val;
+        }
+
+        patchCode = `${patchArgs}\n`;
+      } else if (conversionLayerResult.returnParametersInstead) {
+        let patchArgs = "";
+        for (let i = 0; i < conversionLayerResult.returnParametersInstead.length; i++) {
+          const parameter = conversionLayerResult.returnParametersInstead[i]; // .toUpperCase();
+
+          // Add options to change this based on language later.
+          if (patchArgs !== "") {
+            patchArgs += ", ";
+          }
+
+          if (detectedArgs[parameter]) {
+            patchArgs += detectedArgs[parameter];
+          } else {
+            console.warn("Couldn't find parameter with opcode %s.", parameter);
+            patchArgs += '"# Error: couldn\'t find the parameter to go here."';
+          }
+        }
+
+        patchCode = `${patchArgs}\n`;
+      } else {
+        let patchArgs = "";
+        for (let i = 0; i < conversionLayerResult.parameters.length; i++) {
+          const parameter = conversionLayerResult.parameters[i]; // .toUpperCase();
+
+          // Add options to change this based on language later.
+          if (patchArgs !== "") {
+            patchArgs += ", ";
+          }
+
+          if (detectedArgs[parameter]) {
+            patchArgs += detectedArgs[parameter];
+          } else {
+            console.warn("Couldn't find parameter with opcode %s.", parameter);
+            patchArgs += '"# Error: couldn\'t find the parameter to go here."';
+          }
+        }
+
+        // Handle a special case: Patch implements the Ask block differently
+        if (currentBlock.opcode === "sensing_askandwait") {
+          patchKey = `_patchAnswer = ${patchKey}`;
+        }
+
+        // Join all the bits and pieces together. Add options to change this based on language later.
+        patchCode = `${patchKey}(${patchArgs})\n`;
+      }
+
+      thread.script += patchCode;
+    }
+
+    // Next block
+    currentBlockId = currentBlock.next as string;
+  }
+
+  return thread;
 }
