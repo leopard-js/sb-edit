@@ -510,23 +510,33 @@ export default function toLeopard(
     value: string | number | boolean | object | null,
     desiredInputShape?: InputShape
   ): string {
-    // Short-circuit for string inputs. These must never return number syntax.
-    if (desiredInputShape === InputShape.String) {
-      return JSON.stringify(value);
-    }
+    switch (desiredInputShape) {
+      // Return these as-is.
+      case InputShape.Any:
+      case InputShape.String:
+      case InputShape.Boolean:
+      case undefined:
+        return JSON.stringify(value);
 
-    // Other input shapes which static inputs may fulfill: number, index, any.
-    // These are all OK to return JavaScript number literals for.
-    const asNum = Number(value as string);
-    if (!isNaN(asNum) && value !== "") {
-      if (desiredInputShape === InputShape.Index) {
-        return JSON.stringify(asNum - 1);
-      } else {
+      // Cast to a number.
+      case InputShape.Index:
+      case InputShape.Number: {
+        let asNum = Number(value);
+        // Convert 1-indexes to 0-indexes.
+        if (desiredInputShape === InputShape.Index) {
+          asNum--;
+        }
+        // Scratch casts NaN to 0. This is done *after* the index
+        // conversion--"switch costume to (0 / 0)" switches to the first
+        // costume, not the last one.
+        if (Number.isNaN(asNum)) {
+          asNum = 0;
+        }
         return JSON.stringify(asNum);
       }
+      case InputShape.Stack:
+        throw new Error("Cannot convert a stack input to a literal");
     }
-
-    return JSON.stringify(value);
   }
 
   function triggerInitCode(script: Script, target: Target): string | null {
