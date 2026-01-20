@@ -4,6 +4,7 @@ import fromSb3, { fromSb3JSON } from "./io/sb3/fromSb3";
 import toSb3 from "./io/sb3/toSb3";
 import toLeopard from "./io/leopard/toLeopard";
 import toScratchblocks from "./io/scratchblocks/toScratchblocks";
+import toPatch from "./io/patch/toPatch";
 
 export type TextToSpeechLanguage =
   | "ar"
@@ -37,6 +38,7 @@ export default class Project {
   public toSb3 = toSb3.bind(null, this);
   public toLeopard = toLeopard.bind(null, this);
   public toScratchblocks = toScratchblocks.bind(null, this);
+  public toPatch = toPatch.bind(null, this);
 
   public stage: Stage = new Stage();
   public sprites: Sprite[] = [];
