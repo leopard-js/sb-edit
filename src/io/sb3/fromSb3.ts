@@ -161,9 +161,10 @@ function getBlockScript(blocks: { [key: string]: sb3.Block }) {
               const shadowInputs = translateInputs(blocks[value].inputs);
               const shadowFields = translateFields(blocks[value].fields, blocks[value].opcode);
 
-              if (blocks[value].opcode === "pen_menu_colorParam") {
+              if (blocks[value].opcode === OpCode.pen_menu_colorParam) {
                 result = {
                   ...result,
+                  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
                   COLOR_PARAM: (shadowFields as any).colorParam
                 };
               } else {

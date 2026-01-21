@@ -9,6 +9,7 @@ type DefaultInput<T extends BlockInput.Any = BlockInput.Any> =
 
 export class BlockBase<MyOpCode extends OpCode, MyInputs extends { [key: string]: BlockInput.Any }> {
   // TODO: fix signature to be more specific in what's returned
+  // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
   public static getDefaultInput(opcode: KnownBlock["opcode"], input: string): DefaultInput | void {
     if (!(opcode in KnownBlockInputMap)) return;
     return KnownBlockInputMap[opcode][input as keyof (typeof KnownBlockInputMap)[typeof opcode]];
@@ -43,6 +44,7 @@ export class BlockBase<MyOpCode extends OpCode, MyInputs extends { [key: string]
   }
 
   // TODO: Can we reference MyInputs here?
+  // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
   public getDefaultInput(input: string): DefaultInput | void {
     if (this.isKnownBlock()) {
       return BlockBase.getDefaultInput(this.opcode, input);
